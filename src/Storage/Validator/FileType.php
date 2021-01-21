@@ -60,7 +60,7 @@ class FileType extends Validator
      *
      * @see http://stackoverflow.com/a/3313196
      *
-     * @param string $path
+     * @param mixed $path
      *
      * @return bool
      */

@@ -42,7 +42,7 @@ abstract class Device
      *
      * @return string
      */
-    abstract public function getPath($filename): string;
+    abstract public function getPath(string $filename): string;
 
     /**
      * Upload.

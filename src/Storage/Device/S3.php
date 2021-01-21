@@ -46,8 +46,8 @@ class S3 extends Device
      *
      * Upload a file to desired destination in the selected disk.
      *
-     * @param string $target
-     * @param string $filename
+     * @param string $source
+     * @param string $path
      *
      * @throws \Exception
      *
