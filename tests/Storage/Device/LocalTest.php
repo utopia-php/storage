@@ -33,14 +33,14 @@ class LocalTest extends TestCase
 
     public function testRoot()
     {
-        $this->assertEquals($this->object->getRoot(), 'tests/resources/disk-a');
+        $this->assertEquals($this->object->getRoot(),realpath( __DIR__ . '/../../resources/disk-a'));
     }
 
     public function testPath()
     {
-        $this->assertEquals($this->object->getPath('image.png'), 'tests/resources/disk-a/i/m/a/g/image.png');
-        $this->assertEquals($this->object->getPath('x.png'), 'tests/resources/disk-a/x/./p/n/x.png');
-        $this->assertEquals($this->object->getPath('y'), 'tests/resources/disk-a/y/x/x/x/y');
+        $this->assertEquals($this->object->getPath('image.png'), realpath(__DIR__ . '/../../resources/disk-a').'/i/m/a/g/image.png');
+        $this->assertEquals($this->object->getPath('x.png'), realpath(__DIR__ . '/../../resources/disk-a') . '/x/./p/n/x.png');
+        $this->assertEquals($this->object->getPath('y'), realpath(__DIR__ . '/../../resources/disk-a') . '/y/x/x/x/y');
     }
 
     public function testWrite()
