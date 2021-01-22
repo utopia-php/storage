@@ -22,7 +22,10 @@ composer require utopia-php/storage
 require_once '../vendor/autoload.php';
 
 use Utopia\Storage\Storage;
-$device = new Local('path');
+
+Storage::setDevice('files', new Local('path'));
+
+$device = Storage::getDevice('files');
 
 //upload
 $device->upload('file.png','path');
