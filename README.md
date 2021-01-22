@@ -22,6 +22,7 @@ composer require utopia-php/storage
 require_once '../vendor/autoload.php';
 
 use Utopia\Storage\Storage;
+use Utopia\Storage\Device\Local
 
 Storage::setDevice('files', new Local('path'));
 
