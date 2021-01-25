@@ -3,226 +3,32 @@
 namespace Utopia\Storage\Device;
 
 use Utopia\Storage\Device;
-use Utopia\Storage\Utils\S3Helper;
 
 class S3 extends Device
 {
-    protected $key;
-    protected $secret;
+    protected $accessKey;
+    protected $secretKey;
     protected $bucket;
     protected $region;
-    protected $host;
     protected $acl='private';
     protected $root = 'temp';
-    private $s3Helper;
-    private $headers;
+    private $headers = array(
+		'Host' => '', 'Date' => '', 'Content-MD5' => '', 'Content-Type' => ''
+	);
     private $response;
     private $amzHeaders;
 
-    public function __construct($root='', $key,$secret, $bucket, $region, $acl) {
-        $this->key = $key;
-        $this->secret = $secret;
+    public function __construct($root='', $accessKey,$secretKey, $bucket, $region, $acl) {
+        $this->accessKey = $accessKey;
+        $this->secretKey = $secretKey;
         $this->bucket = $bucket;
         $this->region = $region;
         $this->root = $root;
         $this->acl = $acl;
-        $this->host = $bucket . '.s3.'.$region . '.awazonaws.com';
-        $this->s3Helper = new S3Helper($this->key,$this->secret, false, 's3.amazonaws.com', $region);
-        $this->headers = array();
-        $this->response = new \stdClass();
+        $this->headers['Host'] = $this->bucket.'.s3.amazonaws.com';
+        $this->__resetResponse();
     }
 
-    /**
-	* Generate the headers for AWS Signature V4
-	* @param array $amzHeaders
-	* @param array $headers
-	* @param string $method
-	* @param string $uri
-	* @param array $parameters
-	* @return array
-	*/
-    private function __getSignatureV4($method, $uri, $parameters)
-	{		
-		$service = 's3';
-		$region = $this->region;
-
-		$algorithm = 'AWS4-HMAC-SHA256';
-		$combinedHeaders = array();
-
-		$amzDateStamp = substr($this->amzHeaders['x-amz-date'], 0, 8);
-
-		// CanonicalHeaders
-		foreach ($this->headers as $k => $v)
-			$combinedHeaders[strtolower($k)] = trim($v);
-		foreach ($this->amzHeaders as $k => $v) 
-			$combinedHeaders[strtolower($k)] = trim($v);
-		uksort($combinedHeaders, array(&$this, '__sortMetaHeadersCmp'));
-
-		// Convert null query string parameters to strings and sort
-		$parameters = array_map('strval', $parameters); 
-		uksort($parameters, array(&$this, '__sortMetaHeadersCmp'));
-		$queryString = http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
-
-		// Payload
-		$amzPayload = array($method);
-
-		$qsPos = strpos($uri, '?');
-		$amzPayload[] = ($qsPos === false ? $uri : substr($uri, 0, $qsPos));
-
-		$amzPayload[] = $queryString;
-		// add header as string to requests
-		foreach ($combinedHeaders as $k => $v ) 
-		{
-			$amzPayload[] = $k . ':' . $v;
-		}
-		// add a blank entry so we end up with an extra line break
-		$amzPayload[] = '';
-		// SignedHeaders
-		$amzPayload[] = implode(';', array_keys($combinedHeaders));
-		// payload hash
-		$amzPayload[] = $this->amzHeaders['x-amz-content-sha256'];
-		// request as string
-		$amzPayloadStr = implode("\n", $amzPayload);
-
-		// CredentialScope
-		$credentialScope = array($amzDateStamp, $region, $service, 'aws4_request');
-
-		// stringToSign
-		$stringToSignStr = implode("\n", array($algorithm, $this->amzHeaders['x-amz-date'], 
-		implode('/', $credentialScope), hash('sha256', $amzPayloadStr)));
-
-		// Make Signature
-		$kSecret = 'AWS4' . $this->secret;
-		$kDate = hash_hmac('sha256', $amzDateStamp, $kSecret, true);
-		$kRegion = hash_hmac('sha256', $region, $kDate, true);
-		$kService = hash_hmac('sha256', $service, $kRegion, true);
-		$kSigning = hash_hmac('sha256', 'aws4_request', $kService, true);
-
-		$signature = hash_hmac('sha256', $stringToSignStr, $kSigning);
-
-		return $algorithm . ' ' . implode(',', array(
-			'Credential=' . $this->key . '/' . implode('/', $credentialScope),
-			'SignedHeaders=' . implode(';', array_keys($combinedHeaders)),
-			'Signature=' . $signature,
-		));
-    }
-    
-    /**
-	* Get the S3 response
-	*
-	* @return object | false
-	*/
-	public function getResponse(Array $parameters = array(), string $verb = 'GET',$uri,$data)
-	{
-		$query = '';
-		if (sizeof($parameters) > 0)
-		{
-			$query = substr($this->uri, -1) !== '?' ? '?' : '&';
-			foreach ($this->parameters as $var => $value)
-				if ($value == null || $value == '') $query .= $var.'&';
-				else $query .= $var.'='.rawurlencode($value).'&';
-			$query = substr($query, 0, -1);
-			$this->uri .= $query;
-
-			if (array_key_exists('acl', $parameters) ||
-			array_key_exists('location', $parameters) ||
-			array_key_exists('torrent', $parameters) ||
-			array_key_exists('website', $parameters) ||
-			array_key_exists('logging', $parameters))
-				$this->resource .= $query;
-		}
-		$url = 'https://' . ($this->headers['Host'] !== '' ? $this->headers['Host'] : $this->endpoint) . $uri;
-
-		// Basic setup
-		$curl = curl_init();
-		curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
-
-		
-
-		curl_setopt($curl, CURLOPT_URL, $url);
-
-		
-		// Headers
-		$httpHeaders = array(); 
-		$this->amzHeaders['x-amz-date'] = gmdate('Ymd\THis\Z');
-
-		if (!isset($this->amzHeaders['x-amz-content-sha256'])) 
-			$this->amzHeaders['x-amz-content-sha256'] = hash('sha256', $this->data);
-
-		foreach ($this->amzHeaders as $header => $value)
-			if (strlen($value) > 0) $httpHeaders[] = $header.': '.$value;
-
-		foreach ($this->headers as $header => $value)
-			if (strlen($value) > 0) $httpHeaders[] = $header.': '.$value;
-
-		$httpHeaders[] = 'Authorization: ' . $this->__getSignatureV4(
-			$verb, 
-			$uri,
-			$parameters
-		);
-
-
-		curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
-		curl_setopt($curl, CURLOPT_HEADER, false);
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
-		curl_setopt($curl, CURLOPT_WRITEFUNCTION, array(&$this, '__responseWriteCallback'));
-		curl_setopt($curl, CURLOPT_HEADERFUNCTION, array(&$this, '__responseHeaderCallback'));
-		curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-
-		// Request types
-		switch ($verb)
-		{
-			case 'GET': break;
-			case 'PUT': case 'POST': // POST only used for CloudFront
-					curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $verb);
-					curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
-			break;
-			case 'HEAD':
-				curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'HEAD');
-				curl_setopt($curl, CURLOPT_NOBODY, true);
-			break;
-			case 'DELETE':
-				curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
-			break;
-			default: break;
-		}
-
-
-		// Execute, grab errors
-		if (curl_exec($curl))
-			$this->response->code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-		else
-			$this->response->error = array(
-				'code' => curl_errno($curl),
-				'message' => curl_error($curl),
-				'resource' => $uri
-			);
-
-		@curl_close($curl);
-
-		// Parse body into XML
-		if ($this->response->error === false && isset($this->response->headers['type']) &&
-		$this->response->headers['type'] == 'application/xml' && isset($this->response->body))
-		{
-			$this->response->body = simplexml_load_string($this->response->body);
-
-			// Grab S3 errors
-			if (!in_array($this->response->code, array(200, 204, 206)) &&
-			isset($this->response->body->Code, $this->response->body->Message))
-			{
-				$this->response->error = array(
-					'code' => (string)$this->response->body->Code,
-					'message' => (string)$this->response->body->Message
-				);
-				if (isset($this->response->body->Resource))
-					$this->response->error['resource'] = (string)$this->response->body->Resource;
-				unset($this->response->body);
-			}
-		}
-
-
-		return $this->response;
-	}
 
     /**
      * @return string
@@ -291,8 +97,19 @@ class S3 extends Device
      */
     public function read(string $path):string
     {
-        $res =  $this->s3Helper->getObject($this->bucket,$path);
-        return $res->body;
+        $this->__resetResponse();
+        $verb = 'GET';
+        $uri = $path;
+        $uri = $uri !== '' ? '/'.str_replace('%2F', '/', rawurlencode($uri)) : '/';
+		$this->__getResponse($uri, $verb, false);
+
+		if ($this->response->error === false && $this->response->code !== 200)
+        $this->response->error = array('code' => $this->response->code, 'message' => 'Unexpected HTTP status');
+		if ($this->response->error !== false)
+		{
+            return false;
+        }
+		return $this->response->body;
     }
 
     /**
@@ -305,15 +122,11 @@ class S3 extends Device
      */
     public function write(string $path, string $data, string $contentType = 'text/plain'):bool
     {
-
+        $this->__resetResponse();
         $uri = $path;
-        $acl = 'private';
         $metaHeaders = array();
         $verb = 'PUT';
-        $endpoint = 's3.amazonaws.com';
-
         $uri = $uri !== '' ? '/'.str_replace('%2F', '/', rawurlencode($uri)) : '/';
-        $this->headers['Host'] = $this->bucket.'.'.$endpoint;
         $this->headers['Date'] = gmdate('D, d M Y H:i:s T');
 		$this->response = new \stdClass;
 		$this->response->error = false;
@@ -336,7 +149,7 @@ class S3 extends Device
         }else{
             $this->response->error = array('code' => 0, 'message' => 'Missing input parameters');
         }
-        $this->getResponse(array(), $verb,$uri,$data);
+        $this->__getResponse($uri,  $verb,$data);
         if ($this->response->error === false && $this->response->code !== 200)
 			$this->response->error = array('code' => $this->response->code, 'message' => 'Unexpected HTTP status');
 		if ($this->response->error !== false)
@@ -344,12 +157,8 @@ class S3 extends Device
 			return false;
 		}
 		return true;
-        // return $this->s3Helper->putObjectString($data, $this->bucket,$path, S3Helper::ACL_PUBLIC_READ);
     }
 
-    private function getInfo(string $path) {
-        return $this->s3Helper->getObjectInfo($this->bucket, $path);
-    }
 
     /**
      * Move file from given source to given path, Return true on success and false on failure.
@@ -386,7 +195,19 @@ class S3 extends Device
 
     public function delete(string $path, bool $recursive = false):bool
     {
-        return $this->s3Helper->deleteObject($this->bucket, $path);
+        $this->__resetResponse();
+        $verb = 'DELETE';
+        $uri = $path;
+        $uri = $uri !== '' ? '/'.str_replace('%2F', '/', rawurlencode($uri)) : '/';
+
+		$rest = $this->__getResponse($uri,$verb,false);
+		if ($rest->error === false && $rest->code !== 204)
+			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
+		if ($rest->error !== false)
+		{
+			return false;
+		}
+		return true;
     }
     
     /**
@@ -400,7 +221,7 @@ class S3 extends Device
      */
     public function getFileSize(string $path):int
     {
-        $res = $this->getInfo($path);
+        $res = $this->__getInfo($path);
         return $res['size'];
     }
 
@@ -415,7 +236,7 @@ class S3 extends Device
      */
     public function getFileMimeType(string $path):string
     {
-        $res = $this->getInfo($path);
+        $res = $this->__getInfo($path);
         return $res['type'];
     }
 
@@ -430,7 +251,7 @@ class S3 extends Device
      */
     public function getFileHash(string $path):string
     {
-        $res = $this->getInfo($path);
+        $res = $this->__getInfo($path);
         return $res['hash'];
     }
 
@@ -474,6 +295,200 @@ class S3 extends Device
         return 0.0;
     }
 
+
+    private function __resetResponse()
+    {
+        $this->response = new \stdClass;
+		$this->response->error = false;
+		$this->response->body = null;
+		$this->response->headers = array();
+    }
+
+    private function __getInfo(string $path) {
+        $this->__resetResponse();
+        $verb = 'HEAD';
+        $uri = $path;
+        $uri = $uri !== '' ? '/'.str_replace('%2F', '/', rawurlencode($uri)) : '/';
+		$rest = $this->__getResponse($uri,$verb,false);
+		if ($rest->error === false && ($rest->code !== 200 && $rest->code !== 404))
+			$rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
+		if ($rest->error !== false)
+		{
+			return false;
+		}
+		return $rest->code == 200 ? $rest->headers : false;
+    }
+
+    /**
+	* Generate the headers for AWS Signature V4
+	* @param string $method
+	* @param string $uri
+	* @return string
+	*/
+    private function __getSignatureV4($method, $uri):string
+	{	
+        $parameters = array();
+		$service = 's3';
+		$region = $this->region;
+
+		$algorithm = 'AWS4-HMAC-SHA256';
+		$combinedHeaders = array();
+
+		$amzDateStamp = substr($this->amzHeaders['x-amz-date'], 0, 8);
+
+		// CanonicalHeaders
+		foreach ($this->headers as $k => $v)
+			$combinedHeaders[strtolower($k)] = trim($v);
+		foreach ($this->amzHeaders as $k => $v) 
+			$combinedHeaders[strtolower($k)] = trim($v);
+		uksort($combinedHeaders, array(&$this, '__sortMetaHeadersCmp'));
+
+		// Convert null query string parameters to strings and sort
+		$parameters = array_map('strval', $parameters); 
+		uksort($parameters, array(&$this, '__sortMetaHeadersCmp'));
+		$queryString = http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
+
+		// Payload
+		$amzPayload = array($method);
+
+		$qsPos = strpos($uri, '?');
+		$amzPayload[] = ($qsPos === false ? $uri : substr($uri, 0, $qsPos));
+
+		$amzPayload[] = $queryString;
+		// add header as string to requests
+		foreach ($combinedHeaders as $k => $v ) 
+		{
+			$amzPayload[] = $k . ':' . $v;
+		}
+		// add a blank entry so we end up with an extra line break
+		$amzPayload[] = '';
+		// SignedHeaders
+		$amzPayload[] = implode(';', array_keys($combinedHeaders));
+		// payload hash
+		$amzPayload[] = $this->amzHeaders['x-amz-content-sha256'];
+		// request as string
+		$amzPayloadStr = implode("\n", $amzPayload);
+
+		// CredentialScope
+		$credentialScope = array($amzDateStamp, $region, $service, 'aws4_request');
+
+		// stringToSign
+		$stringToSignStr = implode("\n", array($algorithm, $this->amzHeaders['x-amz-date'], 
+		implode('/', $credentialScope), hash('sha256', $amzPayloadStr)));
+
+		// Make Signature
+		$kSecret = 'AWS4' . $this->secretKey;
+		$kDate = hash_hmac('sha256', $amzDateStamp, $kSecret, true);
+		$kRegion = hash_hmac('sha256', $region, $kDate, true);
+		$kService = hash_hmac('sha256', $service, $kRegion, true);
+		$kSigning = hash_hmac('sha256', 'aws4_request', $kService, true);
+
+		$signature = hash_hmac('sha256', $stringToSignStr, $kSigning);
+
+		return $algorithm . ' ' . implode(',', array(
+			'Credential=' . $this->accessKey . '/' . implode('/', $credentialScope),
+			'SignedHeaders=' . implode(';', array_keys($combinedHeaders)),
+			'Signature=' . $signature,
+		));
+    }
+    
+    /**
+	* Get the S3 response
+	*
+	* @return object | false
+	*/
+	private function __getResponse(string $uri,  string $verb = 'GET',$data='')
+	{
+		$url = 'https://' . ($this->headers['Host'] !== '' ? $this->headers['Host'] : $this->endpoint) . $uri;
+
+		// Basic setup
+		$curl = curl_init();
+		curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
+
+		
+
+		curl_setopt($curl, CURLOPT_URL, $url);
+
+		
+		// Headers
+		$httpHeaders = array(); 
+		$this->amzHeaders['x-amz-date'] = gmdate('Ymd\THis\Z');
+
+		if (!isset($this->amzHeaders['x-amz-content-sha256'])) 
+			$this->amzHeaders['x-amz-content-sha256'] = hash('sha256', $data);
+
+		foreach ($this->amzHeaders as $header => $value)
+			if (strlen($value) > 0) $httpHeaders[] = $header.': '.$value;
+
+		foreach ($this->headers as $header => $value)
+			if (strlen($value) > 0) $httpHeaders[] = $header.': '.$value;
+
+		$httpHeaders[] = 'Authorization: ' . $this->__getSignatureV4(
+			$verb, 
+			$uri
+		);
+
+
+		curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
+		curl_setopt($curl, CURLOPT_HEADER, false);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
+		curl_setopt($curl, CURLOPT_WRITEFUNCTION, array(&$this, '__responseWriteCallback'));
+		curl_setopt($curl, CURLOPT_HEADERFUNCTION, array(&$this, '__responseHeaderCallback'));
+		curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+
+		// Request types
+		switch ($verb)
+		{
+			case 'GET': break;
+			case 'PUT': case 'POST': // POST only used for CloudFront
+					curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $verb);
+					curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+			break;
+			case 'HEAD':
+				curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'HEAD');
+				curl_setopt($curl, CURLOPT_NOBODY, true);
+			break;
+			case 'DELETE':
+				curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
+			break;
+			default: break;
+		}
+
+
+		// Execute, grab errors
+		if (curl_exec($curl))
+			$this->response->code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		else
+			$this->response->error = array(
+				'code' => curl_errno($curl),
+				'message' => curl_error($curl),
+				'resource' => $uri
+			);
+
+		@curl_close($curl);
+
+		// Parse body into XML
+		if ($this->response->error === false && isset($this->response->headers['type']) &&
+		$this->response->headers['type'] == 'application/xml' && isset($this->response->body))
+		{
+			$this->response->body = simplexml_load_string($this->response->body);
+
+			// Grab S3 errors
+			if (!in_array($this->response->code, array(200, 204, 206)) &&
+			isset($this->response->body->Code, $this->response->body->Message))
+			{
+				$this->response->error = array(
+					'code' => (string)$this->response->body->Code,
+					'message' => (string)$this->response->body->Message
+				);
+				if (isset($this->response->body->Resource))
+					$this->response->error['resource'] = (string)$this->response->body->Resource;
+				unset($this->response->body);
+			}
+		}
+		return $this->response;
+	}
+
     /**
 	* Sort compare for meta headers
 	*
@@ -502,7 +517,7 @@ class S3 extends Device
 	*/
 	private function __responseWriteCallback(&$curl, &$data)
 	{
-		$this->response->body .= $data;
+        $this->response->body .= $data;
 		return strlen($data);
     }
     
