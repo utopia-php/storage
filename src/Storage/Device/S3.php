@@ -103,7 +103,7 @@ class S3 extends Device
         $this->getResponse($uri, $verb, false);
 
         if ($this->response->error === false && $this->response->code !== 200) {
-            $this->response->error = array('code' => $this->response->code, 'message' => 'Unexpected HTTP status');
+            ['code' => $this->response->code, 'message' => 'Unexpected HTTP status'];
         }
 
         if ($this->response->error !== false) {
@@ -130,11 +130,11 @@ class S3 extends Device
         $this->response->error = false;
         $this->response->body = null;
         $this->response->headers = [];
-        $input = array(
+        $input = [
             'data' => $data, 'size' => strlen($data),
             'md5sum' => base64_encode(md5($data, true)),
             'sha256sum' => hash('sha256', $data),
-        );
+        ];
         $input['type'] = $contentType;
         if (isset($input['size']) && $input['size'] >= 0) {
             $this->headers['Content-Type'] = $input['type'];
@@ -152,11 +152,11 @@ class S3 extends Device
             }
 
         } else {
-            $this->response->error = array('code' => 0, 'message' => 'Missing input parameters');
+            $this->response->error = ['code' => 0, 'message' => 'Missing input parameters'];
         }
         $this->getResponse($uri, 'PUT', $data);
         if ($this->response->error === false && $this->response->code !== 200) {
-            $this->response->error = array('code' => $this->response->code, 'message' => 'Unexpected HTTP status');
+            $this->response->error = ['code' => $this->response->code, 'message' => 'Unexpected HTTP status'];
         }
 
         if ($this->response->error !== false) {
@@ -196,7 +196,7 @@ class S3 extends Device
 
         $rest = $this->getResponse($uri, 'DELETE', false);
         if ($rest->error === false && $rest->code !== 204) {
-            $rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
+            $rest->error = ['code' => $rest->code, 'message' => 'Unexpected HTTP status'];
         }
 
         if ($rest->error !== false) {
@@ -306,7 +306,7 @@ class S3 extends Device
         $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
         $rest = $this->getResponse($uri, $verb, false);
         if ($rest->error === false && ($rest->code !== 200 && $rest->code !== 404)) {
-            $rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
+            $rest->error = ['code' => $rest->code, 'message' => 'Unexpected HTTP status'];
         }
 
         if ($rest->error !== false) {
@@ -341,15 +341,15 @@ class S3 extends Device
             $combinedHeaders[strtolower($k)] = trim($v);
         }
 
-        uksort($combinedHeaders, array(&$this, 'sortMetaHeadersCmp'));
+        uksort($combinedHeaders, [ & $this, 'sortMetaHeadersCmp']);
 
         // Convert null query string parameters to strings and sort
         $parameters = array_map('strval', $parameters);
-        uksort($parameters, array(&$this, 'sortMetaHeadersCmp'));
+        uksort($parameters, [ & $this, 'sortMetaHeadersCmp']);
         $queryString = http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 
         // Payload
-        $amzPayload = array($method);
+        $amzPayload = [$method];
 
         $qsPos = strpos($uri, '?');
         $amzPayload[] = ($qsPos === false ? $uri : substr($uri, 0, $qsPos));
@@ -369,11 +369,11 @@ class S3 extends Device
         $amzPayloadStr = implode("\n", $amzPayload);
 
         // CredentialScope
-        $credentialScope = array($amzDateStamp, $region, $service, 'aws4_request');
+        $credentialScope = [$amzDateStamp, $region, $service, 'aws4_request'];
 
         // stringToSign
-        $stringToSignStr = implode("\n", array($algorithm, $this->amzHeaders['x-amz-date'],
-            implode('/', $credentialScope), hash('sha256', $amzPayloadStr)));
+        $stringToSignStr = implode("\n", [$algorithm, $this->amzHeaders['x-amz-date'],
+            implode('/', $credentialScope), hash('sha256', $amzPayloadStr)]);
 
         // Make Signature
         $kSecret = 'AWS4' . $this->secretKey;
@@ -384,11 +384,11 @@ class S3 extends Device
 
         $signature = hash_hmac('sha256', $stringToSignStr, $kSigning);
 
-        return $algorithm . ' ' . implode(',', array(
+        return $algorithm . ' ' . implode(',', [
             'Credential=' . $this->accessKey . '/' . implode('/', $credentialScope),
             'SignedHeaders=' . implode(';', array_keys($combinedHeaders)),
             'Signature=' . $signature,
-        ));
+        ]);
     }
 
     /**
@@ -434,8 +434,50 @@ class S3 extends Device
         curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
         curl_setopt($curl, CURLOPT_HEADER, false);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
-        curl_setopt($curl, CURLOPT_WRITEFUNCTION, array(&$this, 'responseWriteCallback'));
-        curl_setopt($curl, CURLOPT_HEADERFUNCTION, array(&$this, 'responseHeaderCallback'));
+        curl_setopt($curl, CURLOPT_WRITEFUNCTION, function (&$curl, &$data) {
+            $this->response->body .= $data;
+            return strlen($data);
+        });
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, $data) {
+            $strlen = strlen($data);
+            if ($strlen <= 2) {
+                return $strlen;
+            }
+
+            if (substr($data, 0, 4) == 'HTTP') {
+                $this->response->code = (int) substr($data, 9, 3);
+            } else {
+                $data = trim($data);
+                if (strpos($data, ': ') === false) {
+                    return $strlen;
+                }
+
+                list($header, $value) = explode(': ', $data, 2);
+                $header = strtolower($header);
+                switch ($header) {
+                    case $header == 'last-modified':
+                        $this->response->headers['time'] = strtotime($value);
+                        break;
+                    case $header == 'date':
+                        $this->response->headers['date'] = strtotime($value);
+                        break;
+                    case $header == 'content-length':
+                        $this->response->headers['size'] = (int) $value;
+                        break;
+                    case $header == 'content-type':
+                        $this->response->headers['type'] = $value;
+                        break;
+                    case $header == 'etag':
+                        $this->response->headers['hash'] = $value[0] == '"' ? substr($value, 1, -1) : $value;
+                        break;
+                    case preg_match('/^x-amz-meta-.*$/', $header):
+                        $this->response->headers[$header] = $value;
+                        break;
+                }
+
+            }
+            return $strlen;
+        });
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
 
         // Request types
@@ -459,11 +501,11 @@ class S3 extends Device
         if (curl_exec($curl)) {
             $this->response->code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         } else {
-            $this->response->error = array(
+            $this->response->error = [
                 'code' => curl_errno($curl),
                 'message' => curl_error($curl),
                 'resource' => $uri,
-            );
+            ];
         }
 
         @curl_close($curl);
@@ -474,12 +516,12 @@ class S3 extends Device
             $this->response->body = simplexml_load_string($this->response->body);
 
             // Grab S3 errors
-            if (!in_array($this->response->code, array(200, 204, 206)) &&
+            if (!in_array($this->response->code, [200, 204, 206]) &&
                 isset($this->response->body->Code, $this->response->body->Message)) {
-                $this->response->error = array(
+                $this->response->error = [
                     'code' => (string) $this->response->body->Code,
                     'message' => (string) $this->response->body->Message,
-                );
+                ];
                 if (isset($this->response->body->Resource)) {
                     $this->response->error['resource'] = (string) $this->response->body->Resource;
                 }
@@ -513,67 +555,5 @@ class S3 extends Device
         }
 
         return $ncmp;
-    }
-
-    /**
-     * CURL write callback
-     *
-     * @param resource &$curl CURL resource
-     * @param string &$data Data
-     * @return integer
-     */
-    private function responseWriteCallback(&$curl, &$data)
-    {
-        $this->response->body .= $data;
-        return strlen($data);
-    }
-
-    /**
-     * CURL header callback
-     *
-     * @param resource $curl CURL resource
-     * @param string $data Data
-     * @return integer
-     */
-    private function responseHeaderCallback($curl, $data)
-    {
-        $strlen = strlen($data);
-        if ($strlen <= 2) {
-            return $strlen;
-        }
-
-        if (substr($data, 0, 4) == 'HTTP') {
-            $this->response->code = (int) substr($data, 9, 3);
-        } else {
-            $data = trim($data);
-            if (strpos($data, ': ') === false) {
-                return $strlen;
-            }
-
-            list($header, $value) = explode(': ', $data, 2);
-            $header = strtolower($header);
-            switch ($header) {
-                case $header == 'last-modified':
-                    $this->response->headers['time'] = strtotime($value);
-                    break;
-                case $header == 'date':
-                    $this->response->headers['date'] = strtotime($value);
-                    break;
-                case $header == 'content-length':
-                    $this->response->headers['size'] = (int) $value;
-                    break;
-                case $header == 'content-type':
-                    $this->response->headers['type'] = $value;
-                    break;
-                case $header == 'etag':
-                    $this->response->headers['hash'] = $value[0] == '"' ? substr($value, 1, -1) : $value;
-                    break;
-                case preg_match('/^x-amz-meta-.*$/', $header):
-                    $this->response->headers[$header] = $value;
-                    break;
-            }
-
-        }
-        return $strlen;
     }
 }
