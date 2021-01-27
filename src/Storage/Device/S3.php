@@ -341,11 +341,11 @@ class S3 extends Device
             $combinedHeaders[strtolower($k)] = trim($v);
         }
 
-        uksort($combinedHeaders, array(&$this, '__sortMetaHeadersCmp'));
+        uksort($combinedHeaders, array(&$this, 'sortMetaHeadersCmp'));
 
         // Convert null query string parameters to strings and sort
         $parameters = array_map('strval', $parameters);
-        uksort($parameters, array(&$this, '__sortMetaHeadersCmp'));
+        uksort($parameters, array(&$this, 'sortMetaHeadersCmp'));
         $queryString = http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 
         // Payload
@@ -434,8 +434,8 @@ class S3 extends Device
         curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
         curl_setopt($curl, CURLOPT_HEADER, false);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
-        curl_setopt($curl, CURLOPT_WRITEFUNCTION, array(&$this, '__responseWriteCallback'));
-        curl_setopt($curl, CURLOPT_HEADERFUNCTION, array(&$this, '__responseHeaderCallback'));
+        curl_setopt($curl, CURLOPT_WRITEFUNCTION, array(&$this, 'responseWriteCallback'));
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION, array(&$this, 'responseHeaderCallback'));
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
 
         // Request types
@@ -498,7 +498,7 @@ class S3 extends Device
      * @param string $b String B
      * @return integer
      */
-    private function __sortMetaHeadersCmp($a, $b)
+    private function sortMetaHeadersCmp($a, $b)
     {
         $lenA = strlen($a);
         $lenB = strlen($b);
@@ -522,7 +522,7 @@ class S3 extends Device
      * @param string &$data Data
      * @return integer
      */
-    private function __responseWriteCallback(&$curl, &$data)
+    private function responseWriteCallback(&$curl, &$data)
     {
         $this->response->body .= $data;
         return strlen($data);
@@ -535,7 +535,7 @@ class S3 extends Device
      * @param string $data Data
      * @return integer
      */
-    private function __responseHeaderCallback($curl, $data)
+    private function responseHeaderCallback($curl, $data)
     {
         $strlen = strlen($data);
         if ($strlen <= 2) {
