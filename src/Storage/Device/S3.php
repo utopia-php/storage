@@ -84,7 +84,8 @@ class S3 extends Device
      */
     public function upload($source, $path): bool
     {
-        return $this->write($path, $source);
+        $content = \file_get_contents($source);
+        return $this->write($path, $content,\mime_content_type($source));
     }
 
     /**
