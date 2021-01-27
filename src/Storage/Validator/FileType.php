@@ -30,24 +30,27 @@ class FileType extends Validator
     /**
      * @var array
      */
-    protected $whiteList;
+    protected $allowed;
 
     /**
-     * @param array $whiteList
+     * @param array $allowed
      *
      * @throws Exception
      */
-    public function __construct(array $whiteList)
+    public function __construct(array $allowed)
     {
-        foreach ($whiteList as $key) {
+        foreach ($allowed as $key) {
             if (!isset($this->types[$key])) {
                 throw new Exception('Unknown file mime type');
             }
         }
 
-        $this->whiteList = $whiteList;
+        $this->allowed = $allowed;
     }
 
+    /**
+     * Get Description
+     */
     public function getDescription()
     {
         return 'File mime-type is not allowed ';
@@ -78,7 +81,7 @@ class FileType extends Validator
 
         $bytes = \fgets($handle, 8);
 
-        foreach ($this->whiteList as $key) {
+        foreach ($this->allowed as $key) {
             if (\strpos($bytes, $this->types[$key]) === 0) {
                 \fclose($handle);
 
