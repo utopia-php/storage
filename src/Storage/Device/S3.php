@@ -178,7 +178,11 @@ class S3 extends Device
      */
     public function move(string $source, string $target): bool
     {
-        return false;
+        $type = $this->getFileMimeType($source);
+        if($this->write($target,$this->read($source),$type)) {
+            $this->delete($source);
+        }
+        return true;
     }
 
     /**
