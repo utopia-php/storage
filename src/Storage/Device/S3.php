@@ -12,13 +12,13 @@ class S3 extends Device
     protected $region;
     protected $acl = 'private';
     protected $root = 'temp';
-    private $headers = array(
+    protected $headers = [
         'Host' => '', 'Date' => '', 'Content-MD5' => '', 'Content-Type' => '',
-    );
-    private $response;
-    private $amzHeaders;
+    ];
+    protected $response;
+    protected $amzHeaders;
 
-    public function __construct($root = '', $accessKey, $secretKey, $bucket, $region, $acl)
+    public function __construct($root, $accessKey, $secretKey, $bucket, $region, $acl)
     {
         $this->accessKey = $accessKey;
         $this->secretKey = $secretKey;
@@ -27,7 +27,7 @@ class S3 extends Device
         $this->root = $root;
         $this->acl = $acl;
         $this->headers['Host'] = $this->bucket . '.s3.amazonaws.com';
-        $this->__resetResponse();
+        $this->resetResponse();
     }
 
     /**
@@ -59,7 +59,7 @@ class S3 extends Device
      *
      * @return string
      */
-    public function getPath($filename): string
+    public function getPath(string $filename): string
     {
         $path = '';
 
@@ -96,11 +96,11 @@ class S3 extends Device
      */
     public function read(string $path): string
     {
-        $this->__resetResponse();
+        $this->resetResponse();
         $verb = 'GET';
         $uri = $path;
         $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
-        $this->__getResponse($uri, $verb, false);
+        $this->getResponse($uri, $verb, false);
 
         if ($this->response->error === false && $this->response->code !== 200) {
             $this->response->error = array('code' => $this->response->code, 'message' => 'Unexpected HTTP status');
@@ -120,18 +120,16 @@ class S3 extends Device
      *
      * @return bool
      */
-    public function write(string $path, string $data, string $contentType = 'text/plain'): bool
+    public function write(string $path, string $data, string $contentType = ''): bool
     {
-        $this->__resetResponse();
-        $uri = $path;
-        $metaHeaders = array();
-        $verb = 'PUT';
-        $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
+        $this->resetResponse();
+        $metaHeaders = [];
+        $uri = $path !== '' ? '/' . str_replace('%2F', '/', rawurlencode($path)) : '/';
         $this->headers['Date'] = gmdate('D, d M Y H:i:s T');
         $this->response = new \stdClass;
         $this->response->error = false;
         $this->response->body = null;
-        $this->response->headers = array();
+        $this->response->headers = [];
         $input = array(
             'data' => $data, 'size' => strlen($data),
             'md5sum' => base64_encode(md5($data, true)),
@@ -156,7 +154,7 @@ class S3 extends Device
         } else {
             $this->response->error = array('code' => 0, 'message' => 'Missing input parameters');
         }
-        $this->__getResponse($uri, $verb, $data);
+        $this->getResponse($uri, 'PUT', $data);
         if ($this->response->error === false && $this->response->code !== 200) {
             $this->response->error = array('code' => $this->response->code, 'message' => 'Unexpected HTTP status');
         }
@@ -191,23 +189,12 @@ class S3 extends Device
      *
      * @return bool
      */
-
-    /*
-    DELETE /my-second-image.jpg HTTP/1.1
-    Host: <bucket>.s3.<Region>.amazonaws.com
-    Date: Wed, 12 Oct 2009 17:50:00 GMT
-    Authorization: authorization string
-    Content-Type: text/plain
-     */
-
     public function delete(string $path, bool $recursive = false): bool
     {
-        $this->__resetResponse();
-        $verb = 'DELETE';
-        $uri = $path;
-        $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
+        $this->resetResponse();
+        $uri = $path !== '' ? '/' . str_replace('%2F', '/', rawurlencode($path)) : '/';
 
-        $rest = $this->__getResponse($uri, $verb, false);
+        $rest = $this->getResponse($uri, 'DELETE', false);
         if ($rest->error === false && $rest->code !== 204) {
             $rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
         }
@@ -229,7 +216,7 @@ class S3 extends Device
      */
     public function getFileSize(string $path): int
     {
-        $res = $this->__getInfo($path);
+        $res = $this->getInfo($path);
         return $res['size'];
     }
 
@@ -244,7 +231,7 @@ class S3 extends Device
      */
     public function getFileMimeType(string $path): string
     {
-        $res = $this->__getInfo($path);
+        $res = $this->getInfo($path);
         return $res['type'];
     }
 
@@ -259,7 +246,7 @@ class S3 extends Device
      */
     public function getFileHash(string $path): string
     {
-        $res = $this->__getInfo($path);
+        $res = $this->getInfo($path);
         return $res['hash'];
     }
 
@@ -303,21 +290,21 @@ class S3 extends Device
         return 0.0;
     }
 
-    private function __resetResponse()
+    private function resetResponse()
     {
         $this->response = new \stdClass;
         $this->response->error = false;
         $this->response->body = null;
-        $this->response->headers = array();
+        $this->response->headers = [];
     }
 
-    private function __getInfo(string $path)
+    private function getInfo(string $path)
     {
-        $this->__resetResponse();
+        $this->resetResponse();
         $verb = 'HEAD';
         $uri = $path;
         $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
-        $rest = $this->__getResponse($uri, $verb, false);
+        $rest = $this->getResponse($uri, $verb, false);
         if ($rest->error === false && ($rest->code !== 200 && $rest->code !== 404)) {
             $rest->error = array('code' => $rest->code, 'message' => 'Unexpected HTTP status');
         }
@@ -334,14 +321,14 @@ class S3 extends Device
      * @param string $uri
      * @return string
      */
-    private function __getSignatureV4($method, $uri): string
+    private function getSignatureV4(string $method, string $uri): string
     {
-        $parameters = array();
+        $parameters = [];
         $service = 's3';
         $region = $this->region;
 
         $algorithm = 'AWS4-HMAC-SHA256';
-        $combinedHeaders = array();
+        $combinedHeaders = [];
 
         $amzDateStamp = substr($this->amzHeaders['x-amz-date'], 0, 8);
 
@@ -409,7 +396,7 @@ class S3 extends Device
      *
      * @return object | false
      */
-    private function __getResponse(string $uri, string $verb = 'GET', $data = '')
+    private function getResponse(string $uri, string $verb = 'GET', $data = '')
     {
         $url = 'https://' . ($this->headers['Host'] !== '' ? $this->headers['Host'] : $this->endpoint) . $uri;
 
@@ -420,7 +407,7 @@ class S3 extends Device
         curl_setopt($curl, CURLOPT_URL, $url);
 
         // Headers
-        $httpHeaders = array();
+        $httpHeaders = [];
         $this->amzHeaders['x-amz-date'] = gmdate('Ymd\THis\Z');
 
         if (!isset($this->amzHeaders['x-amz-content-sha256'])) {
@@ -439,7 +426,7 @@ class S3 extends Device
             }
         }
 
-        $httpHeaders[] = 'Authorization: ' . $this->__getSignatureV4(
+        $httpHeaders[] = 'Authorization: ' . $this->getSignatureV4(
             $verb,
             $uri
         );
@@ -565,18 +552,25 @@ class S3 extends Device
 
             list($header, $value) = explode(': ', $data, 2);
             $header = strtolower($header);
-            if ($header == 'last-modified') {
-                $this->response->headers['time'] = strtotime($value);
-            } elseif ($header == 'date') {
-                $this->response->headers['date'] = strtotime($value);
-            } elseif ($header == 'content-length') {
-                $this->response->headers['size'] = (int) $value;
-            } elseif ($header == 'content-type') {
-                $this->response->headers['type'] = $value;
-            } elseif ($header == 'etag') {
-                $this->response->headers['hash'] = $value[0] == '"' ? substr($value, 1, -1) : $value;
-            } elseif (preg_match('/^x-amz-meta-.*$/', $header)) {
-                $this->response->headers[$header] = $value;
+            switch ($header) {
+                case $header == 'last-modified':
+                    $this->response->headers['time'] = strtotime($value);
+                    break;
+                case $header == 'date':
+                    $this->response->headers['date'] = strtotime($value);
+                    break;
+                case $header == 'content-length':
+                    $this->response->headers['size'] = (int) $value;
+                    break;
+                case $header == 'content-type':
+                    $this->response->headers['type'] = $value;
+                    break;
+                case $header == 'etag':
+                    $this->response->headers['hash'] = $value[0] == '"' ? substr($value, 1, -1) : $value;
+                    break;
+                case preg_match('/^x-amz-meta-.*$/', $header):
+                    $this->response->headers[$header] = $value;
+                    break;
             }
 
         }
