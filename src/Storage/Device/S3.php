@@ -217,7 +217,7 @@ class S3 extends Device
     public function getFileSize(string $path): int
     {
         $res = $this->getInfo($path);
-        return $res['size'];
+        return $res['size'] ?? 0;
     }
 
     /**
@@ -232,7 +232,7 @@ class S3 extends Device
     public function getFileMimeType(string $path): string
     {
         $res = $this->getInfo($path);
-        return $res['type'];
+        return $res['type'] ?? '';
     }
 
     /**
@@ -247,7 +247,7 @@ class S3 extends Device
     public function getFileHash(string $path): string
     {
         $res = $this->getInfo($path);
-        return $res['hash'];
+        return $res['hash'] ?? '';
     }
 
     /**
