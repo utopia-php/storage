@@ -19,8 +19,7 @@ class S3Test extends TestCase
         $key = getenv('S3_ACCESS_KEY');
         $secret = getenv('S3_SECRET');
         $bucket = "utopia-storage";
-        $region = "ap-south-1";
-        $this->object = new S3($this->root, $key, $secret, $bucket, $region, 'public-read');
+        $this->object = new S3($this->root, $key, $secret, $bucket, S3::AP_SOUTH_1, S3::ACL_PUBLIC_READ);
 
         $this->uploadTestFiles();
     }
@@ -123,19 +122,18 @@ class S3Test extends TestCase
         $this->assertEquals($this->object->getFileHash($this->object->getPath('testing/kitten-2.png')), '8a9ed992b77e4b62b10e3a5c8ed72062');
     }
 
-    // public function testDirectorySize()
-    // {
-    //     $this->assertGreaterThan(0, $this->object->getDirectorySize(__DIR__ . '/../../resources/disk-a/'));
-    //     $this->assertGreaterThan(0, $this->object->getDirectorySize(__DIR__ . '/../../resources/disk-b/'));
-    // }
+    public function testDirectorySize()
+    {
+        $this->assertEquals(-1, $this->object->getDirectorySize('resources/disk-a/'));
+    }
 
-    // public function testPartitionFreeSpace()
-    // {
-    //     $this->assertGreaterThan(0, $this->object->getPartitionFreeSpace());
-    // }
+    public function testPartitionFreeSpace()
+    {
+        $this->assertEquals(-1, $this->object->getPartitionFreeSpace());
+    }
 
-    // public function testPartitionTotalSpace()
-    // {
-    //     $this->assertGreaterThan(0, $this->object->getPartitionTotalSpace());
-    // }
+    public function testPartitionTotalSpace()
+    {
+        $this->assertEquals(-1, $this->object->getPartitionTotalSpace());
+    }
 }

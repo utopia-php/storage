@@ -6,19 +6,95 @@ use Utopia\Storage\Device;
 
 class S3 extends Device
 {
+
+    /**
+     * AWS Regions constants
+     */
+    const US_EAST_1 = 'us-east-1';
+    const US_EAST_2 = 'us-east-2';
+    const US_WEST_1 = 'us-west-1';
+    const US_WEST_2 = 'us-west-2';
+    const AF_SOUTH_1 = 'af-south-1';
+    const AP_EAST_1 = 'ap-east-1';
+    const AP_SOUTH_1 = 'ap-south-1';
+    const AP_NORTHEAST_3 = 'ap-northeast-3';
+    const AP_NORTHEAST_2 = 'ap-northeast-2';
+    const AP_NORTHEAST_1 = 'ap-northeast-1';
+    const AP_SOUTHEAST_1 = 'ap-southeast-1';
+    const AP_SOUTHEAST_2 = 'ap-southeast-2';
+    const CA_CENTRAL_1 = 'ca-central-1';
+    const EU_CENTRAL_1 = 'eu-central-1';
+    const EU_WEST_1 = 'eu-west-1';
+    const EU_SOUTH_1 = 'eu-south-1';
+    const EU_WEST_2 = 'eu-west-2';
+    const EU_WEST_3 = 'eu-west-3';
+    const EU_NORTH_1 = 'eu-north-1';
+    const SA_EAST_1 = 'eu-north-1';
+    const CN_NORTH_1 = 'cn-north-1';
+    const ME_SOUTH_1 = 'me-south-1';
+    const CN_NORTHWEST_1 = 'cn-northwest-1';
+    const US_GOV_EAST_1 = 'us-gov-east-1';
+    const US_GOV_WEST_1 = 'us-gov-west-1';
+
+    /**
+     * AWS ACL Flag constants
+     */
+    const ACL_PRIVATE = 'private';
+    const ACL_PUBLIC_READ = 'public-read';
+    const ACL_PUBLIC_READ_WRITE = 'public-read-write';
+    const ACL_AUTHENTICATED_READ = 'authenticated-read';
+
+    /**
+     * @var string
+     */
     protected $accessKey;
+
+    /**
+     * @var string
+     */
     protected $secretKey;
+    /**
+     * @var string
+     */
     protected $bucket;
+    /**
+     * @var string
+     */
     protected $region;
-    protected $acl = 'private';
+    /**
+     * @var string
+     */
+    protected $acl = self::ACL_PRIVATE;
+    /**
+     * @var string
+     */
     protected $root = 'temp';
+    /**
+     * @var Array
+     */
     protected $headers = [
         'Host' => '', 'Date' => '', 'Content-MD5' => '', 'Content-Type' => '',
     ];
+    /**
+     * @var object
+     */
     protected $response;
+    /**
+     * @var Array
+     */
     protected $amzHeaders;
 
-    public function __construct($root, $accessKey, $secretKey, $bucket, $region, $acl)
+    /**
+     * S3 Constructor
+     *
+     * @param string $root
+     * @param string $accessKey
+     * @param string $secretKey
+     * @param string $bucket
+     * @param string $region
+     * @param string $acl
+     */
+    public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_EAST_1, string $acl = self::ACL_PRIVATE)
     {
         $this->accessKey = $accessKey;
         $this->secretKey = $secretKey;
@@ -27,6 +103,7 @@ class S3 extends Device
         $this->root = $root;
         $this->acl = $acl;
         $this->headers['Host'] = $this->bucket . '.s3.amazonaws.com';
+        $this->amzHeaders = [];
         $this->resetResponse();
     }
 
@@ -85,7 +162,7 @@ class S3 extends Device
     public function upload($source, $path): bool
     {
         $content = \file_get_contents($source);
-        return $this->write($path, $content,\mime_content_type($source));
+        return $this->write($path, $content, \mime_content_type($source));
     }
 
     /**
@@ -179,7 +256,7 @@ class S3 extends Device
     public function move(string $source, string $target): bool
     {
         $type = $this->getFileMimeType($source);
-        if($this->write($target,$this->read($source),$type)) {
+        if ($this->write($target, $this->read($source), $type)) {
             $this->delete($source);
         }
         return true;
@@ -268,7 +345,7 @@ class S3 extends Device
      */
     public function getDirectorySize(string $path): int
     {
-        return 0;
+        return -1;
     }
 
     /**
@@ -280,7 +357,7 @@ class S3 extends Device
      */
     public function getPartitionFreeSpace(): float
     {
-        return 0.0;
+        return -1;
     }
 
     /**
@@ -292,10 +369,14 @@ class S3 extends Device
      */
     public function getPartitionTotalSpace(): float
     {
-        return 0.0;
+        return -1;
     }
 
-    private function resetResponse()
+    /**
+     * Reset response object
+     * @return void
+     */
+    private function resetResponse(): void
     {
         $this->response = new \stdClass;
         $this->response->error = false;
@@ -303,7 +384,11 @@ class S3 extends Device
         $this->response->headers = [];
     }
 
-    private function getInfo(string $path)
+    /**
+     * Get file info
+     * @return Array | false
+     */
+    private function getInfo(string $path): array
     {
         $this->resetResponse();
         $verb = 'HEAD';
@@ -399,11 +484,11 @@ class S3 extends Device
     /**
      * Get the S3 response
      *
-     * @return object | false
+     * @return  object
      */
-    private function getResponse(string $uri, string $verb = 'GET', $data = '')
+    private function getResponse(string $uri, string $verb = 'GET', string $data = '')
     {
-        $url = 'https://' . ($this->headers['Host'] !== '' ? $this->headers['Host'] : $this->endpoint) . $uri;
+        $url = 'https://' . $this->headers['Host'] . $uri;
 
         // Basic setup
         $curl = curl_init();
