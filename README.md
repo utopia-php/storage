@@ -24,7 +24,12 @@ require_once '../vendor/autoload.php';
 use Utopia\Storage\Storage;
 use Utopia\Storage\Device\Local
 
+// instiantiating local storage
 Storage::setDevice('files', new Local('path'));
+
+//or you can use s3 storage
+Storage::setDevice('files', new S3('path',AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_BUCKET_NAME, AWS_REGION, AWS_ACL_FLAG));
+
 
 $device = Storage::getDevice('files');
 
