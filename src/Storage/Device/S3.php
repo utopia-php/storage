@@ -545,12 +545,6 @@ class S3 extends Device
                 list($header, $value) = explode(': ', $data, 2);
                 $header = strtolower($header);
                 switch ($header) {
-                    case $header == 'last-modified':
-                        $this->response->headers['time'] = strtotime($value);
-                        break;
-                    case $header == 'date':
-                        $this->response->headers['date'] = strtotime($value);
-                        break;
                     case $header == 'content-length':
                         $this->response->headers['size'] = (int) $value;
                         break;
@@ -559,9 +553,6 @@ class S3 extends Device
                         break;
                     case $header == 'etag':
                         $this->response->headers['hash'] = $value[0] == '"' ? substr($value, 1, -1) : $value;
-                        break;
-                    case preg_match('/^x-amz-meta-.*$/', $header):
-                        $this->response->headers[$header] = $value;
                         break;
                 }
 
