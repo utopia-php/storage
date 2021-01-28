@@ -75,7 +75,7 @@ abstract class Device
      *
      * @return bool
      */
-    abstract public function write(string $path, string $data): bool;
+    abstract public function write(string $path, string $data, string $contentType): bool;
 
     /**
      * Move file from given source to given path, return true on success and false on failure.

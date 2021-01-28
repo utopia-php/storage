@@ -109,7 +109,7 @@ class Local extends Device
      *
      * @return bool
      */
-    public function write(string $path, string $data): bool
+    public function write(string $path, string $data, $contentType = ''): bool
     {
         if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
             if (!@\mkdir(\dirname($path), 0755, true)) {
