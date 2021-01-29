@@ -171,6 +171,18 @@ class Local extends Device
 
         return false;
     }
+
+    /**
+     * Check if file exists
+     * 
+     * @param string $path
+     * 
+     * @return bool
+     */
+    public function fileExists(string $path): bool
+    {
+        return \file_exists($path);
+    }
     
     /**
      * Returns given file path its size.

@@ -288,6 +288,22 @@ class S3 extends Device
     }
 
     /**
+     * Check if file exists
+     *
+     * @param string $path
+     *
+     * @return bool
+     */
+    public function fileExists(string $path): bool
+    {
+        if (!$this->getInfo($path)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
      * Returns given file path its size.
      *
      * @see http://php.net/manual/en/function.filesize.php
