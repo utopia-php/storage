@@ -108,7 +108,7 @@ abstract class Device
      *
      * @return bool
      */
-    abstract public function fileExists(string $path): bool;
+    abstract public function exists(string $path): bool;
 
     /**
      * Returns given file path its size.

@@ -25,7 +25,7 @@ class Local extends Device
     /**
      * @return string
      */
-    public function getName():string
+    public function getName(): string
     {
         return 'Local Storage';
     }
@@ -33,7 +33,7 @@ class Local extends Device
     /**
      * @return string
      */
-    public function getDescription():string
+    public function getDescription(): string
     {
         return 'Adapter for Local storage that is in the physical or virtual machine or mounted to it.';
     }
@@ -41,7 +41,7 @@ class Local extends Device
     /**
      * @return string
      */
-    public function getRoot():string
+    public function getRoot(): string
     {
         return $this->root;
     }
@@ -51,15 +51,15 @@ class Local extends Device
      *
      * @return string
      */
-    public function getPath($filename):string
+    public function getPath($filename): string
     {
         $path = '';
 
         for ($i = 0; $i < 4; ++$i) {
-            $path = ($i < \strlen($filename)) ? $path.DIRECTORY_SEPARATOR.$filename[$i] : $path.DIRECTORY_SEPARATOR.'x';
+            $path = ($i < \strlen($filename)) ? $path . DIRECTORY_SEPARATOR . $filename[$i] : $path . DIRECTORY_SEPARATOR . 'x';
         }
 
-        return $this->getRoot().$path.DIRECTORY_SEPARATOR.$filename;
+        return $this->getRoot() . $path . DIRECTORY_SEPARATOR . $filename;
     }
 
     /**
@@ -74,11 +74,11 @@ class Local extends Device
      *
      * @return bool
      */
-    public function upload($source, $path):bool
+    public function upload($source, $path): bool
     {
         if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
             if (!@\mkdir(\dirname($path), 0755, true)) {
-                throw new Exception('Can\'t create directory: '.\dirname($path));
+                throw new Exception('Can\'t create directory: ' . \dirname($path));
             }
         }
 
@@ -96,7 +96,7 @@ class Local extends Device
      *
      * @return string
      */
-    public function read(string $path):string
+    public function read(string $path): string
     {
         return \file_get_contents($path);
     }
@@ -113,11 +113,11 @@ class Local extends Device
     {
         if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
             if (!@\mkdir(\dirname($path), 0755, true)) {
-                throw new Exception('Can\'t create directory '.\dirname($path));
+                throw new Exception('Can\'t create directory ' . \dirname($path));
             }
         }
 
-        return (bool)\file_put_contents($path, $data);
+        return (bool) \file_put_contents($path, $data);
     }
 
     /**
@@ -130,11 +130,11 @@ class Local extends Device
      *
      * @return bool
      */
-    public function move(string $source, string $target):bool
+    public function move(string $source, string $target): bool
     {
         if (!\file_exists(\dirname($target))) { // Checks if directory path to file exists
             if (!@\mkdir(\dirname($target), 0755, true)) {
-                throw new Exception('Can\'t create directory '.\dirname($target));
+                throw new Exception('Can\'t create directory ' . \dirname($target));
             }
         }
 
@@ -155,15 +155,15 @@ class Local extends Device
      *
      * @return bool
      */
-    public function delete(string $path, bool $recursive = false):bool
+    public function delete(string $path, bool $recursive = false): bool
     {
         if (\is_dir($path) && $recursive) {
-            $files = \glob($path.'*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
-    
+            $files = \glob($path . '*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
+
             foreach ($files as $file) {
                 $this->delete($file, true);
             }
-    
+
             \rmdir($path);
         } elseif (\is_file($path)) {
             return \unlink($path);
@@ -174,16 +174,16 @@ class Local extends Device
 
     /**
      * Check if file exists
-     * 
+     *
      * @param string $path
-     * 
+     *
      * @return bool
      */
-    public function fileExists(string $path): bool
+    public function exists(string $path): bool
     {
         return \file_exists($path);
     }
-    
+
     /**
      * Returns given file path its size.
      *
@@ -193,7 +193,7 @@ class Local extends Device
      *
      * @return int
      */
-    public function getFileSize(string $path):int
+    public function getFileSize(string $path): int
     {
         return \filesize($path);
     }
@@ -207,7 +207,7 @@ class Local extends Device
      *
      * @return string
      */
-    public function getFileMimeType(string $path):string
+    public function getFileMimeType(string $path): string
     {
         return \mime_content_type($path);
     }
@@ -221,7 +221,7 @@ class Local extends Device
      *
      * @return string
      */
-    public function getFileHash(string $path):string
+    public function getFileHash(string $path): string
     {
         return \md5_file($path);
     }
@@ -237,7 +237,7 @@ class Local extends Device
      *
      * @return int
      */
-    public function getDirectorySize(string $path):int
+    public function getDirectorySize(string $path): int
     {
         $size = 0;
 
@@ -254,10 +254,10 @@ class Local extends Device
             }
 
             // Go recursive down, or add the file size
-            if (\is_dir($path.$file)) {
-                $size += $this->getDirectorySize($path.$file.DIRECTORY_SEPARATOR);
+            if (\is_dir($path . $file)) {
+                $size += $this->getDirectorySize($path . $file . DIRECTORY_SEPARATOR);
             } else {
-                $size += \filesize($path.$file);
+                $size += \filesize($path . $file);
             }
         }
 
@@ -273,7 +273,7 @@ class Local extends Device
      *
      * @return float
      */
-    public function getPartitionFreeSpace():float
+    public function getPartitionFreeSpace(): float
     {
         return \disk_free_space($this->getRoot());
     }
@@ -285,7 +285,7 @@ class Local extends Device
      *
      * @return float
      */
-    public function getPartitionTotalSpace():float
+    public function getPartitionTotalSpace(): float
     {
         return \disk_total_space($this->getRoot());
     }

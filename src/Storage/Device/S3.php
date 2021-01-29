@@ -294,7 +294,7 @@ class S3 extends Device
      *
      * @return bool
      */
-    public function fileExists(string $path): bool
+    public function exists(string $path): bool
     {
         if (!$this->getInfo($path)) {
             return false;
