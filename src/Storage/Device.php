@@ -57,7 +57,7 @@ abstract class Device
      * @return bool
      */
     abstract public function upload($source, $path): bool;
-    
+
     /**
      * Read file by given path.
      *
@@ -100,6 +100,15 @@ abstract class Device
      * @return bool
      */
     abstract public function delete(string $path, bool $recursive = false): bool;
+
+    /**
+     * Check if file exists
+     *
+     * @param string $path
+     *
+     * @return bool
+     */
+    abstract public function fileExists(string $path): bool;
 
     /**
      * Returns given file path its size.
