@@ -6,6 +6,14 @@ use Exception;
 
 class Storage
 {
+
+    /**
+     * Supported devices
+     */
+    const DEVICE_LOCAL = 'Local';
+    const DEVICE_S3 = 'S3';
+    const DEVICE_DO_SPACES = 'DoSpaces';
+
     /**
      * Devices.
      *
