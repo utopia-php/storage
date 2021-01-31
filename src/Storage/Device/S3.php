@@ -402,9 +402,9 @@ class S3 extends Device
 
     /**
      * Get file info
-     * @return Array | false
+     * @return array | false
      */
-    private function getInfo(string $path): array
+    private function getInfo(string $path)
     {
         $this->resetResponse();
         $verb = 'HEAD';

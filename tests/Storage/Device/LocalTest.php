@@ -60,6 +60,15 @@ class LocalTest extends TestCase
         $this->object->delete($this->object->getPath('text-for-read.txt'));
     }
 
+    public function testFileExists()
+    {
+        $this->assertEquals($this->object->write($this->object->getPath('text-for-test-exists.txt'), 'Hello World'), true);
+        $this->assertEquals($this->object->exists($this->object->getPath('text-for-test-exists.txt')), true);
+        $this->assertEquals($this->object->exists($this->object->getPath('text-for-test-doesnt-exist.txt')), false);
+
+        $this->object->delete($this->object->getPath('text-for-test-exists.txt'));
+    }
+
     public function testMove()
     {
         $this->assertEquals($this->object->write($this->object->getPath('text-for-move.txt'), 'Hello World'), true);
