@@ -82,13 +82,19 @@ class S3Test extends TestCase
         $this->object->delete($this->object->getPath('text-for-read.txt'));
     }
 
+    public function testFileExists()
+    {
+        $this->assertEquals($this->object->exists($this->object->getPath('testing/kitten-1.jpg')), true);
+        $this->assertEquals($this->object->exists($this->object->getPath('testing/kitten-5.jpg')), false);
+    }
+
     public function testMove()
     {
         $this->assertEquals($this->object->write($this->object->getPath('text-for-move.txt'), 'Hello World', 'text/plain'), true);
-        $this->assertEquals($this->object->read($this->object->getPath('text-for-move.txt')), 'Hello World');
+        $this->assertEquals($this->object->exists($this->object->getPath('text-for-move.txt')), true);
         $this->assertEquals($this->object->move($this->object->getPath('text-for-move.txt'), $this->object->getPath('text-for-move-new.txt')), true);
         $this->assertEquals($this->object->read($this->object->getPath('text-for-move-new.txt')), 'Hello World');
-        $this->assertEquals($this->object->read($this->object->getPath('text-for-move.txt')), '');
+        $this->assertEquals($this->object->exists($this->object->getPath('text-for-move.txt')), false);
 
         $this->object->delete($this->object->getPath('text-for-move-new.txt'));
     }
@@ -96,7 +102,7 @@ class S3Test extends TestCase
     public function testDelete()
     {
         $this->assertEquals($this->object->write($this->object->getPath('text-for-delete.txt'), 'Hello World', 'text/plain'), true);
-        $this->assertEquals($this->object->read($this->object->getPath('text-for-delete.txt')), 'Hello World');
+        $this->assertEquals($this->object->exists($this->object->getPath('text-for-delete.txt')), true);
         $this->assertEquals($this->object->delete($this->object->getPath('text-for-delete.txt')), true);
     }
 

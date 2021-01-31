@@ -288,6 +288,22 @@ class S3 extends Device
     }
 
     /**
+     * Check if file exists
+     *
+     * @param string $path
+     *
+     * @return bool
+     */
+    public function exists(string $path): bool
+    {
+        if (!$this->getInfo($path)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
      * Returns given file path its size.
      *
      * @see http://php.net/manual/en/function.filesize.php
@@ -386,9 +402,9 @@ class S3 extends Device
 
     /**
      * Get file info
-     * @return Array | false
+     * @return array | false
      */
-    private function getInfo(string $path): array
+    private function getInfo(string $path)
     {
         $this->resetResponse();
         $verb = 'HEAD';
