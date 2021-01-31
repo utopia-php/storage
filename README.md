@@ -4,7 +4,7 @@
 ![Total Downloads](https://img.shields.io/packagist/dt/utopia-php/storage.svg)
 [![Discord](https://img.shields.io/discord/564160730845151244?label=discord)](https://appwrite.io/discord)
 
-Utopia Storage library is simple and lite library for managing application storage. It supports multiple storage adapters. Soon we will be adding more adapters. This library is aiming to be as simple and easy to learn and use. This library is maintained by the [Appwrite team](https://appwrite.io).
+Utopia Storage library is simple and lite library for managing application storage. It supports multiple storage adapters. We already support AWS S3 storage and Digitalocean Spaces storage. This library is aiming to be as simple and easy to learn and use. This library is maintained by the [Appwrite team](https://appwrite.io).
 
 This library is part of the [Utopia Framework](https://github.com/utopia-php/framework) project.
 
@@ -23,6 +23,8 @@ require_once '../vendor/autoload.php';
 
 use Utopia\Storage\Storage;
 use Utopia\Storage\Device\Local
+use Utopia\Storage\Device\S3
+use Utopia\Storage\Device\DoSpaces
 
 // instiantiating local storage
 Storage::setDevice('files', new Local('path'));
@@ -30,6 +32,8 @@ Storage::setDevice('files', new Local('path'));
 //or you can use s3 storage
 Storage::setDevice('files', new S3('path',AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_BUCKET_NAME, AWS_REGION, AWS_ACL_FLAG));
 
+//or you can use Digitalocean spaces storage
+Storage::setDevice('files', new DoSpaces('path',DO_SPACES_ACCESS_KEY, DO_SPACES_SECRET_KEY,DO_SPACES_BUCKET_NAME, DO_SPACES_REGION, AWS_ACL_FLAG));
 
 $device = Storage::getDevice('files');
 
