@@ -181,11 +181,11 @@ class S3 extends Device
         $this->getResponse($uri, $verb, false);
 
         if ($this->response->error === false && $this->response->code !== 200) {
-            ['code' => $this->response->code, 'message' => 'Unexpected HTTP status'];
+            $this->response->error = ['code' => $this->response->code, 'message' => 'Unexpected HTTP status'];
         }
 
         if ($this->response->error !== false) {
-            return false;
+            throw new \Exception($this->response->error['message'], $this->response->error['code']);
         }
         return $this->response->body;
     }
@@ -296,10 +296,15 @@ class S3 extends Device
      */
     public function exists(string $path): bool
     {
-        if (!$this->getInfo($path)) {
-            return false;
-        } else {
+        try {
+            $this->getInfo($path);
             return true;
+        } catch (\Throwable $th) {
+            if ($th->getCode() == 404) {
+                return false;
+            } else {
+                throw new $th;
+            }
         }
     }
 
@@ -314,8 +319,12 @@ class S3 extends Device
      */
     public function getFileSize(string $path): int
     {
-        $res = $this->getInfo($path);
-        return $res['size'] ?? 0;
+        try {
+            $res = $this->getInfo($path);
+            return $res['size'] ?? 0;
+        } catch (\Throwable $th) {
+            throw $th;
+        }
     }
 
     /**
@@ -329,8 +338,12 @@ class S3 extends Device
      */
     public function getFileMimeType(string $path): string
     {
-        $res = $this->getInfo($path);
-        return $res['type'] ?? '';
+        try {
+            $res = $this->getInfo($path);
+            return $res['type'] ?? '';
+        } catch (\Throwable $th) {
+            throw $th;
+        }
     }
 
     /**
@@ -344,8 +357,12 @@ class S3 extends Device
      */
     public function getFileHash(string $path): string
     {
-        $res = $this->getInfo($path);
-        return $res['hash'] ?? '';
+        try {
+            $res = $this->getInfo($path);
+            return $res['hash'] ?? '';
+        } catch (\Throwable $th) {
+            throw $th;
+        }
     }
 
     /**
@@ -402,9 +419,9 @@ class S3 extends Device
 
     /**
      * Get file info
-     * @return array | false
+     * @return array
      */
-    private function getInfo(string $path)
+    private function getInfo(string $path): array
     {
         $this->resetResponse();
         $verb = 'HEAD';
@@ -415,10 +432,14 @@ class S3 extends Device
             $rest->error = ['code' => $rest->code, 'message' => 'Unexpected HTTP status'];
         }
 
-        if ($rest->error !== false) {
-            return false;
+        if ($rest->code === 404) {
+            throw new \Exception("404 not found", 404);
         }
-        return $rest->code == 200 ? $rest->headers : false;
+
+        if ($rest->error !== false) {
+            throw new \Exception($rest->error['message'], $rest->error['code']);
+        }
+        return $rest->headers;
     }
 
     /**
