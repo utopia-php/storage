@@ -180,13 +180,10 @@ class S3 extends Device
         $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
         $this->getResponse($uri, $verb, false);
 
-        if ($this->response->error === false && $this->response->code !== 200) {
-            $this->response->error = ['code' => $this->response->code, 'message' => 'Unexpected HTTP status'];
+        if ($this->response->code !== 200) {
+            throw new \Exception('Unexpected HTTP status', $this->response->code);
         }
 
-        if ($this->response->error !== false) {
-            throw new \Exception($this->response->error['message'], $this->response->error['code']);
-        }
         return $this->response->body;
     }
 
@@ -230,14 +227,10 @@ class S3 extends Device
             }
 
         } else {
-            $this->response->error = ['code' => 0, 'message' => 'Missing input parameters'];
+            throw new \Exception('Missing input parameters', 0);
         }
         $this->getResponse($uri, 'PUT', $data);
-        if ($this->response->error === false && $this->response->code !== 200) {
-            $this->response->error = ['code' => $this->response->code, 'message' => 'Unexpected HTTP status'];
-        }
-
-        if ($this->response->error !== false) {
+        if ($this->response->code !== 200) {
             return false;
         }
         return true;
@@ -277,11 +270,8 @@ class S3 extends Device
         $uri = $path !== '' ? '/' . str_replace('%2F', '/', rawurlencode($path)) : '/';
 
         $rest = $this->getResponse($uri, 'DELETE', false);
-        if ($rest->error === false && $rest->code !== 204) {
-            $rest->error = ['code' => $rest->code, 'message' => 'Unexpected HTTP status'];
-        }
 
-        if ($rest->error !== false) {
+        if ($rest->code !== 204) {
             return false;
         }
         return true;
@@ -428,17 +418,14 @@ class S3 extends Device
         $uri = $path;
         $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
         $rest = $this->getResponse($uri, $verb, false);
-        if ($rest->error === false && ($rest->code !== 200 && $rest->code !== 404)) {
-            $rest->error = ['code' => $rest->code, 'message' => 'Unexpected HTTP status'];
+        if ($rest->code !== 200 && $rest->code !== 404) {
+            throw new \Exception('Unexpected HTTP status', $rest->code);
         }
 
         if ($rest->code === 404) {
             throw new \Exception("404 not found", 404);
         }
 
-        if ($rest->error !== false) {
-            throw new \Exception($rest->error['message'], $rest->error['code']);
-        }
         return $rest->headers;
     }
 
