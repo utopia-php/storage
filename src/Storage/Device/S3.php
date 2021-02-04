@@ -2,6 +2,7 @@
 
 namespace Utopia\Storage\Device;
 
+use Exception;
 use Utopia\Storage\Device;
 
 class S3 extends Device
@@ -169,6 +170,8 @@ class S3 extends Device
      * Read file by given path.
      *
      * @param string $path
+     * 
+     * @throws \Exception
      *
      * @return string
      */
@@ -181,7 +184,7 @@ class S3 extends Device
         $this->getResponse($uri, $verb, false);
 
         if ($this->response->code !== 200) {
-            throw new \Exception('Unexpected HTTP status', $this->response->code);
+            throw new Exception('Unexpected HTTP status', $this->response->code);
         }
 
         return $this->response->body;
@@ -192,7 +195,8 @@ class S3 extends Device
      *
      * @param string $path
      * @param string $data
-     *
+     * @throws \Exception
+     * 
      * @return bool
      */
     public function write(string $path, string $data, string $contentType = ''): bool
@@ -227,7 +231,7 @@ class S3 extends Device
             }
 
         } else {
-            throw new \Exception('Missing input parameters', 0);
+            throw new Exception('Missing input parameters', 0);
         }
         $this->getResponse($uri, 'PUT', $data);
         if ($this->response->code !== 200) {
@@ -419,11 +423,11 @@ class S3 extends Device
         $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
         $rest = $this->getResponse($uri, $verb, false);
         if ($rest->code !== 200 && $rest->code !== 404) {
-            throw new \Exception('Unexpected HTTP status', $rest->code);
+            throw new Exception('Unexpected HTTP status', $rest->code);
         }
 
         if ($rest->code === 404) {
-            throw new \Exception("404 not found", 404);
+            throw new Exception("404 not found", 404);
         }
 
         return $rest->headers;
