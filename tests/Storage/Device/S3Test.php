@@ -19,7 +19,8 @@ class S3Test extends TestCase
         $key = $_SERVER['S3_ACCESS_KEY'] || '';
         $secret = $_SERVER['S3_SECRET'] || '';
         $bucket = "utopia-storage-tests";
-        $this->object = new S3($this->root, $key, $secret, $bucket, S3::AP_SOUTH_1, S3::ACL_PUBLIC_READ);
+
+        $this->object = new S3($this->root, $key, $secret, $bucket, S3::AP_SOUTH_1, S3::ACL_PRIVATE);
 
         $this->uploadTestFiles();
     }

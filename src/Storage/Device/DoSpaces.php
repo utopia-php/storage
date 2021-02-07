@@ -6,7 +6,6 @@ use Utopia\Storage\Device\S3;
 
 class DoSpaces extends S3
 {
-
     /**
      * Regions constants
      *
@@ -31,7 +30,7 @@ class DoSpaces extends S3
     public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::NYC3, string $acl = self::ACL_PRIVATE)
     {
         parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl);
-        $this->headers['Host'] = $bucket . '.' . $region . '.digitaloceanspaces.com';
+        $this->headers['host'] = $bucket . '.' . $region . '.digitaloceanspaces.com';
     }
 
     /**
@@ -49,5 +48,4 @@ class DoSpaces extends S3
     {
         return 'Digitalocean Spaces Storage';
     }
-
 }
