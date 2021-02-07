@@ -564,6 +564,7 @@ class S3 extends Device
         if ($response->code >= 400) {
             var_dump($response->body);
             var_dump($response->code);
+            
             throw new Exception('HTTP request failed');
         }
 
