@@ -562,9 +562,6 @@ class S3 extends Device
         $response->code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         
         if ($response->code >= 400) {
-            var_dump($response->body);
-            var_dump($response->code);
-            
             throw new Exception('HTTP request failed');
         }
 
