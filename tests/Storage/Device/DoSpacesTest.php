@@ -16,9 +16,10 @@ class DoSpacesTest extends TestCase
     public function setUp(): void
     {
         $this->root = '/root';
-        $key = getenv('DO_ACCESS_KEY');
-        $secret = getenv('DO_SECRET');
-        $bucket = "utopia-storage";
+        $key = $_SERVER['DO_ACCESS_KEY'] ?? '';
+        $secret = $_SERVER['DO_SECRET'] ?? '';
+        $bucket = "utopia-storage-test";
+        
         $this->object = new DoSpaces($this->root, $key, $secret, $bucket, DoSpaces::NYC3, DoSpaces::ACL_PUBLIC_READ);
 
         $this->uploadTestFiles();
