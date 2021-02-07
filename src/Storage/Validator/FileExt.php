@@ -20,7 +20,6 @@ class FileExt extends Validator
     /**
      * @param array $allowed
      *
-     * @throws Exception
      */
     public function __construct(array $allowed)
     {

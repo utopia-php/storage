@@ -181,7 +181,7 @@ class S3 extends Device
         $verb = 'GET';
         $uri = $path;
         $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
-        $this->getResponse($uri, $verb, false);
+        $this->getResponse($uri, $verb);
 
         if ($this->response->code !== 200) {
             throw new Exception('Unexpected HTTP status', $this->response->code);
@@ -273,7 +273,7 @@ class S3 extends Device
         $this->resetResponse();
         $uri = $path !== '' ? '/' . str_replace('%2F', '/', rawurlencode($path)) : '/';
 
-        $rest = $this->getResponse($uri, 'DELETE', false);
+        $rest = $this->getResponse($uri, 'DELETE');
 
         if ($rest->code !== 204) {
             return false;
@@ -297,7 +297,7 @@ class S3 extends Device
             if ($th->getCode() == 404) {
                 return false;
             } else {
-                throw new $th;
+                throw $th;
             }
         }
     }
@@ -421,7 +421,7 @@ class S3 extends Device
         $verb = 'HEAD';
         $uri = $path;
         $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
-        $rest = $this->getResponse($uri, $verb, false);
+        $rest = $this->getResponse($uri, $verb);
         if ($rest->code !== 200 && $rest->code !== 404) {
             throw new Exception('Unexpected HTTP status', $rest->code);
         }
@@ -441,7 +441,6 @@ class S3 extends Device
      */
     private function getSignatureV4(string $method, string $uri): string
     {
-        $parameters = [];
         $service = 's3';
         $region = $this->region;
 
@@ -462,7 +461,7 @@ class S3 extends Device
         uksort($combinedHeaders, [ & $this, 'sortMetaHeadersCmp']);
 
         // Convert null query string parameters to strings and sort
-        $parameters = array_map('strval', $parameters);
+        $parameters = [];
         uksort($parameters, [ & $this, 'sortMetaHeadersCmp']);
         $queryString = http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 
