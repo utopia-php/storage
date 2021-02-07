@@ -509,7 +509,7 @@ class S3 extends Device
             $response->body .= $data;
             return strlen($data);
         });
-        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, $data) use ($response) {
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function (&$curl, &$data) use ($response) {
             $strlen = strlen($data);
             if ($strlen <= 2) {
                 return $strlen;
