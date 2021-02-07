@@ -472,7 +472,7 @@ class S3 extends Device
     {
         $url = 'https://' . $this->headers['host'] . $uri;
         $response = new \stdClass;
-        $response->body = null;
+        $response->body = '';
         $response->headers = [];
 
         // Basic setup
@@ -571,9 +571,7 @@ class S3 extends Device
         curl_close($curl);
 
         // Parse body into XML
-        if (isset($response->headers['type'])
-            && $response->headers['type'] == 'application/xml'
-            && isset($response->body)) {
+        if (isset($response->headers['type']) && $response->headers['type'] == 'application/xml') {
             $response->body = simplexml_load_string($response->body);
         }
 
