@@ -88,7 +88,7 @@ class DoSpacesTest extends TestCase
         $this->assertEquals($this->object->read($this->object->getPath('text-for-move.txt')), 'Hello World');
         $this->assertEquals($this->object->move($this->object->getPath('text-for-move.txt'), $this->object->getPath('text-for-move-new.txt')), true);
         $this->assertEquals($this->object->read($this->object->getPath('text-for-move-new.txt')), 'Hello World');
-        $this->assertEquals($this->object->read($this->object->getPath('text-for-move.txt')), '');
+        $this->assertEquals($this->object->exists($this->object->getPath('text-for-move.txt')), false);
 
         $this->object->delete($this->object->getPath('text-for-move-new.txt'));
     }

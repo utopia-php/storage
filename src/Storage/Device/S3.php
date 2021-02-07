@@ -2,6 +2,7 @@
 
 namespace Utopia\Storage\Device;
 
+use Exception;
 use Utopia\Storage\Device;
 
 class S3 extends Device
@@ -169,6 +170,8 @@ class S3 extends Device
      * Read file by given path.
      *
      * @param string $path
+     * 
+     * @throws \Exception
      *
      * @return string
      */
@@ -178,15 +181,12 @@ class S3 extends Device
         $verb = 'GET';
         $uri = $path;
         $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
-        $this->getResponse($uri, $verb, false);
+        $this->getResponse($uri, $verb);
 
-        if ($this->response->error === false && $this->response->code !== 200) {
-            ['code' => $this->response->code, 'message' => 'Unexpected HTTP status'];
+        if ($this->response->code !== 200) {
+            throw new Exception('Unexpected HTTP status', $this->response->code);
         }
 
-        if ($this->response->error !== false) {
-            return false;
-        }
         return $this->response->body;
     }
 
@@ -195,7 +195,8 @@ class S3 extends Device
      *
      * @param string $path
      * @param string $data
-     *
+     * @throws \Exception
+     * 
      * @return bool
      */
     public function write(string $path, string $data, string $contentType = ''): bool
@@ -230,14 +231,10 @@ class S3 extends Device
             }
 
         } else {
-            $this->response->error = ['code' => 0, 'message' => 'Missing input parameters'];
+            throw new Exception('Missing input parameters', 0);
         }
         $this->getResponse($uri, 'PUT', $data);
-        if ($this->response->error === false && $this->response->code !== 200) {
-            $this->response->error = ['code' => $this->response->code, 'message' => 'Unexpected HTTP status'];
-        }
-
-        if ($this->response->error !== false) {
+        if ($this->response->code !== 200) {
             return false;
         }
         return true;
@@ -276,12 +273,9 @@ class S3 extends Device
         $this->resetResponse();
         $uri = $path !== '' ? '/' . str_replace('%2F', '/', rawurlencode($path)) : '/';
 
-        $rest = $this->getResponse($uri, 'DELETE', false);
-        if ($rest->error === false && $rest->code !== 204) {
-            $rest->error = ['code' => $rest->code, 'message' => 'Unexpected HTTP status'];
-        }
+        $rest = $this->getResponse($uri, 'DELETE');
 
-        if ($rest->error !== false) {
+        if ($rest->code !== 204) {
             return false;
         }
         return true;
@@ -296,10 +290,15 @@ class S3 extends Device
      */
     public function exists(string $path): bool
     {
-        if (!$this->getInfo($path)) {
-            return false;
-        } else {
+        try {
+            $this->getInfo($path);
             return true;
+        } catch (\Throwable $th) {
+            if ($th->getCode() == 404) {
+                return false;
+            } else {
+                throw $th;
+            }
         }
     }
 
@@ -314,8 +313,12 @@ class S3 extends Device
      */
     public function getFileSize(string $path): int
     {
-        $res = $this->getInfo($path);
-        return $res['size'] ?? 0;
+        try {
+            $res = $this->getInfo($path);
+            return $res['size'] ?? 0;
+        } catch (\Throwable $th) {
+            throw $th;
+        }
     }
 
     /**
@@ -329,8 +332,12 @@ class S3 extends Device
      */
     public function getFileMimeType(string $path): string
     {
-        $res = $this->getInfo($path);
-        return $res['type'] ?? '';
+        try {
+            $res = $this->getInfo($path);
+            return $res['type'] ?? '';
+        } catch (\Throwable $th) {
+            throw $th;
+        }
     }
 
     /**
@@ -344,8 +351,12 @@ class S3 extends Device
      */
     public function getFileHash(string $path): string
     {
-        $res = $this->getInfo($path);
-        return $res['hash'] ?? '';
+        try {
+            $res = $this->getInfo($path);
+            return $res['hash'] ?? '';
+        } catch (\Throwable $th) {
+            throw $th;
+        }
     }
 
     /**
@@ -402,23 +413,24 @@ class S3 extends Device
 
     /**
      * Get file info
-     * @return array | false
+     * @return array
      */
-    private function getInfo(string $path)
+    private function getInfo(string $path): array
     {
         $this->resetResponse();
         $verb = 'HEAD';
         $uri = $path;
         $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
-        $rest = $this->getResponse($uri, $verb, false);
-        if ($rest->error === false && ($rest->code !== 200 && $rest->code !== 404)) {
-            $rest->error = ['code' => $rest->code, 'message' => 'Unexpected HTTP status'];
+        $rest = $this->getResponse($uri, $verb);
+        if ($rest->code !== 200 && $rest->code !== 404) {
+            throw new Exception('Unexpected HTTP status', $rest->code);
         }
 
-        if ($rest->error !== false) {
-            return false;
+        if ($rest->code === 404) {
+            throw new Exception("404 not found", 404);
         }
-        return $rest->code == 200 ? $rest->headers : false;
+
+        return $rest->headers;
     }
 
     /**
@@ -429,7 +441,6 @@ class S3 extends Device
      */
     private function getSignatureV4(string $method, string $uri): string
     {
-        $parameters = [];
         $service = 's3';
         $region = $this->region;
 
@@ -450,7 +461,7 @@ class S3 extends Device
         uksort($combinedHeaders, [ & $this, 'sortMetaHeadersCmp']);
 
         // Convert null query string parameters to strings and sort
-        $parameters = array_map('strval', $parameters);
+        $parameters = [];
         uksort($parameters, [ & $this, 'sortMetaHeadersCmp']);
         $queryString = http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 

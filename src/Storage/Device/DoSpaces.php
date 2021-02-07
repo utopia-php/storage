@@ -18,8 +18,6 @@ class DoSpaces extends S3
     const SFO3 = 'sfo3';
     const AMS3 = 'AMS3';
 
-    protected $endpoint;
-
     /**
      * DoSpaces Constructor
      *

@@ -98,6 +98,9 @@ class Local extends Device
      */
     public function read(string $path): string
     {
+        if(!$this->exists($path)) {
+            throw new Exception("File Not Found", 404);
+        }
         return \file_get_contents($path);
     }
 
@@ -109,7 +112,7 @@ class Local extends Device
      *
      * @return bool
      */
-    public function write(string $path, string $data, $contentType = ''): bool
+    public function write(string $path, string $data, string $contentType = ''): bool
     {
         if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
             if (!@\mkdir(\dirname($path), 0755, true)) {
