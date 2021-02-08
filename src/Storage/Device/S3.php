@@ -300,7 +300,7 @@ class S3 extends Device
     public function getFileMimeType(string $path): string
     {
         $response = $this->getInfo($path);
-        return $response['type'] ?? '';
+        return $response['content-type'] ?? '';
     }
 
     /**
@@ -489,36 +489,17 @@ class S3 extends Device
             $response->body .= $data;
             return \strlen($data);
         });
-        \curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $data) use ($response) {
-            $strlen = \strlen($data);
-            if ($strlen <= 2) {
-                return $strlen;
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, $header) use (&$response) {
+            $len = strlen($header);
+            $header = explode(':', $header, 2);
+
+            if (count($header) < 2) { // ignore invalid headers
+                return $len;
             }
 
-            if (\substr($data, 0, 4) == 'HTTP') {
-                $response->code = (int) \substr($data, 9, 3);
-            } else {
-                $data = \trim($data);
-                if (\strpos($data, ': ') === false) {
-                    return $strlen;
-                }
+            $response->headers[strtolower(trim($header[0]))] = trim($header[1]);
 
-                list($header, $value) = \explode(': ', $data, 2);
-                $header = \strtolower($header);
-                switch ($header) {
-                    case $header == 'content-length':
-                        $response->headers['size'] = (int) $value;
-                        break;
-                    case $header == 'content-type':
-                        $response->headers['type'] = $value;
-                        break;
-                    case $header == 'etag':
-                        $response->headers['hash'] = $value[0] == '"' ? \substr($value, 1, -1) : $value;
-                        break;
-                }
-            }
-
-            return $strlen;
+            return $len;
         });
         \curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
         \curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
@@ -549,7 +530,7 @@ class S3 extends Device
         \curl_close($curl);
 
         // Parse body into XML
-        if (isset($response->headers['type']) && $response->headers['type'] == 'application/xml') {
+        if (isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') {
             $response->body = \simplexml_load_string($response->body);
         }
 
