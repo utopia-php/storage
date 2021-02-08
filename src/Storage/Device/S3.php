@@ -285,7 +285,7 @@ class S3 extends Device
     public function getFileSize(string $path): int
     {
         $response = $this->getInfo($path);
-        return $response['size'] ?? 0;
+        return (int)($response['content-length'] ?? 0);
     }
 
     /**
