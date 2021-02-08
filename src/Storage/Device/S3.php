@@ -477,54 +477,54 @@ class S3 extends Device
 
         // Basic setup
         $curl = curl_init();
-        curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
-        curl_setopt($curl, CURLOPT_URL, $url);
+        \curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
+        \curl_setopt($curl, CURLOPT_URL, $url);
 
         // Headers
         $httpHeaders = [];
-        $this->amzHeaders['x-amz-date'] = gmdate('Ymd\THis\Z');
+        $this->amzHeaders['x-amz-date'] = \gmdate('Ymd\THis\Z');
 
         if (!isset($this->amzHeaders['x-amz-content-sha256'])) {
-            $this->amzHeaders['x-amz-content-sha256'] = hash('sha256', $data);
+            $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
         }
 
         foreach ($this->amzHeaders as $header => $value) {
-            if (strlen($value) > 0) {
+            if (\strlen($value) > 0) {
                 $httpHeaders[] = $header . ': ' . $value;
             }
         }
 
         foreach ($this->headers as $header => $value) {
-            if (strlen($value) > 0) {
+            if (\strlen($value) > 0) {
                 $httpHeaders[] = $header . ': ' . $value;
             }
         }
 
         $httpHeaders[] = 'Authorization: ' . $this->getSignatureV4($method, $uri);
 
-        curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
-        curl_setopt($curl, CURLOPT_HEADER, false);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
-        curl_setopt($curl, CURLOPT_WRITEFUNCTION, function (&$curl, &$data) use ($response) {
+        \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
+        \curl_setopt($curl, CURLOPT_HEADER, false);
+        \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
+        \curl_setopt($curl, CURLOPT_WRITEFUNCTION, function ($curl, string $data) use ($response) {
             $response->body .= $data;
-            return strlen($data);
+            return \strlen($data);
         });
-        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function (&$curl, &$data) use ($response) {
-            $strlen = strlen($data);
+        \curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $data) use ($response) {
+            $strlen = \strlen($data);
             if ($strlen <= 2) {
                 return $strlen;
             }
 
-            if (substr($data, 0, 4) == 'HTTP') {
-                $response->code = (int) substr($data, 9, 3);
+            if (\substr($data, 0, 4) == 'HTTP') {
+                $response->code = (int) \substr($data, 9, 3);
             } else {
                 $data = trim($data);
-                if (strpos($data, ': ') === false) {
+                if (\strpos($data, ': ') === false) {
                     return $strlen;
                 }
 
-                list($header, $value) = explode(': ', $data, 2);
-                $header = strtolower($header);
+                list($header, $value) = \explode(': ', $data, 2);
+                $header = \strtolower($header);
                 switch ($header) {
                     case $header == 'content-length':
                         $response->headers['size'] = (int) $value;
@@ -533,7 +533,7 @@ class S3 extends Device
                         $response->headers['type'] = $value;
                         break;
                     case $header == 'etag':
-                        $response->headers['hash'] = $value[0] == '"' ? substr($value, 1, -1) : $value;
+                        $response->headers['hash'] = $value[0] == '"' ? \substr($value, 1, -1) : $value;
                         break;
                 }
             }
@@ -547,25 +547,26 @@ class S3 extends Device
         switch ($method) {
             case self::METHOD_PUT:
             case self::METHOD_POST: // POST only used for CloudFront
-                curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+                \curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
                 break;
             case self::METHOD_HEAD:
-                curl_setopt($curl, CURLOPT_NOBODY, true);
+                \curl_setopt($curl, CURLOPT_NOBODY, true);
                 break;
         }
 
-        // Execute, grab errors
-        if (!curl_exec($curl)) {
-            throw new Exception(curl_error($curl));
+        $result = \curl_exec($curl);
+        
+        if (!$result) {
+            throw new Exception(\curl_error($curl));
         }
         
-        $response->code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
         
         if ($response->code >= 400) {
             throw new Exception('HTTP request failed');
         }
 
-        curl_close($curl);
+        \curl_close($curl);
 
         // Parse body into XML
         if (isset($response->headers['type']) && $response->headers['type'] == 'application/xml') {
