@@ -186,7 +186,7 @@ class S3 extends Device
      */
     public function read(string $path): string
     {
-        $uri = ($path !== '') ? '/' . str_replace('%2F', '/', rawurlencode($path)) : '/';
+        $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
         $response = $this->call(self::METHOD_GET, $uri);
 
         return $response->body;
@@ -204,12 +204,12 @@ class S3 extends Device
     public function write(string $path, string $data, string $contentType = ''): bool
     {
         $metaHeaders = [];
-        $uri = $path !== '' ? '/' . str_replace('%2F', '/', rawurlencode($path)) : '/';
-        $this->headers['date'] = gmdate('D, d M Y H:i:s T');
+        $uri = $path !== '' ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
         $input = [
-            'data' => $data, 'size' => strlen($data),
-            'md5sum' => base64_encode(md5($data, true)),
-            'sha256sum' => hash('sha256', $data),
+            'data' => $data, 'size' => \strlen($data),
+            'md5sum' => \base64_encode(md5($data, true)),
+            'sha256sum' => \hash('sha256', $data),
         ];
         $input['type'] = $contentType;
         if (isset($input['size']) && $input['size'] >= 0) {
@@ -268,7 +268,7 @@ class S3 extends Device
      */
     public function delete(string $path, bool $recursive = false): bool
     {
-        $uri = ($path !== '') ? '/' . str_replace('%2F', '/', rawurlencode($path)) : '/';
+        $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
 
         $this->call(self::METHOD_DELETE, $uri);
 
@@ -384,7 +384,7 @@ class S3 extends Device
      */
     private function getInfo(string $path): array
     {
-        $uri = $path !== '' ? '/' . str_replace('%2F', '/', rawurlencode($path)) : '/';
+        $uri = $path !== '' ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
         $response = $this->call(self::METHOD_HEAD, $uri);
 
         return $response->headers;
@@ -404,15 +404,15 @@ class S3 extends Device
         $algorithm = 'AWS4-HMAC-SHA256';
         $combinedHeaders = [];
 
-        $amzDateStamp = substr($this->amzHeaders['x-amz-date'], 0, 8);
+        $amzDateStamp = \substr($this->amzHeaders['x-amz-date'], 0, 8);
 
         // CanonicalHeaders
         foreach ($this->headers as $k => $v) {
-            $combinedHeaders[strtolower($k)] = trim($v);
+            $combinedHeaders[\strtolower($k)] = \trim($v);
         }
 
         foreach ($this->amzHeaders as $k => $v) {
-            $combinedHeaders[strtolower($k)] = trim($v);
+            $combinedHeaders[\strtolower($k)] = \trim($v);
         }
 
         uksort($combinedHeaders, [ & $this, 'sortMetaHeadersCmp']);
@@ -420,13 +420,13 @@ class S3 extends Device
         // Convert null query string parameters to strings and sort
         $parameters = [];
         uksort($parameters, [ & $this, 'sortMetaHeadersCmp']);
-        $queryString = http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
+        $queryString = \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 
         // Payload
         $amzPayload = [$method];
 
-        $qsPos = strpos($uri, '?');
-        $amzPayload[] = ($qsPos === false ? $uri : substr($uri, 0, $qsPos));
+        $qsPos = \strpos($uri, '?');
+        $amzPayload[] = ($qsPos === false ? $uri : \substr($uri, 0, $qsPos));
 
         $amzPayload[] = $queryString;
         
@@ -435,30 +435,30 @@ class S3 extends Device
         }
         
         $amzPayload[] = ''; // add a blank entry so we end up with an extra line break
-        $amzPayload[] = implode(';', array_keys($combinedHeaders)); // SignedHeaders
+        $amzPayload[] = \implode(';', \array_keys($combinedHeaders)); // SignedHeaders
         $amzPayload[] = $this->amzHeaders['x-amz-content-sha256']; // payload hash
         
-        $amzPayloadStr = implode("\n", $amzPayload); // request as string
+        $amzPayloadStr = \implode("\n", $amzPayload); // request as string
 
         // CredentialScope
         $credentialScope = [$amzDateStamp, $region, $service, 'aws4_request'];
 
         // stringToSign
-        $stringToSignStr = implode("\n", [$algorithm, $this->amzHeaders['x-amz-date'],
-            implode('/', $credentialScope), hash('sha256', $amzPayloadStr)]);
+        $stringToSignStr = \implode("\n", [$algorithm, $this->amzHeaders['x-amz-date'],
+            \implode('/', $credentialScope), \hash('sha256', $amzPayloadStr)]);
 
         // Make Signature
         $kSecret = 'AWS4' . $this->secretKey;
-        $kDate = hash_hmac('sha256', $amzDateStamp, $kSecret, true);
-        $kRegion = hash_hmac('sha256', $region, $kDate, true);
-        $kService = hash_hmac('sha256', $service, $kRegion, true);
-        $kSigning = hash_hmac('sha256', 'aws4_request', $kService, true);
+        $kDate = \hash_hmac('sha256', $amzDateStamp, $kSecret, true);
+        $kRegion = \hash_hmac('sha256', $region, $kDate, true);
+        $kService = \hash_hmac('sha256', $service, $kRegion, true);
+        $kSigning = \hash_hmac('sha256', 'aws4_request', $kService, true);
 
-        $signature = hash_hmac('sha256', $stringToSignStr, $kSigning);
+        $signature = \hash_hmac('sha256', $stringToSignStr, $kSigning);
 
-        return $algorithm . ' ' . implode(',', [
-            'Credential=' . $this->accessKey . '/' . implode('/', $credentialScope),
-            'SignedHeaders=' . implode(';', array_keys($combinedHeaders)),
+        return $algorithm . ' ' . \implode(',', [
+            'Credential=' . $this->accessKey . '/' . \implode('/', $credentialScope),
+            'SignedHeaders=' . \implode(';', \array_keys($combinedHeaders)),
             'Signature=' . $signature,
         ]);
     }
@@ -476,7 +476,7 @@ class S3 extends Device
         $response->headers = [];
 
         // Basic setup
-        $curl = curl_init();
+        $curl = \curl_init();
         \curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
         \curl_setopt($curl, CURLOPT_URL, $url);
 
@@ -518,7 +518,7 @@ class S3 extends Device
             if (\substr($data, 0, 4) == 'HTTP') {
                 $response->code = (int) \substr($data, 9, 3);
             } else {
-                $data = trim($data);
+                $data = \trim($data);
                 if (\strpos($data, ': ') === false) {
                     return $strlen;
                 }
@@ -570,7 +570,7 @@ class S3 extends Device
 
         // Parse body into XML
         if (isset($response->headers['type']) && $response->headers['type'] == 'application/xml') {
-            $response->body = simplexml_load_string($response->body);
+            $response->body = \simplexml_load_string($response->body);
         }
 
         return $response;
@@ -586,10 +586,10 @@ class S3 extends Device
      */
     private function sortMetaHeadersCmp($a, $b)
     {
-        $lenA = strlen($a);
-        $lenB = strlen($b);
-        $minLen = min($lenA, $lenB);
-        $ncmp = strncmp($a, $b, $minLen);
+        $lenA = \strlen($a);
+        $lenB = \strlen($b);
+        $minLen = \min($lenA, $lenB);
+        $ncmp = \strncmp($a, $b, $minLen);
         if ($lenA == $lenB) {
             return $ncmp;
         }
