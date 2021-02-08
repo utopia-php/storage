@@ -203,33 +203,13 @@ class S3 extends Device
      */
     public function write(string $path, string $data, string $contentType = ''): bool
     {
-        $metaHeaders = [];
         $uri = $path !== '' ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        
         $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
-        $input = [
-            'data' => $data, 'size' => \strlen($data),
-            'md5sum' => \base64_encode(md5($data, true)),
-            'sha256sum' => \hash('sha256', $data),
-        ];
-        $input['type'] = $contentType;
-        if (isset($input['size']) && $input['size'] >= 0) {
-            $this->headers['content-type'] = $input['type'];
-            if (isset($input['md5sum'])) {
-                $this->headers['content-md5'] = $input['md5sum'];
-            }
-
-            if (isset($input['sha256sum'])) {
-                $this->amzHeaders['x-amz-content-sha256'] = $input['sha256sum'];
-            }
-
-            $this->amzHeaders['x-amz-acl'] = $this->acl;
-            foreach ($metaHeaders as $h => $v) {
-                $this->amzHeaders['x-amz-meta-' . $h] = $v;
-            }
-
-        } else {
-            throw new Exception('Missing input parameters');
-        }
+        $this->headers['content-type'] = $contentType;
+        $this->headers['content-md5'] = \base64_encode(md5($data, true)); //TODO whould this work well with big file? can we skip it?
+        $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
+        $this->amzHeaders['x-amz-acl'] = $this->acl;
 
         $this->call(self::METHOD_PUT, $uri, $data);
 
