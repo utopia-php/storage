@@ -314,7 +314,8 @@ class S3 extends Device
      */
     public function getFileHash(string $path): string
     {
-        return $this->getInfo($path)['etag'] ?? '';
+        $etag = $this->getInfo($path)['etag'] ?? '';
+        return  (!empty($etag)) ? substr($etag, 1, -1) : $etag;
     }
 
     /**
