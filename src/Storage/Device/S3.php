@@ -7,6 +7,15 @@ use Utopia\Storage\Device;
 
 class S3 extends Device
 {
+    const METHOD_GET = 'GET';
+    const METHOD_POST = 'POST';
+    const METHOD_PUT = 'PUT';
+    const METHOD_PATCH = 'PATCH';
+    const METHOD_DELETE = 'DELETE';
+    const METHOD_HEAD = 'HEAD';
+    const METHOD_OPTIONS = 'OPTIONS';
+    const METHOD_CONNECT = 'CONNECT';
+    const METHOD_TRACE = 'TRACE';
 
     /**
      * AWS Regions constants
@@ -54,34 +63,36 @@ class S3 extends Device
      * @var string
      */
     protected $secretKey;
+
     /**
      * @var string
      */
     protected $bucket;
+    
     /**
      * @var string
      */
     protected $region;
+    
     /**
      * @var string
      */
     protected $acl = self::ACL_PRIVATE;
+    
     /**
      * @var string
      */
     protected $root = 'temp';
+    
     /**
-     * @var Array
+     * @var array
      */
     protected $headers = [
-        'Host' => '', 'Date' => '', 'Content-MD5' => '', 'Content-Type' => '',
+        'host' => '', 'date' => '', 'content-md5' => '', 'content-type' => '',
     ];
+
     /**
-     * @var object
-     */
-    protected $response;
-    /**
-     * @var Array
+     * @var array
      */
     protected $amzHeaders;
 
@@ -103,9 +114,8 @@ class S3 extends Device
         $this->region = $region;
         $this->root = $root;
         $this->acl = $acl;
-        $this->headers['Host'] = $this->bucket . '.s3.amazonaws.com';
+        $this->headers['host'] = $this->bucket . '.s3.amazonaws.com';
         $this->amzHeaders = [];
-        $this->resetResponse();
     }
 
     /**
@@ -162,8 +172,7 @@ class S3 extends Device
      */
     public function upload($source, $path): bool
     {
-        $content = \file_get_contents($source);
-        return $this->write($path, $content, \mime_content_type($source));
+        return $this->write($path, \file_get_contents($source), \mime_content_type($source));
     }
 
     /**
@@ -177,17 +186,10 @@ class S3 extends Device
      */
     public function read(string $path): string
     {
-        $this->resetResponse();
-        $verb = 'GET';
-        $uri = $path;
-        $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
-        $this->getResponse($uri, $verb);
+        $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        $response = $this->call(self::METHOD_GET, $uri);
 
-        if ($this->response->code !== 200) {
-            throw new Exception('Unexpected HTTP status', $this->response->code);
-        }
-
-        return $this->response->body;
+        return $response->body;
     }
 
     /**
@@ -201,42 +203,16 @@ class S3 extends Device
      */
     public function write(string $path, string $data, string $contentType = ''): bool
     {
-        $this->resetResponse();
-        $metaHeaders = [];
-        $uri = $path !== '' ? '/' . str_replace('%2F', '/', rawurlencode($path)) : '/';
-        $this->headers['Date'] = gmdate('D, d M Y H:i:s T');
-        $this->response = new \stdClass;
-        $this->response->error = false;
-        $this->response->body = null;
-        $this->response->headers = [];
-        $input = [
-            'data' => $data, 'size' => strlen($data),
-            'md5sum' => base64_encode(md5($data, true)),
-            'sha256sum' => hash('sha256', $data),
-        ];
-        $input['type'] = $contentType;
-        if (isset($input['size']) && $input['size'] >= 0) {
-            $this->headers['Content-Type'] = $input['type'];
-            if (isset($input['md5sum'])) {
-                $this->headers['Content-MD5'] = $input['md5sum'];
-            }
+        $uri = $path !== '' ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        
+        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
+        $this->headers['content-type'] = $contentType;
+        $this->headers['content-md5'] = \base64_encode(md5($data, true)); //TODO whould this work well with big file? can we skip it?
+        $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
+        $this->amzHeaders['x-amz-acl'] = $this->acl;
 
-            if (isset($input['sha256sum'])) {
-                $this->amzHeaders['x-amz-content-sha256'] = $input['sha256sum'];
-            }
+        $this->call(self::METHOD_PUT, $uri, $data);
 
-            $this->amzHeaders['x-amz-acl'] = $this->acl;
-            foreach ($metaHeaders as $h => $v) {
-                $this->amzHeaders['x-amz-meta-' . $h] = $v;
-            }
-
-        } else {
-            throw new Exception('Missing input parameters', 0);
-        }
-        $this->getResponse($uri, 'PUT', $data);
-        if ($this->response->code !== 200) {
-            return false;
-        }
         return true;
     }
 
@@ -253,9 +229,11 @@ class S3 extends Device
     public function move(string $source, string $target): bool
     {
         $type = $this->getFileMimeType($source);
+
         if ($this->write($target, $this->read($source), $type)) {
             $this->delete($source);
         }
+
         return true;
     }
 
@@ -270,14 +248,10 @@ class S3 extends Device
      */
     public function delete(string $path, bool $recursive = false): bool
     {
-        $this->resetResponse();
-        $uri = $path !== '' ? '/' . str_replace('%2F', '/', rawurlencode($path)) : '/';
+        $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
 
-        $rest = $this->getResponse($uri, 'DELETE');
+        $this->call(self::METHOD_DELETE, $uri);
 
-        if ($rest->code !== 204) {
-            return false;
-        }
         return true;
     }
 
@@ -292,14 +266,11 @@ class S3 extends Device
     {
         try {
             $this->getInfo($path);
-            return true;
         } catch (\Throwable $th) {
-            if ($th->getCode() == 404) {
-                return false;
-            } else {
-                throw $th;
-            }
+            return false;
         }
+
+        return true;
     }
 
     /**
@@ -313,12 +284,8 @@ class S3 extends Device
      */
     public function getFileSize(string $path): int
     {
-        try {
-            $res = $this->getInfo($path);
-            return $res['size'] ?? 0;
-        } catch (\Throwable $th) {
-            throw $th;
-        }
+        $response = $this->getInfo($path);
+        return (int)($response['content-length'] ?? 0);
     }
 
     /**
@@ -332,12 +299,8 @@ class S3 extends Device
      */
     public function getFileMimeType(string $path): string
     {
-        try {
-            $res = $this->getInfo($path);
-            return $res['type'] ?? '';
-        } catch (\Throwable $th) {
-            throw $th;
-        }
+        $response = $this->getInfo($path);
+        return $response['content-type'] ?? '';
     }
 
     /**
@@ -351,12 +314,8 @@ class S3 extends Device
      */
     public function getFileHash(string $path): string
     {
-        try {
-            $res = $this->getInfo($path);
-            return $res['hash'] ?? '';
-        } catch (\Throwable $th) {
-            throw $th;
-        }
+        $etag = $this->getInfo($path)['etag'] ?? '';
+        return  (!empty($etag)) ? substr($etag, 1, -1) : $etag;
     }
 
     /**
@@ -400,37 +359,15 @@ class S3 extends Device
     }
 
     /**
-     * Reset response object
-     * @return void
-     */
-    private function resetResponse(): void
-    {
-        $this->response = new \stdClass;
-        $this->response->error = false;
-        $this->response->body = null;
-        $this->response->headers = [];
-    }
-
-    /**
      * Get file info
      * @return array
      */
     private function getInfo(string $path): array
     {
-        $this->resetResponse();
-        $verb = 'HEAD';
-        $uri = $path;
-        $uri = $uri !== '' ? '/' . str_replace('%2F', '/', rawurlencode($uri)) : '/';
-        $rest = $this->getResponse($uri, $verb);
-        if ($rest->code !== 200 && $rest->code !== 404) {
-            throw new Exception('Unexpected HTTP status', $rest->code);
-        }
+        $uri = $path !== '' ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        $response = $this->call(self::METHOD_HEAD, $uri);
 
-        if ($rest->code === 404) {
-            throw new Exception("404 not found", 404);
-        }
-
-        return $rest->headers;
+        return $response->headers;
     }
 
     /**
@@ -447,15 +384,15 @@ class S3 extends Device
         $algorithm = 'AWS4-HMAC-SHA256';
         $combinedHeaders = [];
 
-        $amzDateStamp = substr($this->amzHeaders['x-amz-date'], 0, 8);
+        $amzDateStamp = \substr($this->amzHeaders['x-amz-date'], 0, 8);
 
         // CanonicalHeaders
         foreach ($this->headers as $k => $v) {
-            $combinedHeaders[strtolower($k)] = trim($v);
+            $combinedHeaders[\strtolower($k)] = \trim($v);
         }
 
         foreach ($this->amzHeaders as $k => $v) {
-            $combinedHeaders[strtolower($k)] = trim($v);
+            $combinedHeaders[\strtolower($k)] = \trim($v);
         }
 
         uksort($combinedHeaders, [ & $this, 'sortMetaHeadersCmp']);
@@ -463,47 +400,45 @@ class S3 extends Device
         // Convert null query string parameters to strings and sort
         $parameters = [];
         uksort($parameters, [ & $this, 'sortMetaHeadersCmp']);
-        $queryString = http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
+        $queryString = \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 
         // Payload
         $amzPayload = [$method];
 
-        $qsPos = strpos($uri, '?');
-        $amzPayload[] = ($qsPos === false ? $uri : substr($uri, 0, $qsPos));
+        $qsPos = \strpos($uri, '?');
+        $amzPayload[] = ($qsPos === false ? $uri : \substr($uri, 0, $qsPos));
 
         $amzPayload[] = $queryString;
-        // add header as string to requests
-        foreach ($combinedHeaders as $k => $v) {
+        
+        foreach ($combinedHeaders as $k => $v) { // add header as string to requests
             $amzPayload[] = $k . ':' . $v;
         }
-        // add a blank entry so we end up with an extra line break
-        $amzPayload[] = '';
-        // SignedHeaders
-        $amzPayload[] = implode(';', array_keys($combinedHeaders));
-        // payload hash
-        $amzPayload[] = $this->amzHeaders['x-amz-content-sha256'];
-        // request as string
-        $amzPayloadStr = implode("\n", $amzPayload);
+        
+        $amzPayload[] = ''; // add a blank entry so we end up with an extra line break
+        $amzPayload[] = \implode(';', \array_keys($combinedHeaders)); // SignedHeaders
+        $amzPayload[] = $this->amzHeaders['x-amz-content-sha256']; // payload hash
+        
+        $amzPayloadStr = \implode("\n", $amzPayload); // request as string
 
         // CredentialScope
         $credentialScope = [$amzDateStamp, $region, $service, 'aws4_request'];
 
         // stringToSign
-        $stringToSignStr = implode("\n", [$algorithm, $this->amzHeaders['x-amz-date'],
-            implode('/', $credentialScope), hash('sha256', $amzPayloadStr)]);
+        $stringToSignStr = \implode("\n", [$algorithm, $this->amzHeaders['x-amz-date'],
+            \implode('/', $credentialScope), \hash('sha256', $amzPayloadStr)]);
 
         // Make Signature
         $kSecret = 'AWS4' . $this->secretKey;
-        $kDate = hash_hmac('sha256', $amzDateStamp, $kSecret, true);
-        $kRegion = hash_hmac('sha256', $region, $kDate, true);
-        $kService = hash_hmac('sha256', $service, $kRegion, true);
-        $kSigning = hash_hmac('sha256', 'aws4_request', $kService, true);
+        $kDate = \hash_hmac('sha256', $amzDateStamp, $kSecret, true);
+        $kRegion = \hash_hmac('sha256', $region, $kDate, true);
+        $kService = \hash_hmac('sha256', $service, $kRegion, true);
+        $kSigning = \hash_hmac('sha256', 'aws4_request', $kService, true);
 
-        $signature = hash_hmac('sha256', $stringToSignStr, $kSigning);
+        $signature = \hash_hmac('sha256', $stringToSignStr, $kSigning);
 
-        return $algorithm . ' ' . implode(',', [
-            'Credential=' . $this->accessKey . '/' . implode('/', $credentialScope),
-            'SignedHeaders=' . implode(';', array_keys($combinedHeaders)),
+        return $algorithm . ' ' . \implode(',', [
+            'Credential=' . $this->accessKey . '/' . \implode('/', $credentialScope),
+            'SignedHeaders=' . \implode(';', \array_keys($combinedHeaders)),
             'Signature=' . $signature,
         ]);
     }
@@ -513,131 +448,93 @@ class S3 extends Device
      *
      * @return  object
      */
-    private function getResponse(string $uri, string $verb = 'GET', string $data = '')
+    private function call(string $method, string $uri, string $data = '')
     {
-        $url = 'https://' . $this->headers['Host'] . $uri;
+        $url = 'https://' . $this->headers['host'] . $uri;
+        $response = new \stdClass;
+        $response->body = '';
+        $response->headers = [];
 
         // Basic setup
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
-
-        curl_setopt($curl, CURLOPT_URL, $url);
+        $curl = \curl_init();
+        \curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
+        \curl_setopt($curl, CURLOPT_URL, $url);
 
         // Headers
         $httpHeaders = [];
-        $this->amzHeaders['x-amz-date'] = gmdate('Ymd\THis\Z');
+        $this->amzHeaders['x-amz-date'] = \gmdate('Ymd\THis\Z');
 
         if (!isset($this->amzHeaders['x-amz-content-sha256'])) {
-            $this->amzHeaders['x-amz-content-sha256'] = hash('sha256', $data);
+            $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
         }
 
         foreach ($this->amzHeaders as $header => $value) {
-            if (strlen($value) > 0) {
+            if (\strlen($value) > 0) {
                 $httpHeaders[] = $header . ': ' . $value;
             }
         }
 
         foreach ($this->headers as $header => $value) {
-            if (strlen($value) > 0) {
+            if (\strlen($value) > 0) {
                 $httpHeaders[] = $header . ': ' . $value;
             }
         }
 
-        $httpHeaders[] = 'Authorization: ' . $this->getSignatureV4(
-            $verb,
-            $uri
-        );
+        $httpHeaders[] = 'Authorization: ' . $this->getSignatureV4($method, $uri);
 
-        curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
-        curl_setopt($curl, CURLOPT_HEADER, false);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
-        curl_setopt($curl, CURLOPT_WRITEFUNCTION, function (&$curl, &$data) {
-            $this->response->body .= $data;
-            return strlen($data);
+        \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
+        \curl_setopt($curl, CURLOPT_HEADER, false);
+        \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
+        \curl_setopt($curl, CURLOPT_WRITEFUNCTION, function ($curl, string $data) use ($response) {
+            $response->body .= $data;
+            return \strlen($data);
         });
-        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, $data) {
-            $strlen = strlen($data);
-            if ($strlen <= 2) {
-                return $strlen;
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $header) use (&$response) {
+            $len = strlen($header);
+            $header = explode(':', $header, 2);
+
+            if (count($header) < 2) { // ignore invalid headers
+                return $len;
             }
 
-            if (substr($data, 0, 4) == 'HTTP') {
-                $this->response->code = (int) substr($data, 9, 3);
-            } else {
-                $data = trim($data);
-                if (strpos($data, ': ') === false) {
-                    return $strlen;
-                }
+            $response->headers[strtolower(trim($header[0]))] = trim($header[1]);
 
-                list($header, $value) = explode(': ', $data, 2);
-                $header = strtolower($header);
-                switch ($header) {
-                    case $header == 'content-length':
-                        $this->response->headers['size'] = (int) $value;
-                        break;
-                    case $header == 'content-type':
-                        $this->response->headers['type'] = $value;
-                        break;
-                    case $header == 'etag':
-                        $this->response->headers['hash'] = $value[0] == '"' ? substr($value, 1, -1) : $value;
-                        break;
-                }
-
-            }
-            return $strlen;
+            return $len;
         });
-        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-
+        \curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+        \curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
+        
         // Request types
-        switch ($verb) {
-            case 'GET':break;
-            case 'PUT':case 'POST': // POST only used for CloudFront
-                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $verb);
-                curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+        switch ($method) {
+            case self::METHOD_PUT:
+            case self::METHOD_POST: // POST only used for CloudFront
+                \curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
                 break;
-            case 'HEAD':
-                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'HEAD');
-                curl_setopt($curl, CURLOPT_NOBODY, true);
+            case self::METHOD_HEAD:
+                \curl_setopt($curl, CURLOPT_NOBODY, true);
                 break;
-            case 'DELETE':
-                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
-                break;
-            default:break;
         }
 
-        // Execute, grab errors
-        if (curl_exec($curl)) {
-            $this->response->code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        } else {
-            $this->response->error = [
-                'code' => curl_errno($curl),
-                'message' => curl_error($curl),
-                'resource' => $uri,
-            ];
+        $result = \curl_exec($curl);
+        
+        if (!$result) {
+            throw new Exception(\curl_error($curl));
+        }
+        
+        $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        
+        if ($response->code >= 400) {
+            throw new Exception('HTTP request failed');
         }
 
-        @curl_close($curl);
+        \curl_close($curl);
 
         // Parse body into XML
-        if ($this->response->error === false && isset($this->response->headers['type']) &&
-            $this->response->headers['type'] == 'application/xml' && isset($this->response->body)) {
-            $this->response->body = simplexml_load_string($this->response->body);
-
-            // Grab S3 errors
-            if (!in_array($this->response->code, [200, 204, 206]) &&
-                isset($this->response->body->Code, $this->response->body->Message)) {
-                $this->response->error = [
-                    'code' => (string) $this->response->body->Code,
-                    'message' => (string) $this->response->body->Message,
-                ];
-                if (isset($this->response->body->Resource)) {
-                    $this->response->error['resource'] = (string) $this->response->body->Resource;
-                }
-
-                unset($this->response->body);
-            }
+        if (isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') {
+            $response->body = \simplexml_load_string($response->body);
         }
-        return $this->response;
+
+        return $response;
     }
 
     /**
@@ -650,10 +547,10 @@ class S3 extends Device
      */
     private function sortMetaHeadersCmp($a, $b)
     {
-        $lenA = strlen($a);
-        $lenB = strlen($b);
-        $minLen = min($lenA, $lenB);
-        $ncmp = strncmp($a, $b, $minLen);
+        $lenA = \strlen($a);
+        $lenB = \strlen($b);
+        $minLen = \min($lenA, $lenB);
+        $ncmp = \strncmp($a, $b, $minLen);
         if ($lenA == $lenB) {
             return $ncmp;
         }
