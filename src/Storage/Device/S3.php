@@ -524,7 +524,10 @@ class S3 extends Device
         $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
         
         if ($response->code >= 400) {
-            throw new Exception('HTTP request failed');
+            /* if (isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') {
+                $response->body = \simplexml_load_string($response->body);
+            } */
+            throw new Exception($response->body, $response->code);
         }
 
         \curl_close($curl);
