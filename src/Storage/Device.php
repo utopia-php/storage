@@ -58,6 +58,8 @@ abstract class Device
      */
     abstract public function upload($source, $path): bool;
 
+    abstract public function uploadPart($source, $path, $chunk, $chunks): bool;
+
     /**
      * Read file by given path.
      *

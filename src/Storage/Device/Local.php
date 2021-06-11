@@ -89,6 +89,36 @@ class Local extends Device
         return false;
     }
 
+    public function uploadPart($source, $path, $chunk, $chunks): bool
+    {
+        if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
+            if (!@\mkdir(\dirname($path), 0755, true)) {
+                throw new Exception('Can\'t create directory: ' . \dirname($path));
+            }
+        }
+
+        $out = @fopen("${$path}.part", $chunk == 0 ? "wb" : "ab");
+        if ($out) {
+            $in = @fopen($source, "rb");
+            if ($in) {
+                while ($buff = \fread($in, 4096)) {
+                    fwrite($out, $buff);
+                }
+            } else {
+                return false;
+            }
+            @fclose($in);
+            @fclose($out);
+        } else {
+            return false;
+        }
+        if (!$chunks || $chunk == $chunks - 1) {
+            \rename("{$path}.part", $path);
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Read file by given path.
      *
