@@ -58,6 +58,21 @@ abstract class Device
      */
     abstract public function upload($source, $path): bool;
 
+    /**
+     * Upload Part
+     * 
+     * Upload large file by chunking into smaller chunks. Return true on success uploading each chunk and
+     * false on failure.
+     * 
+     * @param string $source
+     * @param string $path
+     * @param int $chunk
+     * @param int $chunks
+     * 
+     * @throws \Exception
+     * 
+     * @return bool
+     */
     abstract public function uploadPart($source, $path, $chunk, $chunks): bool;
 
     /**

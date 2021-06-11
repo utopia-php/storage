@@ -89,6 +89,19 @@ class Local extends Device
         return false;
     }
 
+    /**
+     *
+     * Upload large file in chunks to desired destination in the selected disk.
+     *
+     * @param string $source
+     * @param string $path
+     * @param int $chunk
+     * @param int $chunks
+     *
+     * @throws \Exception
+     *
+     * @return bool
+     */
     public function uploadPart($source, $path, $chunk, $chunks): bool
     {
         if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
