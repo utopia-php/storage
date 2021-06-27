@@ -119,6 +119,36 @@ class LocalTest extends TestCase
         $this->assertGreaterThan(0, $this->object->getDirectorySize(__DIR__ . '/../../resources/disk-a/'));
         $this->assertGreaterThan(0, $this->object->getDirectorySize(__DIR__ . '/../../resources/disk-b/'));
     }
+
+    public function testPartUpload() {
+        $source = __DIR__ . "/../../resources/disk-a/large_file.mp4";
+        $dest = $this->object->getPath('uploaded.mp4');
+        $totalSize = $this->object->getFileSize($source);
+        $chunkSize = 2097152;
+
+        $chunks = ceil($totalSize / $chunkSize);
+
+        $chunk = 0;
+        $start = 0;
+
+        $handle = @fopen($source, "rb");
+        while ($start < $totalSize) {
+            $contents = fread($handle, $chunkSize);
+            $op = __DIR__ . '/chunk.part';
+            $cc = fopen($op, 'wb');
+            fwrite($cc, $contents);
+            fclose($cc);
+            $this->object->upload($op, $dest, $chunk, $chunks, $this->object->getPath('tmp/chunks.log'));
+            $start += strlen($contents);
+            $chunk++;
+            fseek($handle, $start);
+        }
+        unlink(__DIR__ . '/chunk.part');
+        @fclose($handle);
+        $this->assertEquals(\filesize($source), $this->object->getFileSize($dest));
+        $this->assertEquals(\md5_file($source), $this->object->getFileHash($dest));
+        $this->object->delete($dest);
+    }
     
     public function testPartitionFreeSpace()
     {

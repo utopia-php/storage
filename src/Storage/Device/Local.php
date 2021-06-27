@@ -69,67 +69,59 @@ class Local extends Device
      *
      * @param string $source
      * @param string $path
-     *
-     * @throws \Exception
-     *
-     * @return bool
-     */
-    public function upload($source, $path): bool
-    {
-        if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
-            if (!@\mkdir(\dirname($path), 0755, true)) {
-                throw new Exception('Can\'t create directory: ' . \dirname($path));
-            }
-        }
-
-        if (\move_uploaded_file($source, $path)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     *
-     * Upload large file in chunks to desired destination in the selected disk.
-     *
-     * @param string $source
-     * @param string $path
      * @param int $chunk
      * @param int $chunks
+     * @param string tmp
      *
      * @throws \Exception
      *
-     * @return bool
+     * @return int
      */
-    public function uploadPart($source, $path, $chunk, $chunks): bool
+    public function upload($source, $path, $chunk = 1, $chunks = 1, $tmp = ''): int
     {
         if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
             if (!@\mkdir(\dirname($path), 0755, true)) {
                 throw new Exception('Can\'t create directory: ' . \dirname($path));
             }
         }
-
-        $out = @fopen("${$path}.part", $chunk == 0 ? "wb" : "ab");
-        if ($out) {
-            $in = @fopen($source, "rb");
-            if ($in) {
-                while ($buff = \fread($in, 4096)) {
-                    fwrite($out, $buff);
-                }
-            } else {
-                return false;
+        if (!\file_exists(\dirname($tmp))) { // Checks if directory path to file exists
+            if (!@\mkdir(\dirname($tmp), 0755, true)) {
+                throw new Exception('Can\'t create directory: ' . \dirname($tmp));
             }
-            @fclose($in);
-            @fclose($out);
+        }
+
+        //move_uploaded_file() verifies the file is not tampered with
+        if($chunks == 1) {
+            if (\move_uploaded_file($source, $path)) {
+                throw new Exception('Can\'t upload file ' . $path);
+            }
+            return $chunks;
         } else {
-            return false;
+            if(!file_put_contents($tmp, "{$chunk}\n", FILE_APPEND)) {
+                throw new Exception('Can\'t write chunk log ' . $tmp);
+            }
+
+            $chunksReceived = count(file($tmp));
+
+            if(!file_put_contents(dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . ".part.{$chunk}", file_get_contents($source))) {
+                throw new Exception('Failed to write chunk ' . $chunk);
+            }
+            
+            if ($chunks == $chunksReceived) {
+                for($i = 0; $i < $chunks; $i++) {
+                    $part = dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . ".part.{$i}";
+                    $data = file_get_contents($part);
+                    if(!file_put_contents($path, $data, FILE_APPEND)) {
+                        throw new Exception('Failed to complete file ' . $path);
+                    }
+                    \unlink($part);
+                }
+                \unlink($tmp);
+                return $chunksReceived;
+            }
+            return $chunksReceived;
         }
-        if (!$chunks || $chunk == $chunks - 1) {
-            \rename("{$path}.part", $path);
-            return true;
-        }
-        return false;
+        return 0;
     }
 
     /**
