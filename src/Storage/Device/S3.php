@@ -168,9 +168,9 @@ class S3 extends Device
      *
      * @throws \Exception
      *
-     * @return bool
+     * @return int
      */
-    public function upload($source, $path): bool
+    public function upload($source, $path, $chunk = 1, $chunks = 1): int
     {
         return $this->write($path, \file_get_contents($source), \mime_content_type($source));
     }
