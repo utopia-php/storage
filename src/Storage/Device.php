@@ -59,7 +59,7 @@ abstract class Device
      *
      * @return int
      */
-    abstract public function upload($source, $path, $chunk = 1, $chunks = 1, $tmp = ''): int;
+    abstract public function upload($source, $path, $chunk = 1, $chunks = 1): int;
 
     /**
      * Read file by given path.
