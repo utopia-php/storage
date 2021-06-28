@@ -138,7 +138,7 @@ class LocalTest extends TestCase
             $cc = fopen($op, 'wb');
             fwrite($cc, $contents);
             fclose($cc);
-            $this->object->upload($op, $dest, $chunk, $chunks, $this->object->getPath('tmp/chunks.log'));
+            $this->object->upload($op, $dest, $chunk, $chunks);
             $start += strlen($contents);
             $chunk++;
             fseek($handle, $start);
