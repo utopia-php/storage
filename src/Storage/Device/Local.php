@@ -112,7 +112,7 @@ class Local extends Device
                     $part = dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . ".part.{$i}";
                     $data = file_get_contents($part);
                     if(!file_put_contents($path, $data, FILE_APPEND)) {
-                        throw new Exception('Failed to complete file ' . $path);
+                        throw new Exception('Failed to append chunk ' . $path);
                     }
                     \unlink($part);
                 }
