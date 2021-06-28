@@ -110,7 +110,7 @@ class Local extends Device
 
             $chunksReceived = count(file($tmp));
 
-            if(!move_uploaded_file($source, dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . ".part.{$chunk}")) {
+            if(!\rename($source, dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . ".part.{$chunk}")) {
                 throw new Exception('Failed to write chunk ' . $chunk);
             }
             
@@ -125,8 +125,9 @@ class Local extends Device
                     if(!file_put_contents($path, $data, FILE_APPEND)) {
                         throw new Exception('Failed to append chunk ' . $path);
                     }
+                    \unlink($part);
                 }
-                \rmdir(\dirname($tmp));
+                \unlink($tmp);
                 return $chunksReceived;
             }
             return $chunksReceived;

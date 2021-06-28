@@ -143,7 +143,6 @@ class LocalTest extends TestCase
             $chunk++;
             fseek($handle, $start);
         }
-        unlink(__DIR__ . '/chunk.part');
         @fclose($handle);
         $this->assertEquals(\filesize($source), $this->object->getFileSize($dest));
         $this->assertEquals(\md5_file($source), $this->object->getFileHash($dest));
