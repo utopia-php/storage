@@ -434,7 +434,7 @@ class S3 extends Device
         $kService = \hash_hmac('sha256', $service, $kRegion, true);
         $kSigning = \hash_hmac('sha256', 'aws4_request', $kService, true);
 
-        $signature = \hash_hmac('sha256', $stringToSignStr, $kSigning);
+        $signature = \hash_hmac('sha256', \utf8_encode($stringToSignStr), $kSigning);
 
         return $algorithm . ' ' . \implode(',', [
             'Credential=' . $this->accessKey . '/' . \implode('/', $credentialScope),
