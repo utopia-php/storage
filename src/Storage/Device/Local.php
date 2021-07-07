@@ -87,7 +87,7 @@ class Local extends Device
 
         //move_uploaded_file() verifies the file is not tampered with
         if($chunks == 1) {
-            if (\move_uploaded_file($source, $path)) {
+            if (!\move_uploaded_file($source, $path)) {
                 throw new Exception('Can\'t upload file ' . $path);
             }
             return $chunks;
