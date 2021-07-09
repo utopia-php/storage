@@ -65,10 +65,12 @@ abstract class Device
      * Read file by given path.
      *
      * @param string $path
+     * @param int $offset
+     * @param int $length
      *
      * @return string
      */
-    abstract public function read(string $path): string;
+    abstract public function read(string $path, int $offset = 0, ?int $length): string;
 
     /**
      * Write file by given path.

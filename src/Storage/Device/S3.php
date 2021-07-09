@@ -184,7 +184,7 @@ class S3 extends Device
      *
      * @return string
      */
-    public function read(string $path): string
+    public function read(string $path, int $offset = 0, ?int $length): string
     {
         $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
         $response = $this->call(self::METHOD_GET, $uri);
