@@ -69,12 +69,15 @@ class Local extends Device
      *
      * @param string $source
      * @param string $path
+     * @param int $chunk
+     * @param int $chunks
+     * @param string tmp
      *
      * @throws \Exception
      *
-     * @return bool
+     * @return int
      */
-    public function upload($source, $path): bool
+    public function upload($source, $path, $chunk = 1, $chunks = 1): int
     {
         if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
             if (!@\mkdir(\dirname($path), 0755, true)) {
@@ -82,11 +85,54 @@ class Local extends Device
             }
         }
 
-        if (\move_uploaded_file($source, $path)) {
-            return true;
-        }
+        //move_uploaded_file() verifies the file is not tampered with
+        if($chunks == 1) {
+            if (!\move_uploaded_file($source, $path)) {
+                throw new Exception('Can\'t upload file ' . $path);
+            }
+            return $chunks;
+        } else {
+            $tmp = \dirname($path) . "/tmp/chunks.log";
 
-        return false;
+            if (!\file_exists(\dirname($tmp))) { // Checks if directory path to file exists
+                if (!@\mkdir(\dirname($tmp), 0755, true)) {
+                    throw new Exception('Can\'t create directory: ' . \dirname($tmp));
+                }
+            }
+            if(!file_put_contents($tmp, "{$chunk}\n", FILE_APPEND)) {
+                throw new Exception('Can\'t write chunk log ' . $tmp);
+            }
+
+            $chunkLogs = file($tmp);
+            if(!$chunkLogs) {
+                throw new Exception("Unable to read chunk log " . $tmp);
+            }
+
+            $chunksReceived = count(file($tmp));
+
+            if(!\rename($source, dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . ".part.{$chunk}")) {
+                throw new Exception('Failed to write chunk ' . $chunk);
+            }
+            
+            if ($chunks == $chunksReceived) {
+                for($i = 0; $i < $chunks; $i++) {
+                    $part = dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . ".part.{$i}";
+                    $data = file_get_contents($part);
+                    if(!$data) {
+                        throw new Exception("Failed to read chunk " . $part);
+                    }
+
+                    if(!file_put_contents($path, $data, FILE_APPEND)) {
+                        throw new Exception('Failed to append chunk ' . $part);
+                    }
+                    \unlink($part);
+                }
+                \unlink($tmp);
+                return $chunksReceived;
+            }
+            return $chunksReceived;
+        }
+        return 0;
     }
 
     /**
@@ -96,12 +142,12 @@ class Local extends Device
      *
      * @return string
      */
-    public function read(string $path): string
+    public function read(string $path, int $offset = 0, int $length = null): string
     {
         if(!$this->exists($path)) {
             throw new Exception("File Not Found", 404);
         }
-        return \file_get_contents($path);
+        return \file_get_contents($path, false, null, $offset, $length);
     }
 
     /**

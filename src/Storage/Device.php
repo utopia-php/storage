@@ -51,21 +51,26 @@ abstract class Device
      *
      * @param string $source
      * @param string $path
-     *
+     * @param int $chunk
+     * @param int $chunks
+     * @param string $tmp
+     * 
      * @throws \Exception
      *
-     * @return bool
+     * @return int
      */
-    abstract public function upload($source, $path): bool;
+    abstract public function upload($source, $path, $chunk = 1, $chunks = 1): int;
 
     /**
      * Read file by given path.
      *
      * @param string $path
+     * @param int $offset
+     * @param int $length
      *
      * @return string
      */
-    abstract public function read(string $path): string;
+    abstract public function read(string $path, int $offset = 0, int $length = null): string;
 
     /**
      * Write file by given path.

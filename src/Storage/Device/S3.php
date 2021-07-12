@@ -168,9 +168,9 @@ class S3 extends Device
      *
      * @throws \Exception
      *
-     * @return bool
+     * @return int
      */
-    public function upload($source, $path): bool
+    public function upload($source, $path, $chunk = 1, $chunks = 1): int
     {
         return $this->write($path, \file_get_contents($source), \mime_content_type($source));
     }
@@ -184,7 +184,7 @@ class S3 extends Device
      *
      * @return string
      */
-    public function read(string $path): string
+    public function read(string $path, int $offset = 0, int $length = null): string
     {
         $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
         $response = $this->call(self::METHOD_GET, $uri);
@@ -434,7 +434,7 @@ class S3 extends Device
         $kService = \hash_hmac('sha256', $service, $kRegion, true);
         $kSigning = \hash_hmac('sha256', 'aws4_request', $kService, true);
 
-        $signature = \hash_hmac('sha256', $stringToSignStr, $kSigning);
+        $signature = \hash_hmac('sha256', \utf8_encode($stringToSignStr), $kSigning);
 
         return $algorithm . ' ' . \implode(',', [
             'Credential=' . $this->accessKey . '/' . \implode('/', $credentialScope),
