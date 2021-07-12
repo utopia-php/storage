@@ -70,7 +70,7 @@ abstract class Device
      *
      * @return string
      */
-    abstract public function read(string $path, int $offset = 0, ?int $length): string;
+    abstract public function read(string $path, int $offset = 0, int $length = null): string;
 
     /**
      * Write file by given path.
