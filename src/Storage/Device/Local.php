@@ -147,7 +147,7 @@ class Local extends Device
     public function read(string $path, int $offset = 0, int $length = null): string
     {
         if(!$this->exists($path)) {
-            throw new Exception("File Not Found", 404);
+            throw new Exception("File Not Found");
         }
         return \file_get_contents($path, false, null, $offset, $length);
     }
