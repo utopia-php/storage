@@ -39,10 +39,11 @@ abstract class Device
      * Each device hold a complex directory structure that is being build in this method.
      *
      * @param $filename
+     * @param $prefix
      *
      * @return string
      */
-    abstract public function getPath(string $filename): string;
+    abstract public function getPath(string $filename, string $prefix = null): string;
 
     /**
      * Upload.

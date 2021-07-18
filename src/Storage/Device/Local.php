@@ -51,14 +51,16 @@ class Local extends Device
      *
      * @return string
      */
-    public function getPath($filename): string
+    public function getPath($filename, $prefix = null): string
     {
         $path = '';
 
         for ($i = 0; $i < 4; ++$i) {
             $path = ($i < \strlen($filename)) ? $path . DIRECTORY_SEPARATOR . $filename[$i] : $path . DIRECTORY_SEPARATOR . 'x';
         }
-
+        if($prefix != null) {
+            $path = $prefix . DIRECTORY_SEPARATOR . $path;
+        }
         return $this->getRoot() . $path . DIRECTORY_SEPARATOR . $filename;
     }
 
