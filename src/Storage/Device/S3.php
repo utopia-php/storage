@@ -260,6 +260,24 @@ class S3 extends Device
     }
 
     /**
+     * Delete file in given path, Return true on success and false on failure.
+     *
+     * @see http://php.net/manual/en/function.filesize.php
+     *
+     * @param string $path
+     *
+     * @return bool
+     */
+    public function deletePath(string $path): bool
+    {
+        $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+
+        $this->call(self::METHOD_DELETE, $uri);
+
+        return true;
+    }
+
+    /**
      * Check if file exists
      *
      * @param string $path

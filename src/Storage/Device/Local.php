@@ -224,6 +224,31 @@ class Local extends Device
     }
 
     /**
+     * Delete file in given path, Return true on success and false on failure.
+     *
+     * @see http://php.net/manual/en/function.filesize.php
+     *
+     * @param string $path
+     *
+     * @return bool
+     */
+    public function deletePath(string $path): bool
+    {
+        $path = $this->getRoot() . DIRECTORY_SEPARATOR . $path;
+        if (\is_dir($path)) {
+            $files = \glob($path . '*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
+
+            foreach ($files as $file) {
+                $this->delete($file, true);
+            }
+
+            \rmdir($path);
+        }
+
+        return false;
+    }
+
+    /**
      * Check if file exists
      *
      * @param string $path
