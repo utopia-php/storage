@@ -229,7 +229,7 @@ class Local extends Device
     }
 
     /**
-     * Delete file in given path, Return true on success and false on failure.
+     * Delete files in given path, path must be a directory. Return true on success and false on failure.
      *
      * @see http://php.net/manual/en/function.filesize.php
      *

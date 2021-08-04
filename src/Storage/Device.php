@@ -108,7 +108,7 @@ abstract class Device
     abstract public function delete(string $path, bool $recursive = false): bool;
     
     /**
-     * Delete file in given path return true on success and false on failure.
+     * Delete files in given path, path must be a directory. return true on success and false on failure.
      *
      * @see http://php.net/manual/en/function.filesize.php
      *
