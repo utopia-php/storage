@@ -179,6 +179,53 @@ class S3 extends Device
         return $this->write($path, \file_get_contents($source), \mime_content_type($source));
     }
 
+    public function uploadPart($source, $path, $uploadId, $chunk = 1, $chunks = 1): bool
+    {
+        $path = $path . '?partNumber=' . $chunk . '&uploadId=' . $uploadId;
+        $written = $this->write($path, \file_get_contents($source), \mime_content_type($source));
+        if($written && $chunks == $chunk){ // if last chunk
+            $this->completeMultipartUpload($path, $uploadId);
+        }
+        return $written;
+    }
+
+    /**
+     * Complete Multipart Upload
+     * 
+     * @param string $path
+     * @param string $uploadId
+     * 
+     * @return bool
+     */
+    public function completeMultipartUpload($path, $uploadId): bool
+    {
+        $path = $path . '?uploadId=' . $uploadId;
+        $this->call(self::METHOD_POST, $path, '<CompleteMultipartUpload></CompleteMultipartUpload>');
+        return true;
+    }
+
+    /**
+     * Start Multipart Upload
+     * 
+     * Initiate a multipart upload and return an upload ID.
+     * 
+     * @param string $path
+     * @param string $contentType
+     * 
+     * @return string
+     */
+    public function startMultipartUpload(string $path, string $contentType): string
+    {
+        $this->headers['date'] = gmdate('D, d M Y H:i:s T');
+        $this->headers['content-md5'] = '';
+        $this->headers['content-type'] = $contentType;
+        $this->amzHeaders['x-amz-acl'] = $this->acl;
+        $response = $this->call(self::METHOD_POST, $path);
+        var_dump($response);
+        return $response['UploadId'];
+    }
+
+
     /**
      * Read file by given path.
      *
