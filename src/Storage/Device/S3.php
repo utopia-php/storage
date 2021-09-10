@@ -179,6 +179,9 @@ class S3 extends Device
      */
     public function upload($source, $path, $chunk = 1, $chunks = 1, &$metadata = []): int
     {
+        if($chunk == 1 && $chunks == 1) {
+            return $this->write($path, \file_get_contents($source), \mime_content_type($source));
+        }
         $uploadId = $metadata['uploadId'] ?? null;
         if(empty($uploadId)) {
             $uploadId = $this->createMultipartUpload($path, $metadata['content_type']);
