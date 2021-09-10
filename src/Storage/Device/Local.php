@@ -73,13 +73,13 @@ class Local extends Device
      * @param string $path
      * @param int $chunk
      * @param int $chunks
-     * @param string tmp
+     * @param array $metadata
      *
      * @throws \Exception
      *
      * @return int
      */
-    public function upload($source, $path, $chunk = 1, $chunks = 1): int
+    public function upload($source, $path, $chunk = 1, $chunks = 1, &$metadata = []): int
     {
         if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
             if (!@\mkdir(\dirname($path), 0755, true)) {
@@ -93,48 +93,46 @@ class Local extends Device
                 throw new Exception('Can\'t upload file ' . $path);
             }
             return $chunks;
-        } else {
-            $tmp = \dirname($path) . "/tmp/chunks.log";
+        }
+        $tmp = \dirname($path) . "/tmp/chunks.log";
 
-            if (!\file_exists(\dirname($tmp))) { // Checks if directory path to file exists
-                if (!@\mkdir(\dirname($tmp), 0755, true)) {
-                    throw new Exception('Can\'t create directory: ' . \dirname($tmp));
+        if (!\file_exists(\dirname($tmp))) { // Checks if directory path to file exists
+            if (!@\mkdir(\dirname($tmp), 0755, true)) {
+                throw new Exception('Can\'t create directory: ' . \dirname($tmp));
+            }
+        }
+        if(!file_put_contents($tmp, "{$chunk}\n", FILE_APPEND)) {
+            throw new Exception('Can\'t write chunk log ' . $tmp);
+        }
+
+        $chunkLogs = file($tmp);
+        if(!$chunkLogs) {
+            throw new Exception("Unable to read chunk log " . $tmp);
+        }
+
+        $chunksReceived = count(file($tmp));
+
+        if(!\rename($source, dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . ".part.{$chunk}")) {
+            throw new Exception('Failed to write chunk ' . $chunk);
+        }
+        
+        if ($chunks == $chunksReceived) {
+            for($i = 0; $i < $chunks; $i++) {
+                $part = dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . ".part.{$i}";
+                $data = file_get_contents($part);
+                if(!$data) {
+                    throw new Exception("Failed to read chunk " . $part);
                 }
-            }
-            if(!file_put_contents($tmp, "{$chunk}\n", FILE_APPEND)) {
-                throw new Exception('Can\'t write chunk log ' . $tmp);
-            }
 
-            $chunkLogs = file($tmp);
-            if(!$chunkLogs) {
-                throw new Exception("Unable to read chunk log " . $tmp);
-            }
-
-            $chunksReceived = count(file($tmp));
-
-            if(!\rename($source, dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . ".part.{$chunk}")) {
-                throw new Exception('Failed to write chunk ' . $chunk);
-            }
-            
-            if ($chunks == $chunksReceived) {
-                for($i = 0; $i < $chunks; $i++) {
-                    $part = dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . ".part.{$i}";
-                    $data = file_get_contents($part);
-                    if(!$data) {
-                        throw new Exception("Failed to read chunk " . $part);
-                    }
-
-                    if(!file_put_contents($path, $data, FILE_APPEND)) {
-                        throw new Exception('Failed to append chunk ' . $part);
-                    }
-                    \unlink($part);
+                if(!file_put_contents($path, $data, FILE_APPEND)) {
+                    throw new Exception('Failed to append chunk ' . $part);
                 }
-                \unlink($tmp);
-                return $chunksReceived;
+                \unlink($part);
             }
+            \unlink($tmp);
             return $chunksReceived;
         }
-        return 0;
+        return $chunksReceived;
     }
 
     /**
