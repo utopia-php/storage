@@ -301,8 +301,11 @@ class S3 extends Device
     public function read(string $path, int $offset = 0, int $length = null): string
     {
         $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        if($length !== null) {
+            $end = $offset + $length - 1;
+            $this->headers['range'] = "bytes=$offset-$end";
+        }
         $response = $this->call(self::METHOD_GET, $uri);
-
         return $response->body;
     }
 

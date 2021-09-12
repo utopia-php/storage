@@ -186,6 +186,18 @@ class S3Test extends TestCase
         // https://savjee.be/2015/10/Verifying-Amazon-S3-multi-part-uploads-with-ETag-hash/
         // TODO
         // $this->assertEquals(\md5_file($source), $this->object->getFileHash($dest));
-        $this->object->delete($dest);
+        // $this->object->delete($dest);
+        return $dest;
+    }
+
+    /**
+     * @depends testPartUpload
+     */
+    public function testPartRead($path) {
+        $source = __DIR__ . "/../../resources/disk-a/large_file.mp4";
+        $chunk = file_get_contents($source, false,null, 0, 500);
+        $readChunk = $this->object->read($path, 0, 500);
+        $this->assertEquals($chunk, $readChunk);
+        $this->object->delete($path);
     }
 }
