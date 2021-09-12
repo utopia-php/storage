@@ -209,7 +209,7 @@ class S3 extends Device
      * 
      * @return string
      */
-    public function createMultipartUpload(string $path, string $contentType): string
+    protected function createMultipartUpload(string $path, string $contentType): string
     {
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
 
