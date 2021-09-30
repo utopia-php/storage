@@ -237,7 +237,7 @@ class S3 extends Device
         $data = \file_get_contents($source);
         $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
         $this->headers['content-type'] = \mime_content_type($source);
-        $this->headers['content-md5'] = \base64_encode(md5($data, true)); //TODO whould this work well with big file? can we skip it?
+        $this->headers['content-md5'] = \base64_encode(md5($data, true));
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
         unset($this->amzHeaders['x-amz-acl']);
 
