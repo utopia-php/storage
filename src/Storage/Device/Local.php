@@ -149,12 +149,7 @@ class Local extends Device
         if(!$this->exists($path)) {
             throw new Exception("File Not Found");
         }
-        if (\version_compare(PHP_VERSION, '8.0', '<')) {
-            if($length == null) {
-                $length = $this->getFileSize($path);
-            }
-        }
-        return \file_get_contents($path, false, null, $offset, $length);
+        return \file_get_contents($path, use_include_path: false, context: null, offset: $offset, length: $length);
     }
 
     /**
