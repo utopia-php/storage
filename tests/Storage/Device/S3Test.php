@@ -163,6 +163,7 @@ class S3Test extends TestCase
             'content_type' => \mime_content_type($source),
         ];
         $handle = @fopen($source, "rb");
+        $op = __DIR__ . '/chunk.part';
         while ($start < $totalSize) {
             $contents = fread($handle, $chunkSize);
             $op = __DIR__ . '/chunk.part';
