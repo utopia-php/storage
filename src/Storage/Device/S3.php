@@ -239,7 +239,7 @@ class S3 extends Device
         $this->headers['content-type'] = \mime_content_type($source);
         $this->headers['content-md5'] = \base64_encode(md5($data, true));
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
-        unset($this->amzHeaders['x-amz-acl']);
+        unset($this->amzHeaders['x-amz-acl']); // ACL header is not allowed in parts, only createMultipartUpload accepts this header.
 
         $response = $this->call(self::METHOD_PUT, $uri, $data, [
             'partNumber'=>$chunk,
