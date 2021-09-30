@@ -48,7 +48,8 @@ abstract class Device
     /**
      * Upload.
      *
-     * Upload a file to desired destination in the selected disk, return true on success and false on failure.
+     * Upload a file to desired destination in the selected disk
+     * return number of chunks uploaded or 0 if it fails.
      *
      * @param string $source
      * @param string $path
