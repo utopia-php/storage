@@ -1,4 +1,4 @@
-name: 🚀 Feature"
+name: 🚀 Feature
 description: "Submit a proposal for a new feature"
 title: "🚀 Feature: "
 labels: [feature]
@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out our bug report form 🙏
+        Thanks for taking the time to fill out our feature report form 🙏
   - type: textarea
     id: feature-description
     validations:
@@ -27,7 +27,7 @@ body:
     id: no-duplicate-issues
     attributes:
       label: "👀 Have you spent some time to check if this issue has been raised before?"
-      description: "Have you Googled for a similar issue or checked our older issues for a similar bug?"
+      description: "Have you Googled for a similar issue or checked our older issues for a similar feature suggestion?"
       options:
         - label: "I checked and didn't find similar issue"
           required: true

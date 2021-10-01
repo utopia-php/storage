@@ -34,15 +34,14 @@ body:
   - type: dropdown
     id: appwrite-version
     attributes:
-      label: "🎲 Appwrite version"
-      description: "What version of Appwrite are you running?"
+      label: "🎲 Utopia Storage Version"
+      description: "What version of Utopia Storage are you running?"
       options:
-        - Version 0.10.x
-        - Version 0.9.x
-        - Version 0.8.x
-        - Version 0.7.x
-        - Version 0.6.x
-        - Different version (specify in environment)
+        - Version 0.5.x
+        - Version 0.4.x
+        - Version 0.3.x
+        - Version 0.2.x
+        - Version 0.1.x
     validations:
       required: true
   - type: dropdown
