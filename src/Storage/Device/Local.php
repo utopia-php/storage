@@ -243,6 +243,7 @@ class Local extends Device
             }
 
             \rmdir($path);
+            return true;
         }
 
         return false;
