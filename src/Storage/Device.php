@@ -56,12 +56,13 @@ abstract class Device
      * @param int $chunk
      * @param int $chunks
      * @param string $tmp
+     * @param array $metadata
      * 
      * @throws \Exception
      *
      * @return int
      */
-    abstract public function upload($source, $path, $chunk = 1, $chunks = 1): int;
+    abstract public function upload($source, $path, $chunk = 1, $chunks = 1, &$metadata = []): int;
 
     /**
      * Read file by given path.

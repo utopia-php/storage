@@ -169,14 +169,124 @@ class S3 extends Device
      *
      * @param string $source
      * @param string $path
+     * @param int chunk
+     * @param int chunks
+     * @param array $metadata
      *
      * @throws \Exception
      *
      * @return int
      */
-    public function upload($source, $path, $chunk = 1, $chunks = 1): int
+    public function upload($source, $path, $chunk = 1, $chunks = 1, &$metadata = []): int
     {
-        return $this->write($path, \file_get_contents($source), \mime_content_type($source));
+        if($chunk == 1 && $chunks == 1) {
+            return $this->write($path, \file_get_contents($source), \mime_content_type($source));
+        }
+        $uploadId = $metadata['uploadId'] ?? null;
+        if(empty($uploadId)) {
+            $uploadId = $this->createMultipartUpload($path, $metadata['content_type']);
+            $metadata['uploadId'] = $uploadId;
+        }
+
+        $etag = $this->uploadPart($source, $path, $chunk, $uploadId);
+        $metadata['parts'] ??= [];
+        $metadata['parts'][] = ['partNumber' => $chunk, 'etag' => $etag];
+        $metadata['chunks'] ??= 0;
+        $metadata['chunks']++;
+        if($metadata['chunks'] == $chunks) {
+            $this->completeMultipartUpload($path, $uploadId, $metadata['parts']);
+        }
+        return $metadata['chunks'];
+    }
+
+    /**
+     * Start Multipart Upload
+     * 
+     * Initiate a multipart upload and return an upload ID.
+     * 
+     * @param string $path
+     * @param string $contentType
+     * 
+     * @return string
+     */
+    protected function createMultipartUpload(string $path, string $contentType): string
+    {
+        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+
+        $this->headers['date'] = gmdate('D, d M Y H:i:s T');
+        $this->headers['content-type'] = $contentType;
+        $this->amzHeaders['x-amz-acl'] = $this->acl;
+        $response = $this->call(self::METHOD_POST, $uri, '', ['uploads' => '']);
+        return $response->body['UploadId'];
+    }
+
+    /**
+     * Upload Part
+     * 
+     * @param string $source
+     * @param string $path
+     * @param string $uploadId
+     * @param int $chunk
+     * 
+     * @return string
+     */
+    protected function uploadPart($source, $path, $chunk, $uploadId) : string
+    {
+        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+        
+        $data = \file_get_contents($source);
+        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
+        $this->headers['content-type'] = \mime_content_type($source);
+        $this->headers['content-md5'] = \base64_encode(md5($data, true));
+        $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
+        unset($this->amzHeaders['x-amz-acl']); // ACL header is not allowed in parts, only createMultipartUpload accepts this header.
+
+        $response = $this->call(self::METHOD_PUT, $uri, $data, [
+            'partNumber'=>$chunk,
+            'uploadId' => $uploadId
+        ]);
+
+        return $response->headers['etag'];
+    }
+
+    /**
+     * Complete Multipart Upload
+     * 
+     * @param string $path
+     * @param string $uploadId
+     * 
+     * @return bool
+     */
+    protected function completeMultipartUpload(string $path, string $uploadId, array $parts): bool
+    {
+        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+
+        $body = '<CompleteMultipartUpload>';
+        foreach ($parts as $part) {
+            $body .= "<Part><ETag>{$part['etag']}</ETag><PartNumber>{$part['partNumber']}</PartNumber></Part>";
+        }
+        $body .= '</CompleteMultipartUpload>';
+
+        $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
+        $this->headers['content-md5'] = \base64_encode(md5($body, true));
+        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
+        $this->call(self::METHOD_POST, $uri, $body , ['uploadId' => $uploadId]);
+        return true;
+    }
+
+    /**
+     * Abort Multipart Upload
+     * 
+     * @param string $path
+     * @param string $uploadId
+     * 
+     * @return bool
+     */
+    protected function abortMultipartUpload(string $path, string $uploadId): bool
+    {
+        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+        $this->call(self::METHOD_DELETE, $uri, '', ['uploadId' => $uploadId]);
+        return true;
     }
 
     /**
@@ -191,8 +301,11 @@ class S3 extends Device
     public function read(string $path, int $offset = 0, int $length = null): string
     {
         $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        if($length !== null) {
+            $end = $offset + $length - 1;
+            $this->headers['range'] = "bytes=$offset-$end";
+        }
         $response = $this->call(self::METHOD_GET, $uri);
-
         return $response->body;
     }
 
@@ -207,7 +320,7 @@ class S3 extends Device
      */
     public function write(string $path, string $data, string $contentType = ''): bool
     {
-        $uri = $path !== '' ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
         
         $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
         $this->headers['content-type'] = $contentType;
@@ -398,7 +511,7 @@ class S3 extends Device
      * @param string $uri
      * @return string
      */
-    private function getSignatureV4(string $method, string $uri): string
+    private function getSignatureV4(string $method, string $uri, $parameters = []): string
     {
         $service = 's3';
         $region = $this->region;
@@ -420,7 +533,6 @@ class S3 extends Device
         uksort($combinedHeaders, [ & $this, 'sortMetaHeadersCmp']);
 
         // Convert null query string parameters to strings and sort
-        $parameters = [];
         uksort($parameters, [ & $this, 'sortMetaHeadersCmp']);
         $queryString = \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 
@@ -470,9 +582,9 @@ class S3 extends Device
      *
      * @return  object
      */
-    private function call(string $method, string $uri, string $data = '')
+    private function call(string $method, string $uri, string $data = '', array $parameters=[])
     {
-        $url = 'https://' . $this->headers['host'] . $uri;
+        $url = 'https://' . $this->headers['host'] . $uri . '?' . \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
         $response->body = '';
         $response->headers = [];
@@ -502,7 +614,7 @@ class S3 extends Device
             }
         }
 
-        $httpHeaders[] = 'Authorization: ' . $this->getSignatureV4($method, $uri);
+        $httpHeaders[] = 'Authorization: ' . $this->getSignatureV4($method, $uri, $parameters);
 
         \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
         \curl_setopt($curl, CURLOPT_HEADER, false);
@@ -552,8 +664,9 @@ class S3 extends Device
         \curl_close($curl);
 
         // Parse body into XML
-        if (isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') {
+        if ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml'))) {
             $response->body = \simplexml_load_string($response->body);
+            $response->body = json_decode(json_encode($response->body), true);
         }
 
         return $response;

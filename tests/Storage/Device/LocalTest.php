@@ -146,7 +146,18 @@ class LocalTest extends TestCase
         @fclose($handle);
         $this->assertEquals(\filesize($source), $this->object->getFileSize($dest));
         $this->assertEquals(\md5_file($source), $this->object->getFileHash($dest));
-        $this->object->delete($dest);
+        return $dest;
+    }
+
+    /**
+     * @depends testPartUpload
+     */
+    public function testPartRead($path) {
+        $source = __DIR__ . "/../../resources/disk-a/large_file.mp4";
+        $chunk = file_get_contents($source, false,null, 0, 500);
+        $readChunk = $this->object->read($path, 0, 500);
+        $this->assertEquals($chunk, $readChunk);
+        $this->object->delete($path);
     }
     
     public function testPartitionFreeSpace()
