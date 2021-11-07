@@ -18,7 +18,7 @@ class S3Test extends TestCase
         $this->root = '/root';
         $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['S3_SECRET'] ?? '';
-        $bucket = "utopia-storage-tests";
+        $bucket = 'utopia-storage-tests';
 
         $this->object = new S3($this->root, $key, $secret, $bucket, S3::AP_SOUTH_1, S3::ACL_PRIVATE);
 
@@ -145,7 +145,7 @@ class S3Test extends TestCase
     }
 
     public function testPartUpload() {
-        $source = __DIR__ . "/../../resources/disk-a/large_file.mp4";
+        $source = __DIR__ . '/../../resources/disk-a/large_file.mp4';
         $dest = $this->object->getPath('uploaded.mp4');
         $totalSize = \filesize($source);
         // AWS S3 requires each part to be at least 5MB except for last part
@@ -162,7 +162,7 @@ class S3Test extends TestCase
             'uploadId' => null,
             'content_type' => \mime_content_type($source),
         ];
-        $handle = @fopen($source, "rb");
+        $handle = @fopen($source, 'rb');
         $op = __DIR__ . '/chunk.part';
         while ($start < $totalSize) {
             $contents = fread($handle, $chunkSize);
@@ -195,7 +195,7 @@ class S3Test extends TestCase
      * @depends testPartUpload
      */
     public function testPartRead($path) {
-        $source = __DIR__ . "/../../resources/disk-a/large_file.mp4";
+        $source = __DIR__ . '/../../resources/disk-a/large_file.mp4';
         $chunk = file_get_contents($source, false,null, 0, 500);
         $readChunk = $this->object->read($path, 0, 500);
         $this->assertEquals($chunk, $readChunk);

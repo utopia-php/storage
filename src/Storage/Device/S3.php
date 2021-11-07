@@ -144,10 +144,11 @@ class S3 extends Device
 
     /**
      * @param string $filename
+     * @param string $prefix
      *
      * @return string
      */
-    public function getPath(string $filename, $prefix = null): string
+    public function getPath(string $filename, string $prefix = null): string
     {
         $path = '';
 
@@ -155,7 +156,7 @@ class S3 extends Device
             $path = ($i < \strlen($filename)) ? $path . DIRECTORY_SEPARATOR . $filename[$i] : $path . DIRECTORY_SEPARATOR . 'x';
         }
 
-        if($prefix != null) {
+        if(!is_null($prefix)) {
             $path = $prefix . DIRECTORY_SEPARATOR . $path;
         }
 
@@ -290,9 +291,11 @@ class S3 extends Device
     }
 
     /**
-     * Read file by given path.
+     * Read file or part of file by given path, offset and length.
      *
      * @param string $path
+     * @param int offset
+     * @param int length
      * 
      * @throws \Exception
      *
@@ -509,9 +512,10 @@ class S3 extends Device
      * Generate the headers for AWS Signature V4
      * @param string $method
      * @param string $uri
+     * @param array parameters
      * @return string
      */
-    private function getSignatureV4(string $method, string $uri, $parameters = []): string
+    private function getSignatureV4(string $method, string $uri, array $parameters = []): string
     {
         $service = 's3';
         $region = $this->region;

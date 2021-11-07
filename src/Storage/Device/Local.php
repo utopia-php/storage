@@ -48,17 +48,18 @@ class Local extends Device
 
     /**
      * @param string $filename
+     * @param string $prefix
      *
      * @return string
      */
-    public function getPath($filename, $prefix = null): string
+    public function getPath(string $filename, string $prefix = null): string
     {
         $path = '';
 
         for ($i = 0; $i < 4; ++$i) {
             $path = ($i < \strlen($filename)) ? $path . DIRECTORY_SEPARATOR . $filename[$i] : $path . DIRECTORY_SEPARATOR . 'x';
         }
-        if($prefix != null) {
+        if(!is_null($prefix)) {
             $path = $prefix . DIRECTORY_SEPARATOR . $path;
         }
         return $this->getRoot() . $path . DIRECTORY_SEPARATOR . $filename;
@@ -88,7 +89,7 @@ class Local extends Device
         }
 
         //move_uploaded_file() verifies the file is not tampered with
-        if($chunks == 1) {
+        if($chunks === 1) {
             if (!\move_uploaded_file($source, $path)) {
                 throw new Exception('Can\'t upload file ' . $path);
             }
@@ -145,7 +146,7 @@ class Local extends Device
     public function read(string $path, int $offset = 0, int $length = null): string
     {
         if(!$this->exists($path)) {
-            throw new Exception("File Not Found");
+            throw new Exception('File Not Found');
         }
         return \file_get_contents($path, use_include_path: false, context: null, offset: $offset, length: $length);
     }
@@ -324,7 +325,7 @@ class Local extends Device
 
         while (($file = \readdir($directory)) !== false) {
             // Skip file pointers
-            if ($file[0] == '.') {
+            if ($file[0] === '.') {
                 continue;
             }
 

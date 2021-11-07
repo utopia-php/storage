@@ -121,7 +121,7 @@ class LocalTest extends TestCase
     }
 
     public function testPartUpload() {
-        $source = __DIR__ . "/../../resources/disk-a/large_file.mp4";
+        $source = __DIR__ . '/../../resources/disk-a/large_file.mp4';
         $dest = $this->object->getPath('uploaded.mp4');
         $totalSize = $this->object->getFileSize($source);
         $chunkSize = 2097152;
@@ -131,7 +131,7 @@ class LocalTest extends TestCase
         $chunk = 0;
         $start = 0;
 
-        $handle = @fopen($source, "rb");
+        $handle = @fopen($source, 'rb');
         while ($start < $totalSize) {
             $contents = fread($handle, $chunkSize);
             $op = __DIR__ . '/chunk.part';
@@ -153,7 +153,7 @@ class LocalTest extends TestCase
      * @depends testPartUpload
      */
     public function testPartRead($path) {
-        $source = __DIR__ . "/../../resources/disk-a/large_file.mp4";
+        $source = __DIR__ . '/../../resources/disk-a/large_file.mp4';
         $chunk = file_get_contents($source, false,null, 0, 500);
         $readChunk = $this->object->read($path, 0, 500);
         $this->assertEquals($chunk, $readChunk);
