@@ -113,16 +113,16 @@ class Local extends Device
 
         $chunksReceived = count(file($tmp));
 
-        if(!\rename($source, dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . ".part.{$chunk}")) {
+        if(!\rename($source, dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.' . $chunk)) {
             throw new Exception('Failed to write chunk ' . $chunk);
         }
         
         if ($chunks == $chunksReceived) {
             for($i = 0; $i < $chunks; $i++) {
-                $part = dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . ".part.{$i}";
+                $part = dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.'. $i;
                 $data = file_get_contents($part);
                 if(!$data) {
-                    throw new Exception("Failed to read chunk " . $part);
+                    throw new Exception('Failed to read chunk ' . $part);
                 }
 
                 if(!file_put_contents($path, $data, FILE_APPEND)) {
