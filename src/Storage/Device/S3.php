@@ -178,7 +178,7 @@ class S3 extends Device
      *
      * @return int
      */
-    public function upload($source, $path, $chunk = 1, $chunks = 1, &$metadata = []): int
+    public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
         if($chunk == 1 && $chunks == 1) {
             return $this->write($path, \file_get_contents($source), \mime_content_type($source));
@@ -226,12 +226,12 @@ class S3 extends Device
      * 
      * @param string $source
      * @param string $path
-     * @param string $uploadId
      * @param int $chunk
+     * @param string $uploadId
      * 
      * @return string
      */
-    protected function uploadPart($source, $path, $chunk, $uploadId) : string
+    protected function uploadPart(string $source, string $path, int $chunk, string $uploadId) : string
     {
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
         
@@ -255,6 +255,7 @@ class S3 extends Device
      * 
      * @param string $path
      * @param string $uploadId
+     * @param array $parts
      * 
      * @return bool
      */
@@ -416,7 +417,7 @@ class S3 extends Device
      *
      * @see http://php.net/manual/en/function.filesize.php
      *
-     * @param $path
+     * @param string $path
      *
      * @return int
      */
@@ -431,7 +432,7 @@ class S3 extends Device
      *
      * @see http://php.net/manual/en/function.mime-content-type.php
      *
-     * @param $path
+     * @param string $path
      *
      * @return string
      */
@@ -446,7 +447,7 @@ class S3 extends Device
      *
      * @see http://php.net/manual/en/function.md5-file.php
      *
-     * @param $path
+     * @param string $path
      *
      * @return string
      */
@@ -463,7 +464,7 @@ class S3 extends Device
      *
      * Based on http://www.jonasjohn.de/snippets/php/dir-size.htm
      *
-     * @param $path
+     * @param string $path
      *
      * @return int
      */
@@ -513,6 +514,7 @@ class S3 extends Device
      * @param string $method
      * @param string $uri
      * @param array parameters
+     * 
      * @return string
      */
     private function getSignatureV4(string $method, string $uri, array $parameters = []): string
@@ -583,6 +585,11 @@ class S3 extends Device
 
     /**
      * Get the S3 response
+     * 
+     * @param string $method
+     * @param string $uri
+     * @param string $data
+     * @param array $parameters
      *
      * @return  object
      */

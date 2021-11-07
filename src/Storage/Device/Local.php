@@ -80,7 +80,7 @@ class Local extends Device
      *
      * @return int
      */
-    public function upload($source, $path, $chunk = 1, $chunks = 1, &$metadata = []): int
+    public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
         if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
             if (!@\mkdir(\dirname($path), 0755, true)) {
@@ -140,6 +140,8 @@ class Local extends Device
      * Read file by given path.
      *
      * @param string $path
+     * @param int offset
+     * @param int length
      *
      * @return string
      */
@@ -156,6 +158,7 @@ class Local extends Device
      *
      * @param string $path
      * @param string $data
+     * @param string $contentType
      *
      * @return bool
      */
@@ -265,7 +268,7 @@ class Local extends Device
      *
      * @see http://php.net/manual/en/function.filesize.php
      *
-     * @param $path
+     * @param string $path
      *
      * @return int
      */
@@ -279,7 +282,7 @@ class Local extends Device
      *
      * @see http://php.net/manual/en/function.mime-content-type.php
      *
-     * @param $path
+     * @param string $path
      *
      * @return string
      */
@@ -293,7 +296,7 @@ class Local extends Device
      *
      * @see http://php.net/manual/en/function.md5-file.php
      *
-     * @param $path
+     * @param string $path
      *
      * @return string
      */
@@ -309,7 +312,7 @@ class Local extends Device
      *
      * Based on http://www.jonasjohn.de/snippets/php/dir-size.htm
      *
-     * @param $path
+     * @param string $path
      *
      * @return int
      */
