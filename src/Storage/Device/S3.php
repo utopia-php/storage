@@ -277,17 +277,17 @@ class S3 extends Device
     }
 
     /**
-     * Abort Multipart Upload
+     * Abort Chunked Upload
      * 
      * @param string $path
-     * @param string $uploadId
+     * @param mixed $extra
      * 
      * @return bool
      */
-    protected function abortMultipartUpload(string $path, string $uploadId): bool
+    public function abort(string $path, mixed $extra = ''): bool
     {
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
-        $this->call(self::METHOD_DELETE, $uri, '', ['uploadId' => $uploadId]);
+        $this->call(self::METHOD_DELETE, $uri, '', ['uploadId' => $extra]);
         return true;
     }
 

@@ -64,6 +64,16 @@ abstract class Device
     abstract public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
 
     /**
+     * Abort Chunked Upload
+     * 
+     * @param string $path
+     * @param mixed $extra
+     * 
+     * @return bool
+     */
+    abstract public function abort(string $path, mixed $extra = ''): bool;
+
+    /**
      * Read file by given path.
      *
      * @param string $path

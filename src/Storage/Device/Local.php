@@ -137,6 +137,25 @@ class Local extends Device
     }
 
     /**
+     * Abort Chunked Upload
+     * 
+     * @param string $path
+     * @param mixed $extra
+     * 
+     * @return bool
+     */
+    public function abort(string $path, mixed $extra = ''): bool
+    {
+        if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
+            throw new Exception('File doesn\'t exist: ' . \dirname($path));
+        }
+
+        $tmp = \dirname($path) . "/tmp/chunks.log";
+        unlink($tmp);
+        return unlink(\dirname($tmp));
+    }
+
+    /**
      * Read file by given path.
      *
      * @param string $path
