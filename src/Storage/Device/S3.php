@@ -304,6 +304,8 @@ class S3 extends Device
      */
     public function read(string $path, int $offset = 0, int $length = null): string
     {
+        unset($this->headers['content-type']);
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
         $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
         if($length !== null) {
             $end = $offset + $length - 1;
@@ -505,7 +507,6 @@ class S3 extends Device
     {
         unset($this->headers['content-type']);
         $this->headers['content-md5'] = \base64_encode(md5('', true));
-        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
         $uri = $path !== '' ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
         $response = $this->call(self::METHOD_HEAD, $uri);
 
@@ -622,6 +623,7 @@ class S3 extends Device
             }
         }
 
+        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
         foreach ($this->headers as $header => $value) {
             if (\strlen($value) > 0) {
                 $httpHeaders[] = $header . ': ' . $value;
