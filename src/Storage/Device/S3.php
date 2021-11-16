@@ -503,6 +503,9 @@ class S3 extends Device
      */
     private function getInfo(string $path): array
     {
+        unset($this->headers['content-type']);
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
+        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
         $uri = $path !== '' ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
         $response = $this->call(self::METHOD_HEAD, $uri);
 
