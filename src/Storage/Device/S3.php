@@ -371,6 +371,8 @@ class S3 extends Device
      */
     public function delete(string $path, bool $recursive = false): bool
     {
+        unset($this->headers['content-type']);
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
         $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
 
         $this->call(self::METHOD_DELETE, $uri);
