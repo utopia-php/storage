@@ -4,7 +4,7 @@ This document is a part of Utopia PHP contributors' guide. Before you continue r
 
 ## Getting Started
 
-Storage adapters allows developers to add more types of storage device support easily through single interface.
+Storage providers help us use various storage services to store our data. As of the writing of these lines we already support Local storage, [AWS S3](https://aws.amazon.com/s3/) storage and [Digitalocean Spaces](https://www.digitalocean.com/products/spaces/) storage.
 
 ## 1. Prerequisities
 
@@ -32,19 +32,22 @@ Finally, you will need to create a `feat-XXX-YYY-storage-adapter` branch based o
 
 In order to start implementing new storage adapter, add new file inside `src/Storage/Device/YYY.php` where `YYY` is the name of the storage provider in `PascalCase`. Inside the file you should create a class that extends the basic `Device` abstract class. Note that the class name should start with a capital letter, as PHP FIG standards suggest.
 
+Always use properly named environment variables if any credentials are required.
+
+### 2.2. Introduce new device constant
+Introduce newly added device constant in `src/Storage/Storage.php` alongside existing device constants. The device constant should start with `const DEVICE_<name of device>` as the existing ones.
+
 ## 3. Test your adapter
 
-After you finished adding your new adapter, you should be able to use it. You should then write a test for it. In order to write a test, first create new file inside `tests/Storage/Device/YYYTest.php` where `YYY` is the name of the storage adapter from previous step. Taking one of the existing device as a reference implement all the tests for newly added adapter.
+After you finished adding your new adapter, you should be able to use it. You should then write a test for it. 
 
-### 3.1 Running and testing locally
+### 3.1. Introduce new device tests
+Add tests for the newly added device adapter inside `tests/Storage/Device`. Use the existing adapter tests as a reference. The test file and class should be properly named `<Adapter class name>Test.php` and class should be `<Adapter class name>Test`
 
-In order to run automated tests, you should have PHP installed on your system. To run the test, you can simply enter the following command in your terminal.
+### 3.2. Run and verify tests
+Run tests using `vendor/bin/phpunit --configuration phpunit.xml` and verify that everything is working correctly.```
 
-```
-vendor/bin/phpunit tests/Storage/Device/YYYTest.php
-```
-
-This command will run the tests you added for your adapter. If everything goes well, raise a pull request and be ready to respond to any feedback which can arise during our code review.
+If everything goes well, raise a pull request and be ready to respond to any feedback which can arise during our code review.
 
 ## 4. Raise a pull request
 
