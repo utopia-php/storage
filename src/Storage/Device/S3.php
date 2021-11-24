@@ -215,6 +215,7 @@ class S3 extends Device
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
 
         $this->headers['date'] = gmdate('D, d M Y H:i:s T');
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
         $this->headers['content-type'] = $contentType;
         $this->amzHeaders['x-amz-acl'] = $this->acl;
         $response = $this->call(self::METHOD_POST, $uri, '', ['uploads' => '']);
