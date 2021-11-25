@@ -411,7 +411,7 @@ class S3 extends Device
         $continuationToken = '';
         do {
             $objects = $this->listObjects($path, continuationToken: $continuationToken);
-            $count = (int) $objects['KeyCount'];
+            $count = (int) ($objects['KeyCount'] ?? 0);
             if($count < 1) {
                 break;
             }
