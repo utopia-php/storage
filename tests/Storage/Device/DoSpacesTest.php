@@ -101,6 +101,34 @@ class DoSpacesTest extends TestCase
         $this->assertEquals($this->object->delete($this->object->getPath('text-for-delete.txt')), true);
     }
 
+    public function testDeletePath()
+    {
+        // Test Single Object
+        $path = $this->object->getPath('text-for-delete-path.txt');
+        $path = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path);
+        $this->assertEquals($this->object->write($path, 'Hello World', 'text/plain'), true);
+        $this->assertEquals($this->object->exists($path), true);
+        $res = $this->object->deletePath($this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket');
+        $this->assertEquals($this->object->exists($path), false);
+        
+        // Test Multiple Objects
+        $path = $this->object->getPath('text-for-delete-path1.txt');
+        $path = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path);
+        $this->assertEquals($this->object->write($path, 'Hello World', 'text/plain'), true);
+        $this->assertEquals($this->object->exists($path), true);
+
+        $path2 = $this->object->getPath('text-for-delete-path2.txt');
+        $path2 = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path2);
+        $this->assertEquals($this->object->write($path2, 'Hello World', 'text/plain'), true);
+        $this->assertEquals($this->object->exists($path2), true);
+
+        $this->assertEquals($this->object->deletePath($this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket'), true);
+        $this->assertEquals($this->object->exists($path), false);
+        $this->assertEquals($this->object->exists($path2), false);
+        
+
+    }
+
     public function testFileSize()
     {
         $this->assertEquals($this->object->getFileSize($this->object->getPath('testing/kitten-1.jpg')), 599639);

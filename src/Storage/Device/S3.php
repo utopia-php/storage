@@ -328,7 +328,6 @@ class S3 extends Device
     {
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
         
-        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
         $this->headers['content-type'] = $contentType;
         $this->headers['content-md5'] = \base64_encode(md5($data, true)); //TODO whould this work well with big file? can we skip it?
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
@@ -380,6 +379,21 @@ class S3 extends Device
         return true;
     }
 
+    private function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
+    {
+        $uri = '/';
+        $this->headers['content-type'] = 'text/plain';
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
+
+        $response = $this->call(self::METHOD_GET, $uri, '', [
+            'prefix' => $prefix,
+            'max-keys' => $maxKeys,
+            'list-type' => 2,
+            'continuation-token' => $continuationToken,
+        ]);
+        return $response->body;
+    }
+
     /**
      * Delete files in given path, path must be a directory. Return true on success and false on failure.
      *
@@ -391,11 +405,29 @@ class S3 extends Device
      */
     public function deletePath(string $path): bool
     {
-        $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
-
-        unset($this->headers['content-type']);
-        $this->headers['content-md5'] = \base64_encode(md5('', true));
-        $this->call(self::METHOD_DELETE, $uri);
+        $uri = '/';
+        $continuationToken = '';
+        do {
+            $objects = $this->listObjects($path, continuationToken: $continuationToken);
+            $count = (int) $objects['KeyCount'];
+            if($count < 1) {
+                break;
+            }
+            $continuationToken = $objects['NextContinuationToken'] ?? '';
+            $body = '<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">';
+            if($count > 1) {
+                foreach ($objects['Contents'] as $object) {
+                    $body .= "<Object><Key>{$object['Key']}</Key></Object>";
+                }
+            } else {
+                $body .= "<Object><Key>{$objects['Contents']['Key']}</Key></Object>"; 
+            }
+            $body .= '<Quiet>true</Quiet>';
+            $body .= '</Delete>';
+            $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
+            $this->headers['content-md5'] = \base64_encode(md5($body, true));
+            $this->call(self::METHOD_POST, $uri, $body, ['delete'=>'']);
+        } while(!empty($continuationToken));
 
         return true;
     }
@@ -665,6 +697,7 @@ class S3 extends Device
                 \curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
                 break;
             case self::METHOD_HEAD:
+            case self::METHOD_DELETE:
                 \curl_setopt($curl, CURLOPT_NOBODY, true);
                 break;
         }
@@ -676,7 +709,6 @@ class S3 extends Device
         }
         
         $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        
         if ($response->code >= 400) {
             throw new Exception($response->body, $response->code);
         }
