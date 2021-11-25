@@ -214,7 +214,6 @@ class S3 extends Device
     {
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
 
-        $this->headers['date'] = gmdate('D, d M Y H:i:s T');
         $this->headers['content-md5'] = \base64_encode(md5('', true));
         $this->headers['content-type'] = $contentType;
         $this->amzHeaders['x-amz-acl'] = $this->acl;
@@ -237,7 +236,6 @@ class S3 extends Device
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
         
         $data = \file_get_contents($source);
-        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
         $this->headers['content-type'] = \mime_content_type($source);
         $this->headers['content-md5'] = \base64_encode(md5($data, true));
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
@@ -272,7 +270,6 @@ class S3 extends Device
 
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
         $this->headers['content-md5'] = \base64_encode(md5($body, true));
-        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
         $this->call(self::METHOD_POST, $uri, $body , ['uploadId' => $uploadId]);
         return true;
     }
@@ -288,6 +285,8 @@ class S3 extends Device
     public function abort(string $path, mixed $extra = ''): bool
     {
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+        unset($this->headers['content-type']);
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
         $this->call(self::METHOD_DELETE, $uri, '', ['uploadId' => $extra]);
         return true;
     }
@@ -372,10 +371,10 @@ class S3 extends Device
      */
     public function delete(string $path, bool $recursive = false): bool
     {
+        $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        
         unset($this->headers['content-type']);
         $this->headers['content-md5'] = \base64_encode(md5('', true));
-        $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
-
         $this->call(self::METHOD_DELETE, $uri);
 
         return true;
@@ -394,6 +393,8 @@ class S3 extends Device
     {
         $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
 
+        unset($this->headers['content-type']);
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
         $this->call(self::METHOD_DELETE, $uri);
 
         return true;
