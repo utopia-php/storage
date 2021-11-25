@@ -385,12 +385,14 @@ class S3 extends Device
         $this->headers['content-type'] = 'text/plain';
         $this->headers['content-md5'] = \base64_encode(md5('', true));
 
-        $response = $this->call(self::METHOD_GET, $uri, '', [
+        $parameters = [
             'prefix' => $prefix,
             'max-keys' => $maxKeys,
-            'list-type' => 2,
-            'continuation-token' => $continuationToken,
-        ]);
+        ];
+        if(!empty($continuationToken)) {
+            $parameters['continuation-token'] = $continuationToken;
+        }
+        $response = $this->call(self::METHOD_GET, $uri, '', $parameters);
         return $response->body;
     }
 
