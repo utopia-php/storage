@@ -386,6 +386,7 @@ class S3 extends Device
         $this->headers['content-md5'] = \base64_encode(md5('', true));
 
         $parameters = [
+            'list-type' => 2,
             'prefix' => $prefix,
             'max-keys' => $maxKeys,
         ];
@@ -411,7 +412,7 @@ class S3 extends Device
         $continuationToken = '';
         do {
             $objects = $this->listObjects($path, continuationToken: $continuationToken);
-            $count = (int) ($objects['KeyCount'] ?? 0);
+            $count = (int) ($objects['KeyCount'] ?? 1);
             if($count < 1) {
                 break;
             }
