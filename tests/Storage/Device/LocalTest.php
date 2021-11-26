@@ -128,7 +128,7 @@ class LocalTest extends TestCase
 
         $chunks = ceil($totalSize / $chunkSize);
 
-        $chunk = 0;
+        $chunk = 1;
         $start = 0;
 
         $handle = @fopen($source, 'rb');

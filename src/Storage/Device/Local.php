@@ -118,7 +118,7 @@ class Local extends Device
         }
         
         if ($chunks == $chunksReceived) {
-            for($i = 0; $i < $chunks; $i++) {
+            for($i = 1; $i <= $chunks; $i++) {
                 $part = dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.'. $i;
                 $data = file_get_contents($part);
                 if(!$data) {
