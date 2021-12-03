@@ -82,7 +82,7 @@ class Local extends Device
             }
         }
 
-        if (\move_uploaded_file($source, $path)) {
+        if (\rename($source, $path)) {
             return true;
         }
 
