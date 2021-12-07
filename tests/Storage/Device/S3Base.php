@@ -59,70 +59,70 @@ abstract class S3Base extends TestCase
 
     public function testName()
     {
-        $this->assertEquals($this->object->getName(), $this->getAdapterName());
+        $this->assertEquals( $this->getAdapterName(), $this->object->getName());
     }
 
     public function testDescription()
     {
-        $this->assertEquals($this->object->getDescription(), $this->getAdapterDescription());
+        $this->assertEquals($this->getAdapterDescription(), $this->object->getDescription());
     }
 
     public function testRoot()
     {
-        $this->assertEquals($this->object->getRoot(), $this->root);
+        $this->assertEquals($this->root, $this->object->getRoot());
     }
 
     public function testPath()
     {
-        $this->assertEquals($this->object->getPath('image.png'), $this->root . '/i/m/a/g/image.png');
-        $this->assertEquals($this->object->getPath('x.png'), $this->root . '/x/./p/n/x.png');
-        $this->assertEquals($this->object->getPath('y'), $this->root . '/y/x/x/x/y');
+        $this->assertEquals($this->root . '/i/m/a/g/image.png', $this->object->getPath('image.png'));
+        $this->assertEquals($this->root . '/x/./p/n/x.png', $this->object->getPath('x.png'));
+        $this->assertEquals($this->root . '/y/x/x/x/y', $this->object->getPath('y'));
     }
 
     public function testWrite()
     {
-        $this->assertEquals($this->object->write($this->object->getPath('text.txt'), 'Hello World', 'text/plain'), true);
+        $this->assertEquals(true, $this->object->write($this->object->getPath('text.txt'), 'Hello World', 'text/plain'));
 
         $this->object->delete($this->object->getPath('text.txt'));
     }
 
     public function testRead()
     {
-        $this->assertEquals($this->object->write($this->object->getPath('text-for-read.txt'), 'Hello World', 'text/plain'), true);
-        $this->assertEquals($this->object->read($this->object->getPath('text-for-read.txt')), 'Hello World');
+        $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-read.txt'), 'Hello World', 'text/plain'));
+        $this->assertEquals('Hello World', $this->object->read($this->object->getPath('text-for-read.txt')));
 
         $this->object->delete($this->object->getPath('text-for-read.txt'));
     }
 
     public function testFileExists()
     {
-        $this->assertEquals($this->object->exists($this->object->getPath('testing/kitten-1.jpg')), true);
-        $this->assertEquals($this->object->exists($this->object->getPath('testing/kitten-5.jpg')), false);
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/kitten-1.jpg')));
+        $this->assertEquals(false, $this->object->exists($this->object->getPath('testing/kitten-5.jpg')));
     }
 
     public function testMove()
     {
-        $this->assertEquals($this->object->write($this->object->getPath('text-for-move.txt'), 'Hello World', 'text/plain'), true);
-        $this->assertEquals($this->object->exists($this->object->getPath('text-for-move.txt')), true);
-        $this->assertEquals($this->object->move($this->object->getPath('text-for-move.txt'), $this->object->getPath('text-for-move-new.txt')), true);
-        $this->assertEquals($this->object->read($this->object->getPath('text-for-move-new.txt')), 'Hello World');
-        $this->assertEquals($this->object->exists($this->object->getPath('text-for-move.txt')), false);
+        $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-move.txt'), 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('text-for-move.txt')));
+        $this->assertEquals(true, $this->object->move($this->object->getPath('text-for-move.txt'), $this->object->getPath('text-for-move-new.txt')));
+        $this->assertEquals('Hello World', $this->object->read($this->object->getPath('text-for-move-new.txt')));
+        $this->assertEquals(false, $this->object->exists($this->object->getPath('text-for-move.txt')));
 
         $this->object->delete($this->object->getPath('text-for-move-new.txt'));
     }
 
     public function testDelete()
     {
-        $this->assertEquals($this->object->write($this->object->getPath('text-for-delete.txt'), 'Hello World', 'text/plain'), true);
-        $this->assertEquals($this->object->exists($this->object->getPath('text-for-delete.txt')), true);
-        $this->assertEquals($this->object->delete($this->object->getPath('text-for-delete.txt')), true);
+        $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-delete.txt'), 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('text-for-delete.txt')));
+        $this->assertEquals(true, $this->object->delete($this->object->getPath('text-for-delete.txt')));
     }
 
     public function testSVGUpload() {
-        $this->assertEquals($this->object->upload(__DIR__ . '/../../resources/disk-b/appwrite.svg', $this->object->getPath('testing/appwrite.svg')), true);
-        $this->assertEquals($this->object->read($this->object->getPath('testing/appwrite.svg')), file_get_contents(__DIR__ . '/../../resources/disk-b/appwrite.svg'));
-        $this->assertEquals($this->object->exists($this->object->getPath('testing/appwrite.svg')), true);
-        $this->assertEquals($this->object->delete($this->object->getPath('testing/appwrite.svg')), true);
+        $this->assertEquals(true, $this->object->upload(__DIR__ . '/../../resources/disk-b/appwrite.svg', $this->object->getPath('testing/appwrite.svg')));
+        $this->assertEquals(file_get_contents(__DIR__ . '/../../resources/disk-b/appwrite.svg'), $this->object->read($this->object->getPath('testing/appwrite.svg')));
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/appwrite.svg')));
+        $this->assertEquals(true, $this->object->delete($this->object->getPath('testing/appwrite.svg')));
     }
 
     public function testDeletePath()
@@ -130,49 +130,49 @@ abstract class S3Base extends TestCase
         // Test Single Object
         $path = $this->object->getPath('text-for-delete-path.txt');
         $path = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path);
-        $this->assertEquals($this->object->write($path, 'Hello World', 'text/plain'), true);
-        $this->assertEquals($this->object->exists($path), true);
-        $res = $this->object->deletePath($this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket');
-        $this->assertEquals($this->object->exists($path), false);
+        $this->assertEquals(true, $this->object->write($path, 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->exists($path));
+        $this->assertEquals(true, $this->object->deletePath($this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket'));
+        $this->assertEquals(false, $this->object->exists($path));
         
         // Test Multiple Objects
         $path = $this->object->getPath('text-for-delete-path1.txt');
         $path = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path);
-        $this->assertEquals($this->object->write($path, 'Hello World', 'text/plain'), true);
-        $this->assertEquals($this->object->exists($path), true);
+        $this->assertEquals(true, $this->object->write($path, 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->exists($path));
 
         $path2 = $this->object->getPath('text-for-delete-path2.txt');
         $path2 = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path2);
-        $this->assertEquals($this->object->write($path2, 'Hello World', 'text/plain'), true);
-        $this->assertEquals($this->object->exists($path2), true);
+        $this->assertEquals(true, $this->object->write($path2, 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->exists($path2));
 
-        $this->assertEquals($this->object->deletePath($this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket'), true);
-        $this->assertEquals($this->object->exists($path), false);
-        $this->assertEquals($this->object->exists($path2), false);
+        $this->assertEquals(true, $this->object->deletePath($this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket'));
+        $this->assertEquals(false, $this->object->exists($path));
+        $this->assertEquals(false, $this->object->exists($path2));
         
 
     }
 
     public function testFileSize()
     {
-        $this->assertEquals($this->object->getFileSize($this->object->getPath('testing/kitten-1.jpg')), 599639);
-        $this->assertEquals($this->object->getFileSize($this->object->getPath('testing/kitten-2.jpg')), 131958);
+        $this->assertEquals(599639, $this->object->getFileSize($this->object->getPath('testing/kitten-1.jpg')));
+        $this->assertEquals(131958, $this->object->getFileSize($this->object->getPath('testing/kitten-2.jpg')));
     }
 
     public function testFileMimeType()
     {
-        $this->assertEquals($this->object->getFileMimeType($this->object->getPath('testing/kitten-1.jpg')), 'image/jpeg');
-        $this->assertEquals($this->object->getFileMimeType($this->object->getPath('testing/kitten-2.jpg')), 'image/jpeg');
-        $this->assertEquals($this->object->getFileMimeType($this->object->getPath('testing/kitten-1.png')), 'image/png');
-        $this->assertEquals($this->object->getFileMimeType($this->object->getPath('testing/kitten-2.png')), 'image/png');
+        $this->assertEquals('image/jpeg', $this->object->getFileMimeType($this->object->getPath('testing/kitten-1.jpg')));
+        $this->assertEquals('image/jpeg', $this->object->getFileMimeType($this->object->getPath('testing/kitten-2.jpg')));
+        $this->assertEquals('image/png', $this->object->getFileMimeType($this->object->getPath('testing/kitten-1.png')));
+        $this->assertEquals('image/png', $this->object->getFileMimeType($this->object->getPath('testing/kitten-2.png')));
     }
 
     public function testFileHash()
     {
-        $this->assertEquals($this->object->getFileHash($this->object->getPath('testing/kitten-1.jpg')), '7551f343143d2e24ab4aaf4624996b6a');
-        $this->assertEquals($this->object->getFileHash($this->object->getPath('testing/kitten-2.jpg')), '81702fdeef2e55b1a22617bce4951cb5');
-        $this->assertEquals($this->object->getFileHash($this->object->getPath('testing/kitten-1.png')), '03010f4f02980521a8fd6213b52ec313');
-        $this->assertEquals($this->object->getFileHash($this->object->getPath('testing/kitten-2.png')), '8a9ed992b77e4b62b10e3a5c8ed72062');
+        $this->assertEquals('7551f343143d2e24ab4aaf4624996b6a', $this->object->getFileHash($this->object->getPath('testing/kitten-1.jpg')));
+        $this->assertEquals('81702fdeef2e55b1a22617bce4951cb5', $this->object->getFileHash($this->object->getPath('testing/kitten-2.jpg')));
+        $this->assertEquals('03010f4f02980521a8fd6213b52ec313', $this->object->getFileHash($this->object->getPath('testing/kitten-1.png')));
+        $this->assertEquals('8a9ed992b77e4b62b10e3a5c8ed72062', $this->object->getFileHash($this->object->getPath('testing/kitten-2.png')));
     }
 
     public function testDirectorySize()
