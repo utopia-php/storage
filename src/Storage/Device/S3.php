@@ -167,6 +167,7 @@ class S3 extends Device
      * Upload.
      *
      * Upload a file to desired destination in the selected disk.
+     * return number of chunks uploaded or 0 if it fails.
      *
      * @param string $source
      * @param string $path
@@ -399,8 +400,6 @@ class S3 extends Device
 
     /**
      * Delete files in given path, path must be a directory. Return true on success and false on failure.
-     *
-     * @see http://php.net/manual/en/function.filesize.php
      *
      * @param string $path
      *

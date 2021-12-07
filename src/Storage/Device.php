@@ -38,8 +38,8 @@ abstract class Device
      *
      * Each device hold a complex directory structure that is being build in this method.
      *
-     * @param $filename
-     * @param $prefix
+     * @param string $filename
+     * @param string $prefix
      *
      * @return string
      */
@@ -121,7 +121,6 @@ abstract class Device
     /**
      * Delete files in given path, path must be a directory. return true on success and false on failure.
      *
-     * @see http://php.net/manual/en/function.filesize.php
      *
      * @param string $path
      *

@@ -69,6 +69,7 @@ class Local extends Device
      * Upload.
      *
      * Upload a file to desired destination in the selected disk.
+     * return number of chunks uploaded or 0 if it fails.
      *
      * @param string $source
      * @param string $path
@@ -102,7 +103,7 @@ class Local extends Device
                 throw new Exception('Can\'t create directory: ' . \dirname($tmp));
             }
         }
-        if(!file_put_contents($tmp, "{$chunk}\n", FILE_APPEND)) {
+        if(!file_put_contents($tmp, "$chunk\n", FILE_APPEND)) {
             throw new Exception('Can\'t write chunk log ' . $tmp);
         }
 
@@ -246,8 +247,6 @@ class Local extends Device
 
     /**
      * Delete files in given path, path must be a directory. Return true on success and false on failure.
-     *
-     * @see http://php.net/manual/en/function.filesize.php
      *
      * @param string $path
      *
