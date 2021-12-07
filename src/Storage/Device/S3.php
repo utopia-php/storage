@@ -719,7 +719,7 @@ class S3 extends Device
         \curl_close($curl);
 
         // Parse body into XML
-        if ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml'))) {
+        if ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && $response->headers['content-type'] !== 'image/svg+xml')) {
             $response->body = \simplexml_load_string($response->body);
             $response->body = json_decode(json_encode($response->body), true);
         }

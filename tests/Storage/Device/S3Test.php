@@ -107,6 +107,13 @@ class S3Test extends TestCase
         $this->assertEquals($this->object->delete($this->object->getPath('text-for-delete.txt')), true);
     }
 
+    public function testSVGUpload() {
+        $this->assertEquals($this->object->upload(__DIR__ . '/../../resources/disk-b/appwrite.svg', $this->object->getPath('testing/appwrite.svg')), true);
+        $this->assertEquals($this->object->read($this->object->getPath('testing/appwrite.svg')), file_get_contents(__DIR__ . '/../../resources/disk-b/appwrite.svg'));
+        $this->assertEquals($this->object->exists($this->object->getPath('testing/appwrite.svg')), true);
+        $this->assertEquals($this->object->delete($this->object->getPath('testing/appwrite.svg')), true);
+    }
+
     public function testDeletePath()
     {
         // Test Single Object
