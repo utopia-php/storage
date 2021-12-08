@@ -3,6 +3,7 @@
 namespace Utopia\Tests;
 
 use Utopia\Storage\Device\DoSpaces;
+use Utopia\Tests\S3Base;
 
 class DoSpacesTest extends S3Base
 {

@@ -3,6 +3,7 @@
 namespace Utopia\Tests;
 
 use Utopia\Storage\Device\S3;
+use Utopia\Tests\S3Base;
 
 class S3Test extends S3Base
 {
