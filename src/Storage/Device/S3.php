@@ -209,6 +209,8 @@ class S3 extends Device
      * @param string $path
      * @param string $contentType
      * 
+     * @throws \Exception
+     * 
      * @return string
      */
     protected function createMultipartUpload(string $path, string $contentType): string
@@ -229,6 +231,8 @@ class S3 extends Device
      * @param string $path
      * @param int $chunk
      * @param string $uploadId
+     * 
+     * @throws \Exception
      * 
      * @return string
      */
@@ -257,6 +261,8 @@ class S3 extends Device
      * @param string $uploadId
      * @param array $parts
      * 
+     * @throws \Exception
+     * 
      * @return bool
      */
     protected function completeMultipartUpload(string $path, string $uploadId, array $parts): bool
@@ -280,6 +286,8 @@ class S3 extends Device
      * 
      * @param string $path
      * @param mixed $extra
+     * 
+     * @throws \Exception
      * 
      * @return bool
      */
@@ -321,6 +329,7 @@ class S3 extends Device
      *
      * @param string $path
      * @param string $data
+     * 
      * @throws \Exception
      * 
      * @return bool
@@ -346,6 +355,8 @@ class S3 extends Device
      *
      * @param string $source
      * @param string $target
+     * 
+     * @throw \Exception
      *
      * @return bool
      */
@@ -366,6 +377,8 @@ class S3 extends Device
      * @see http://php.net/manual/en/function.filesize.php
      *
      * @param string $path
+     * 
+     * @throws \Exception
      *
      * @return bool
      */
@@ -380,6 +393,15 @@ class S3 extends Device
         return true;
     }
 
+    /**
+     * Get list of objects in the given path.
+     *
+     * @param string $path
+     * 
+     * @throws \Exception
+     *
+     * @return array
+     */
     private function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
     {
         $uri = '/';
@@ -402,6 +424,8 @@ class S3 extends Device
      * Delete files in given path, path must be a directory. Return true on success and false on failure.
      *
      * @param string $path
+     * 
+     * @throws \Exception
      *
      * @return bool
      */
@@ -632,6 +656,8 @@ class S3 extends Device
      * @param string $uri
      * @param string $data
      * @param array $parameters
+     * 
+     * @throws \Exception
      *
      * @return  object
      */
