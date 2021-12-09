@@ -205,7 +205,7 @@ abstract class S3Base extends TestCase
             'parts' => [],
             'chunks' => 0,
             'uploadId' => null,
-            'content-type' => \mime_content_type($source),
+            'content_type' => \mime_content_type($source),
         ];
         $handle = @fopen($source, 'rb');
         $op = __DIR__ . '/chunk.part';
