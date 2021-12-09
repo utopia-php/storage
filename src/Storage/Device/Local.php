@@ -96,7 +96,7 @@ class Local extends Device
             }
             return $chunks;
         }
-        $tmp = \dirname($path) . "/tmp/chunks.log";
+        $tmp = \dirname($path) . '/tmp/chunks.log';
 
         if (!\file_exists(\dirname($tmp))) { // Checks if directory path to file exists
             if (!@\mkdir(\dirname($tmp), 0755, true)) {
@@ -109,7 +109,7 @@ class Local extends Device
 
         $chunkLogs = file($tmp);
         if(!$chunkLogs) {
-            throw new Exception("Unable to read chunk log " . $tmp);
+            throw new Exception('Unable to read chunk log ' . $tmp);
         }
 
         $chunksReceived = count(file($tmp));
@@ -151,7 +151,7 @@ class Local extends Device
             throw new Exception('File doesn\'t exist: ' . \dirname($path));
         }
 
-        $tmp = \dirname($path) . "/tmp/chunks.log";
+        $tmp = \dirname($path) . '/tmp/chunks.log';
         unlink($tmp);
         return unlink(\dirname($tmp));
     }
