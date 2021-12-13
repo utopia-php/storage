@@ -51,7 +51,7 @@ class FileType extends Validator
     /**
      * Get Description
      */
-    public function getDescription()
+    public function getDescription(): string
     {
         return 'File mime-type is not allowed ';
     }
@@ -67,7 +67,7 @@ class FileType extends Validator
      *
      * @return bool
      */
-    public function isValid($path)
+    public function isValid($path): bool
     {
         if (!\is_readable($path)) {
             return false;

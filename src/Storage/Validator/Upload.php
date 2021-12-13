@@ -6,7 +6,10 @@ use Utopia\Validator;
 
 class Upload extends Validator
 {
-    public function getDescription()
+    /**
+     * Get Description
+     */
+    public function getDescription(): string
     {
         return 'Not a valid upload file';
     }
@@ -18,7 +21,7 @@ class Upload extends Validator
      *
      * @return bool
      */
-    public function isValid($path)
+    public function isValid($path): bool
     {
         if (!is_string($path)) {
             return false;
