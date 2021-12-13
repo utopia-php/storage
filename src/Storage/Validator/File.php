@@ -6,7 +6,7 @@ use Utopia\Validator;
 
 class File extends Validator
 {
-    public function getDescription()
+    public function getDescription(): string
     {
         return 'File is not valid';
     }
@@ -20,7 +20,7 @@ class File extends Validator
      *
      * @return bool
      */
-    public function isValid($name)
+    public function isValid($name): bool
     {
         return true;
     }

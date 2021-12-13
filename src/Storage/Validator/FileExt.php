@@ -29,7 +29,7 @@ class FileExt extends Validator
     /**
      * Get Description
      */
-    public function getDescription()
+    public function getDescription(): string
     {
         return 'File extension is not valid';
     }
@@ -41,7 +41,7 @@ class FileExt extends Validator
      *
      * @return bool
      */
-    public function isValid($filename)
+    public function isValid($filename): bool
     {
         $ext = pathinfo($filename, PATHINFO_EXTENSION);
         
