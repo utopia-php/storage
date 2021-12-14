@@ -21,7 +21,10 @@ class FileSize extends Validator
         $this->max = $max;
     }
 
-    public function getDescription()
+    /**
+     * Get Description
+     */
+    public function getDescription(): string
     {
         return 'File size can\'t be bigger than '.$this->max;
     }
@@ -33,7 +36,7 @@ class FileSize extends Validator
      *
      * @return bool
      */
-    public function isValid($fileSize)
+    public function isValid($fileSize): bool
     {
         if (!is_int($fileSize)) {
             return false;
