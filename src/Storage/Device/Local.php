@@ -150,7 +150,7 @@ class Local extends Device
         if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
             throw new Exception('File doesn\'t exist: ' . \dirname($path));
         }
-        
+
         return rmdir (\dirname($path) . '/tmp/');
     }
 
@@ -238,13 +238,6 @@ class Local extends Device
             \rmdir($path);
         } elseif (\is_file($path)) {
             return \unlink($path);
-        }
-
-        // for large files there might be incomplete chunks left
-        // in the tmp directory even when there is not file, so we delete them first
-        $tmp = \dirname($path) . '/tmp/';
-        if(file_exists($tmp)) {
-            \rmdir($tmp);
         }
 
         return false;
