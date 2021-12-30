@@ -96,7 +96,7 @@ class Local extends Device
             }
             return $chunks;
         }
-        $tmp = \dirname($path) . '/tmp/chunks.log';
+        $tmp = \dirname($path) . '/tmp/' . \basename($path) . '_chunks.log';
 
         if (!\file_exists(\dirname($tmp))) { // Checks if directory path to file exists
             if (!@\mkdir(\dirname($tmp), 0755, true)) {
