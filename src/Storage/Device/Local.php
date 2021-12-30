@@ -147,11 +147,22 @@ class Local extends Device
      */
     public function abort(string $path, mixed $extra = ''): bool
     {
-        if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
-            throw new Exception('File doesn\'t exist: ' . \dirname($path));
+        if(file_exists($path)) {
+            \unlink($path);
         }
 
-        return rmdir (\dirname($path) . '/tmp/');
+        $tmp = \dirname($path) . '/tmp/';
+
+        if (!\file_exists(\dirname($tmp))) { // Checks if directory path to file exists
+            throw new Exception('File doesn\'t exist: ' . \dirname($path));
+        }
+        $files = \glob($tmp . '*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
+
+        foreach ($files as $file) {
+            $this->delete($file, true);
+        }
+
+        return \rmdir ($tmp);
     }
 
     /**
