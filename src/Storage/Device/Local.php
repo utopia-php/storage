@@ -239,6 +239,12 @@ class Local extends Device
 
             \rmdir($path);
         } elseif (\is_file($path)) {
+            // for large files there might be incomplete chunks left
+            // in the tmp directory, so we delete them first
+            $tmp = \dirname($path) . '/tmp/';
+            if(file_exists($tmp)) {
+                \rmdir($tmp);
+            }
             return \unlink($path);
         }
 
