@@ -67,11 +67,11 @@ abstract class Device
      * Abort Chunked Upload
      * 
      * @param string $path
-     * @param mixed $extra
+     * @param string $extra
      * 
      * @return bool
      */
-    abstract public function abort(string $path, mixed $extra = ''): bool;
+    abstract public function abort(string $path, string $extra = ''): bool;
 
     /**
      * Read file by given path.

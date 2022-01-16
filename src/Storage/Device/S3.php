@@ -285,13 +285,13 @@ class S3 extends Device
      * Abort Chunked Upload
      * 
      * @param string $path
-     * @param mixed $extra
+     * @param string $extra
      * 
      * @throws \Exception
      * 
      * @return bool
      */
-    public function abort(string $path, mixed $extra = ''): bool
+    public function abort(string $path, string $extra = ''): bool
     {
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
         unset($this->headers['content-type']);

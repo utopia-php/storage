@@ -141,11 +141,11 @@ class Local extends Device
      * Abort Chunked Upload
      * 
      * @param string $path
-     * @param mixed $extra
+     * @param string $extra
      * 
      * @return bool
      */
-    public function abort(string $path, mixed $extra = ''): bool
+    public function abort(string $path, string $extra = ''): bool
     {
         if(file_exists($path)) {
             \unlink($path);
