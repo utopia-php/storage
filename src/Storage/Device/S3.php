@@ -431,6 +431,7 @@ class S3 extends Device
      */
     public function deletePath(string $path): bool
     {
+        $path = $this->getRoot() . '/' . $path;
         $uri = '/';
         $continuationToken = '';
         do {
