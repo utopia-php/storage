@@ -131,7 +131,7 @@ abstract class S3Base extends TestCase
         $path = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path);
         $this->assertEquals(true, $this->object->write($path, 'Hello World', 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path));
-        $this->assertEquals(true, $this->object->deletePath($this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket'));
+        $this->assertEquals(true, $this->object->deletePath('bucket'));
         $this->assertEquals(false, $this->object->exists($path));
         
         // Test Multiple Objects
