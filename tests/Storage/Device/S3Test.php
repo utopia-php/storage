@@ -2,145 +2,32 @@
 
 namespace Utopia\Tests;
 
-use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Device\S3;
+use Utopia\Tests\S3Base;
 
-class S3Test extends TestCase
+class S3Test extends S3Base
 {
-    /**
-     * @var S3
-     */
-    protected $object = null;
-    protected $root = '/root';
-
-    public function setUp(): void
+    
+    protected function init(): void
     {
         $this->root = '/root';
         $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['S3_SECRET'] ?? '';
-        $bucket = "utopia-storage-tests";
+        $bucket = 'utopia-storage-tests';
 
         $this->object = new S3($this->root, $key, $secret, $bucket, S3::AP_SOUTH_1, S3::ACL_PRIVATE);
-
-        $this->uploadTestFiles();
     }
 
-    private function uploadTestFiles()
+    /**
+     * @return string
+     */
+    protected function getAdapterName() : string
     {
-        $this->object->upload(__DIR__ . '/../../resources/disk-a/kitten-1.jpg', $this->object->getPath('testing/kitten-1.jpg'));
-        $this->object->upload(__DIR__ . '/../../resources/disk-a/kitten-2.jpg', $this->object->getPath('testing/kitten-2.jpg'));
-        $this->object->upload(__DIR__ . '/../../resources/disk-b/kitten-1.png', $this->object->getPath('testing/kitten-1.png'));
-        $this->object->upload(__DIR__ . '/../../resources/disk-b/kitten-2.png', $this->object->getPath('testing/kitten-2.png'));
+        return 'S3 Storage';
     }
 
-    private function removeTestFiles()
-    {
-        $this->object->delete($this->object->getPath('testing/kitten-1.jpg'));
-        $this->object->delete($this->object->getPath('testing/kitten-2.jpg'));
-        $this->object->delete($this->object->getPath('testing/kitten-1.png'));
-        $this->object->delete($this->object->getPath('testing/kitten-2.png'));
-    }
-
-    public function tearDown(): void
-    {
-        $this->removeTestFiles();
-    }
-
-    public function testName()
-    {
-        $this->assertEquals($this->object->getName(), 'S3 Storage');
-    }
-
-    public function testDescription()
-    {
-        $this->assertEquals($this->object->getDescription(), 'S3 Bucket Storage drive for AWS or on premise solution');
-    }
-
-    public function testRoot()
-    {
-        $this->assertEquals($this->object->getRoot(), $this->root);
-    }
-
-    public function testPath()
-    {
-        $this->assertEquals($this->object->getPath('image.png'), $this->root . '/i/m/a/g/image.png');
-        $this->assertEquals($this->object->getPath('x.png'), $this->root . '/x/./p/n/x.png');
-        $this->assertEquals($this->object->getPath('y'), $this->root . '/y/x/x/x/y');
-    }
-
-    public function testWrite()
-    {
-        $this->assertEquals($this->object->write($this->object->getPath('text.txt'), 'Hello World', 'text/plain'), true);
-
-        $this->object->delete($this->object->getPath('text.txt'));
-    }
-
-    public function testRead()
-    {
-        $this->assertEquals($this->object->write($this->object->getPath('text-for-read.txt'), 'Hello World', 'text/plain'), true);
-        $this->assertEquals($this->object->read($this->object->getPath('text-for-read.txt')), 'Hello World');
-
-        $this->object->delete($this->object->getPath('text-for-read.txt'));
-    }
-
-    public function testFileExists()
-    {
-        $this->assertEquals($this->object->exists($this->object->getPath('testing/kitten-1.jpg')), true);
-        $this->assertEquals($this->object->exists($this->object->getPath('testing/kitten-5.jpg')), false);
-    }
-
-    public function testMove()
-    {
-        $this->assertEquals($this->object->write($this->object->getPath('text-for-move.txt'), 'Hello World', 'text/plain'), true);
-        $this->assertEquals($this->object->exists($this->object->getPath('text-for-move.txt')), true);
-        $this->assertEquals($this->object->move($this->object->getPath('text-for-move.txt'), $this->object->getPath('text-for-move-new.txt')), true);
-        $this->assertEquals($this->object->read($this->object->getPath('text-for-move-new.txt')), 'Hello World');
-        $this->assertEquals($this->object->exists($this->object->getPath('text-for-move.txt')), false);
-
-        $this->object->delete($this->object->getPath('text-for-move-new.txt'));
-    }
-
-    public function testDelete()
-    {
-        $this->assertEquals($this->object->write($this->object->getPath('text-for-delete.txt'), 'Hello World', 'text/plain'), true);
-        $this->assertEquals($this->object->exists($this->object->getPath('text-for-delete.txt')), true);
-        $this->assertEquals($this->object->delete($this->object->getPath('text-for-delete.txt')), true);
-    }
-
-    public function testFileSize()
-    {
-        $this->assertEquals($this->object->getFileSize($this->object->getPath('testing/kitten-1.jpg')), 599639);
-        $this->assertEquals($this->object->getFileSize($this->object->getPath('testing/kitten-2.jpg')), 131958);
-    }
-
-    public function testFileMimeType()
-    {
-        $this->assertEquals($this->object->getFileMimeType($this->object->getPath('testing/kitten-1.jpg')), 'image/jpeg');
-        $this->assertEquals($this->object->getFileMimeType($this->object->getPath('testing/kitten-2.jpg')), 'image/jpeg');
-        $this->assertEquals($this->object->getFileMimeType($this->object->getPath('testing/kitten-1.png')), 'image/png');
-        $this->assertEquals($this->object->getFileMimeType($this->object->getPath('testing/kitten-2.png')), 'image/png');
-    }
-
-    public function testFileHash()
-    {
-        $this->assertEquals($this->object->getFileHash($this->object->getPath('testing/kitten-1.jpg')), '7551f343143d2e24ab4aaf4624996b6a');
-        $this->assertEquals($this->object->getFileHash($this->object->getPath('testing/kitten-2.jpg')), '81702fdeef2e55b1a22617bce4951cb5');
-        $this->assertEquals($this->object->getFileHash($this->object->getPath('testing/kitten-1.png')), '03010f4f02980521a8fd6213b52ec313');
-        $this->assertEquals($this->object->getFileHash($this->object->getPath('testing/kitten-2.png')), '8a9ed992b77e4b62b10e3a5c8ed72062');
-    }
-
-    public function testDirectorySize()
-    {
-        $this->assertEquals(-1, $this->object->getDirectorySize('resources/disk-a/'));
-    }
-
-    public function testPartitionFreeSpace()
-    {
-        $this->assertEquals(-1, $this->object->getPartitionFreeSpace());
-    }
-
-    public function testPartitionTotalSpace()
-    {
-        $this->assertEquals(-1, $this->object->getPartitionTotalSpace());
+    protected function getAdapterDescription(): string
+    {   
+        return 'S3 Bucket Storage drive for AWS or on premise solution';
     }
 }

@@ -144,15 +144,20 @@ class S3 extends Device
 
     /**
      * @param string $filename
+     * @param string $prefix
      *
      * @return string
      */
-    public function getPath(string $filename): string
+    public function getPath(string $filename, string $prefix = null): string
     {
         $path = '';
 
         for ($i = 0; $i < 4; ++$i) {
             $path = ($i < \strlen($filename)) ? $path . DIRECTORY_SEPARATOR . $filename[$i] : $path . DIRECTORY_SEPARATOR . 'x';
+        }
+
+        if(!is_null($prefix)) {
+            $path = $prefix . DIRECTORY_SEPARATOR . $path;
         }
 
         return $this->getRoot() . $path . DIRECTORY_SEPARATOR . $filename;
@@ -162,33 +167,160 @@ class S3 extends Device
      * Upload.
      *
      * Upload a file to desired destination in the selected disk.
+     * return number of chunks uploaded or 0 if it fails.
      *
      * @param string $source
      * @param string $path
+     * @param int chunk
+     * @param int chunks
+     * @param array $metadata
      *
      * @throws \Exception
      *
-     * @return bool
+     * @return int
      */
-    public function upload($source, $path): bool
+    public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        return $this->write($path, \file_get_contents($source), \mime_content_type($source));
+        if($chunk == 1 && $chunks == 1) {
+            return $this->write($path, \file_get_contents($source), \mime_content_type($source));
+        }
+        $uploadId = $metadata['uploadId'] ?? null;
+        if(empty($uploadId)) {
+            $uploadId = $this->createMultipartUpload($path, $metadata['content_type']);
+            $metadata['uploadId'] = $uploadId;
+        }
+
+        $etag = $this->uploadPart($source, $path, $chunk, $uploadId);
+        $metadata['parts'] ??= [];
+        $metadata['parts'][] = ['partNumber' => $chunk, 'etag' => $etag];
+        $metadata['chunks'] ??= 0;
+        $metadata['chunks']++;
+        if($metadata['chunks'] == $chunks) {
+            $this->completeMultipartUpload($path, $uploadId, $metadata['parts']);
+        }
+        return $metadata['chunks'];
     }
 
     /**
-     * Read file by given path.
+     * Start Multipart Upload
+     * 
+     * Initiate a multipart upload and return an upload ID.
+     * 
+     * @param string $path
+     * @param string $contentType
+     * 
+     * @throws \Exception
+     * 
+     * @return string
+     */
+    protected function createMultipartUpload(string $path, string $contentType): string
+    {
+        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
+        $this->headers['content-type'] = $contentType;
+        $this->amzHeaders['x-amz-acl'] = $this->acl;
+        $response = $this->call(self::METHOD_POST, $uri, '', ['uploads' => '']);
+        return $response->body['UploadId'];
+    }
+
+    /**
+     * Upload Part
+     * 
+     * @param string $source
+     * @param string $path
+     * @param int $chunk
+     * @param string $uploadId
+     * 
+     * @throws \Exception
+     * 
+     * @return string
+     */
+    protected function uploadPart(string $source, string $path, int $chunk, string $uploadId) : string
+    {
+        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+        
+        $data = \file_get_contents($source);
+        $this->headers['content-type'] = \mime_content_type($source);
+        $this->headers['content-md5'] = \base64_encode(md5($data, true));
+        $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
+        unset($this->amzHeaders['x-amz-acl']); // ACL header is not allowed in parts, only createMultipartUpload accepts this header.
+
+        $response = $this->call(self::METHOD_PUT, $uri, $data, [
+            'partNumber'=>$chunk,
+            'uploadId' => $uploadId
+        ]);
+
+        return $response->headers['etag'];
+    }
+
+    /**
+     * Complete Multipart Upload
+     * 
+     * @param string $path
+     * @param string $uploadId
+     * @param array $parts
+     * 
+     * @throws \Exception
+     * 
+     * @return bool
+     */
+    protected function completeMultipartUpload(string $path, string $uploadId, array $parts): bool
+    {
+        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+
+        $body = '<CompleteMultipartUpload>';
+        foreach ($parts as $part) {
+            $body .= "<Part><ETag>{$part['etag']}</ETag><PartNumber>{$part['partNumber']}</PartNumber></Part>";
+        }
+        $body .= '</CompleteMultipartUpload>';
+
+        $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
+        $this->headers['content-md5'] = \base64_encode(md5($body, true));
+        $this->call(self::METHOD_POST, $uri, $body , ['uploadId' => $uploadId]);
+        return true;
+    }
+
+    /**
+     * Abort Chunked Upload
+     * 
+     * @param string $path
+     * @param string $extra
+     * 
+     * @throws \Exception
+     * 
+     * @return bool
+     */
+    public function abort(string $path, string $extra = ''): bool
+    {
+        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+        unset($this->headers['content-type']);
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
+        $this->call(self::METHOD_DELETE, $uri, '', ['uploadId' => $extra]);
+        return true;
+    }
+
+    /**
+     * Read file or part of file by given path, offset and length.
      *
      * @param string $path
+     * @param int offset
+     * @param int length
      * 
      * @throws \Exception
      *
      * @return string
      */
-    public function read(string $path): string
+    public function read(string $path, int $offset = 0, int $length = null): string
     {
+        unset($this->headers['content-type']);
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
         $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        if($length !== null) {
+            $end = $offset + $length - 1;
+            $this->headers['range'] = "bytes=$offset-$end";
+        }
         $response = $this->call(self::METHOD_GET, $uri);
-
         return $response->body;
     }
 
@@ -197,15 +329,15 @@ class S3 extends Device
      *
      * @param string $path
      * @param string $data
+     * 
      * @throws \Exception
      * 
      * @return bool
      */
     public function write(string $path, string $data, string $contentType = ''): bool
     {
-        $uri = $path !== '' ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
         
-        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
         $this->headers['content-type'] = $contentType;
         $this->headers['content-md5'] = \base64_encode(md5($data, true)); //TODO whould this work well with big file? can we skip it?
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
@@ -223,6 +355,8 @@ class S3 extends Device
      *
      * @param string $source
      * @param string $target
+     * 
+     * @throw \Exception
      *
      * @return bool
      */
@@ -243,14 +377,84 @@ class S3 extends Device
      * @see http://php.net/manual/en/function.filesize.php
      *
      * @param string $path
+     * 
+     * @throws \Exception
      *
      * @return bool
      */
     public function delete(string $path, bool $recursive = false): bool
     {
         $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
-
+        
+        unset($this->headers['content-type']);
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
         $this->call(self::METHOD_DELETE, $uri);
+
+        return true;
+    }
+
+    /**
+     * Get list of objects in the given path.
+     *
+     * @param string $path
+     * 
+     * @throws \Exception
+     *
+     * @return array
+     */
+    private function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
+    {
+        $uri = '/';
+        $this->headers['content-type'] = 'text/plain';
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
+
+        $parameters = [
+            'list-type' => 2,
+            'prefix' => $prefix,
+            'max-keys' => $maxKeys,
+        ];
+        if(!empty($continuationToken)) {
+            $parameters['continuation-token'] = $continuationToken;
+        }
+        $response = $this->call(self::METHOD_GET, $uri, '', $parameters);
+        return $response->body;
+    }
+
+    /**
+     * Delete files in given path, path must be a directory. Return true on success and false on failure.
+     *
+     * @param string $path
+     * 
+     * @throws \Exception
+     *
+     * @return bool
+     */
+    public function deletePath(string $path): bool
+    {
+        $path = $this->getRoot() . '/' . $path;
+        $uri = '/';
+        $continuationToken = '';
+        do {
+            $objects = $this->listObjects($path, continuationToken: $continuationToken);
+            $count = (int) ($objects['KeyCount'] ?? 1);
+            if($count < 1) {
+                break;
+            }
+            $continuationToken = $objects['NextContinuationToken'] ?? '';
+            $body = '<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">';
+            if($count > 1) {
+                foreach ($objects['Contents'] as $object) {
+                    $body .= "<Object><Key>{$object['Key']}</Key></Object>";
+                }
+            } else {
+                $body .= "<Object><Key>{$objects['Contents']['Key']}</Key></Object>"; 
+            }
+            $body .= '<Quiet>true</Quiet>';
+            $body .= '</Delete>';
+            $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
+            $this->headers['content-md5'] = \base64_encode(md5($body, true));
+            $this->call(self::METHOD_POST, $uri, $body, ['delete'=>'']);
+        } while(!empty($continuationToken));
 
         return true;
     }
@@ -278,7 +482,7 @@ class S3 extends Device
      *
      * @see http://php.net/manual/en/function.filesize.php
      *
-     * @param $path
+     * @param string $path
      *
      * @return int
      */
@@ -293,7 +497,7 @@ class S3 extends Device
      *
      * @see http://php.net/manual/en/function.mime-content-type.php
      *
-     * @param $path
+     * @param string $path
      *
      * @return string
      */
@@ -308,7 +512,7 @@ class S3 extends Device
      *
      * @see http://php.net/manual/en/function.md5-file.php
      *
-     * @param $path
+     * @param string $path
      *
      * @return string
      */
@@ -325,7 +529,7 @@ class S3 extends Device
      *
      * Based on http://www.jonasjohn.de/snippets/php/dir-size.htm
      *
-     * @param $path
+     * @param string $path
      *
      * @return int
      */
@@ -364,6 +568,8 @@ class S3 extends Device
      */
     private function getInfo(string $path): array
     {
+        unset($this->headers['content-type']);
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
         $uri = $path !== '' ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
         $response = $this->call(self::METHOD_HEAD, $uri);
 
@@ -374,9 +580,11 @@ class S3 extends Device
      * Generate the headers for AWS Signature V4
      * @param string $method
      * @param string $uri
+     * @param array parameters
+     * 
      * @return string
      */
-    private function getSignatureV4(string $method, string $uri): string
+    private function getSignatureV4(string $method, string $uri, array $parameters = []): string
     {
         $service = 's3';
         $region = $this->region;
@@ -398,7 +606,6 @@ class S3 extends Device
         uksort($combinedHeaders, [ & $this, 'sortMetaHeadersCmp']);
 
         // Convert null query string parameters to strings and sort
-        $parameters = [];
         uksort($parameters, [ & $this, 'sortMetaHeadersCmp']);
         $queryString = \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 
@@ -434,7 +641,7 @@ class S3 extends Device
         $kService = \hash_hmac('sha256', $service, $kRegion, true);
         $kSigning = \hash_hmac('sha256', 'aws4_request', $kService, true);
 
-        $signature = \hash_hmac('sha256', $stringToSignStr, $kSigning);
+        $signature = \hash_hmac('sha256', \utf8_encode($stringToSignStr), $kSigning);
 
         return $algorithm . ' ' . \implode(',', [
             'Credential=' . $this->accessKey . '/' . \implode('/', $credentialScope),
@@ -445,12 +652,19 @@ class S3 extends Device
 
     /**
      * Get the S3 response
+     * 
+     * @param string $method
+     * @param string $uri
+     * @param string $data
+     * @param array $parameters
+     * 
+     * @throws \Exception
      *
      * @return  object
      */
-    private function call(string $method, string $uri, string $data = '')
+    private function call(string $method, string $uri, string $data = '', array $parameters=[])
     {
-        $url = 'https://' . $this->headers['host'] . $uri;
+        $url = 'https://' . $this->headers['host'] . $uri . '?' . \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
         $response->body = '';
         $response->headers = [];
@@ -474,13 +688,14 @@ class S3 extends Device
             }
         }
 
+        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
         foreach ($this->headers as $header => $value) {
             if (\strlen($value) > 0) {
                 $httpHeaders[] = $header . ': ' . $value;
             }
         }
 
-        $httpHeaders[] = 'Authorization: ' . $this->getSignatureV4($method, $uri);
+        $httpHeaders[] = 'Authorization: ' . $this->getSignatureV4($method, $uri, $parameters);
 
         \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
         \curl_setopt($curl, CURLOPT_HEADER, false);
@@ -511,6 +726,7 @@ class S3 extends Device
                 \curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
                 break;
             case self::METHOD_HEAD:
+            case self::METHOD_DELETE:
                 \curl_setopt($curl, CURLOPT_NOBODY, true);
                 break;
         }
@@ -522,7 +738,6 @@ class S3 extends Device
         }
         
         $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        
         if ($response->code >= 400) {
             throw new Exception($response->body, $response->code);
         }
@@ -530,8 +745,9 @@ class S3 extends Device
         \curl_close($curl);
 
         // Parse body into XML
-        if (isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') {
+        if ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml')) {
             $response->body = \simplexml_load_string($response->body);
+            $response->body = json_decode(json_encode($response->body), true);
         }
 
         return $response;

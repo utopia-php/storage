@@ -38,34 +38,51 @@ abstract class Device
      *
      * Each device hold a complex directory structure that is being build in this method.
      *
-     * @param $filename
+     * @param string $filename
+     * @param string $prefix
      *
      * @return string
      */
-    abstract public function getPath(string $filename): string;
+    abstract public function getPath(string $filename, string $prefix = null): string;
 
     /**
      * Upload.
      *
-     * Upload a file to desired destination in the selected disk, return true on success and false on failure.
+     * Upload a file to desired destination in the selected disk
+     * return number of chunks uploaded or 0 if it fails.
      *
      * @param string $source
      * @param string $path
-     *
+     * @param int $chunk
+     * @param int $chunks
+     * @param array $metadata
+     * 
      * @throws \Exception
      *
+     * @return int
+     */
+    abstract public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
+
+    /**
+     * Abort Chunked Upload
+     * 
+     * @param string $path
+     * @param string $extra
+     * 
      * @return bool
      */
-    abstract public function upload($source, $path): bool;
+    abstract public function abort(string $path, string $extra = ''): bool;
 
     /**
      * Read file by given path.
      *
      * @param string $path
+     * @param int $offset
+     * @param int $length
      *
      * @return string
      */
-    abstract public function read(string $path): string;
+    abstract public function read(string $path, int $offset = 0, int $length = null): string;
 
     /**
      * Write file by given path.
@@ -100,6 +117,16 @@ abstract class Device
      * @return bool
      */
     abstract public function delete(string $path, bool $recursive = false): bool;
+    
+    /**
+     * Delete files in given path, path must be a directory. return true on success and false on failure.
+     *
+     *
+     * @param string $path
+     *
+     * @return bool
+     */
+    abstract public function deletePath(string $path): bool;
 
     /**
      * Check if file exists

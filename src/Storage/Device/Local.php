@@ -48,17 +48,20 @@ class Local extends Device
 
     /**
      * @param string $filename
+     * @param string $prefix
      *
      * @return string
      */
-    public function getPath($filename): string
+    public function getPath(string $filename, string $prefix = null): string
     {
         $path = '';
 
         for ($i = 0; $i < 4; ++$i) {
             $path = ($i < \strlen($filename)) ? $path . DIRECTORY_SEPARATOR . $filename[$i] : $path . DIRECTORY_SEPARATOR . 'x';
         }
-
+        if(!is_null($prefix)) {
+            $path = $prefix . DIRECTORY_SEPARATOR . $path;
+        }
         return $this->getRoot() . $path . DIRECTORY_SEPARATOR . $filename;
     }
 
@@ -66,15 +69,19 @@ class Local extends Device
      * Upload.
      *
      * Upload a file to desired destination in the selected disk.
+     * return number of chunks uploaded or 0 if it fails.
      *
      * @param string $source
      * @param string $path
+     * @param int $chunk
+     * @param int $chunks
+     * @param array $metadata
      *
      * @throws \Exception
      *
-     * @return bool
+     * @return int
      */
-    public function upload($source, $path): bool
+    public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
         if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
             if (!@\mkdir(\dirname($path), 0755, true)) {
@@ -82,26 +89,97 @@ class Local extends Device
             }
         }
 
-        if (\move_uploaded_file($source, $path)) {
-            return true;
+        //move_uploaded_file() verifies the file is not tampered with
+        if($chunks === 1) {
+            if (!\move_uploaded_file($source, $path)) {
+                throw new Exception('Can\'t upload file ' . $path);
+            }
+            return $chunks;
+        }
+        $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp' . DIRECTORY_SEPARATOR . \basename($path) . '_chunks.log';
+
+        if (!\file_exists(\dirname($tmp))) { // Checks if directory path to file exists
+            if (!@\mkdir(\dirname($tmp), 0755, true)) {
+                throw new Exception('Can\'t create directory: ' . \dirname($tmp));
+            }
+        }
+        if(!file_put_contents($tmp, "$chunk\n", FILE_APPEND)) {
+            throw new Exception('Can\'t write chunk log ' . $tmp);
         }
 
-        return false;
+        $chunkLogs = file($tmp);
+        if(!$chunkLogs) {
+            throw new Exception('Unable to read chunk log ' . $tmp);
+        }
+
+        $chunksReceived = count(file($tmp));
+
+        if(!\rename($source, dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.' . $chunk)) {
+            throw new Exception('Failed to write chunk ' . $chunk);
+        }
+        
+        if ($chunks === $chunksReceived) {
+            for($i = 1; $i <= $chunks; $i++) {
+                $part = dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.'. $i;
+                $data = file_get_contents($part);
+                if(!$data) {
+                    throw new Exception('Failed to read chunk ' . $part);
+                }
+
+                if(!file_put_contents($path, $data, FILE_APPEND)) {
+                    throw new Exception('Failed to append chunk ' . $part);
+                }
+                \unlink($part);
+            }
+            \unlink($tmp);
+            return $chunksReceived;
+        }
+        return $chunksReceived;
+    }
+
+    /**
+     * Abort Chunked Upload
+     * 
+     * @param string $path
+     * @param string $extra
+     * 
+     * @return bool
+     */
+    public function abort(string $path, string $extra = ''): bool
+    {
+        if(file_exists($path)) {
+            \unlink($path);
+        }
+
+        $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp' . DIRECTORY_SEPARATOR;
+
+        if (!\file_exists(\dirname($tmp))) { // Checks if directory path to file exists
+            throw new Exception('File doesn\'t exist: ' . \dirname($path));
+        }
+        $files = \glob($tmp . '*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
+
+        foreach ($files as $file) {
+            $this->delete($file, true);
+        }
+
+        return \rmdir ($tmp);
     }
 
     /**
      * Read file by given path.
      *
      * @param string $path
+     * @param int offset
+     * @param int length
      *
      * @return string
      */
-    public function read(string $path): string
+    public function read(string $path, int $offset = 0, int $length = null): string
     {
         if(!$this->exists($path)) {
-            throw new Exception("File Not Found", 404);
+            throw new Exception('File Not Found');
         }
-        return \file_get_contents($path);
+        return \file_get_contents($path, use_include_path: false, context: null, offset: $offset, length: $length);
     }
 
     /**
@@ -109,6 +187,7 @@ class Local extends Device
      *
      * @param string $path
      * @param string $data
+     * @param string $contentType
      *
      * @return bool
      */
@@ -176,6 +255,30 @@ class Local extends Device
     }
 
     /**
+     * Delete files in given path, path must be a directory. Return true on success and false on failure.
+     *
+     * @param string $path
+     *
+     * @return bool
+     */
+    public function deletePath(string $path): bool
+    {
+        $path = $this->getRoot() . DIRECTORY_SEPARATOR . $path;
+        if (\is_dir($path)) {
+            $files = \glob($path . '*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
+
+            foreach ($files as $file) {
+                $this->delete($file, true);
+            }
+
+            \rmdir($path);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Check if file exists
      *
      * @param string $path
@@ -192,7 +295,7 @@ class Local extends Device
      *
      * @see http://php.net/manual/en/function.filesize.php
      *
-     * @param $path
+     * @param string $path
      *
      * @return int
      */
@@ -206,7 +309,7 @@ class Local extends Device
      *
      * @see http://php.net/manual/en/function.mime-content-type.php
      *
-     * @param $path
+     * @param string $path
      *
      * @return string
      */
@@ -220,7 +323,7 @@ class Local extends Device
      *
      * @see http://php.net/manual/en/function.md5-file.php
      *
-     * @param $path
+     * @param string $path
      *
      * @return string
      */
@@ -236,7 +339,7 @@ class Local extends Device
      *
      * Based on http://www.jonasjohn.de/snippets/php/dir-size.htm
      *
-     * @param $path
+     * @param string $path
      *
      * @return int
      */
@@ -252,7 +355,7 @@ class Local extends Device
 
         while (($file = \readdir($directory)) !== false) {
             // Skip file pointers
-            if ($file[0] == '.') {
+            if ($file[0] === '.') {
                 continue;
             }
 

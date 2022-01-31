@@ -13,8 +13,11 @@
     "autoload": {
         "psr-4": {"Utopia\\Storage\\":"src/Storage"}
     },
+    "autoload-dev": {
+        "psr-4": {"Utopia\\Tests\\":"tests/Storage"}
+    },
     "require": {
-        "php": ">=7.4",
+        "php": ">=8.0",
         "utopia-php/framework": "0.*.*"
     },
     "require-dev": {
