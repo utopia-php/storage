@@ -2,10 +2,10 @@
 
 namespace Utopia\Tests;
 
-use Utopia\Storage\Device\DoSpaces;
+use Utopia\Storage\Device\DOSpaces;
 use Utopia\Tests\S3Base;
 
-class DoSpacesTest extends S3Base
+class DOSpacesTest extends S3Base
 {
     protected function init(): void
     {
@@ -14,7 +14,7 @@ class DoSpacesTest extends S3Base
         $secret = $_SERVER['DO_SECRET'] ?? '';
         $bucket = "utopia-storage-tests";
 
-        $this->object = new DoSpaces($this->root, $key, $secret, $bucket, DoSpaces::NYC3, DoSpaces::ACL_PUBLIC_READ);
+        $this->object = new DOSpaces($this->root, $key, $secret, $bucket, DOSpaces::NYC3, DOSpaces::ACL_PUBLIC_READ);
 
     }
 

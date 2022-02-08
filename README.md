@@ -24,7 +24,7 @@ require_once '../vendor/autoload.php';
 use Utopia\Storage\Storage;
 use Utopia\Storage\Device\Local
 use Utopia\Storage\Device\S3
-use Utopia\Storage\Device\DoSpaces
+use Utopia\Storage\Device\DOSpaces
 
 // instiantiating local storage
 Storage::setDevice('files', new Local('path'));
@@ -33,7 +33,7 @@ Storage::setDevice('files', new Local('path'));
 Storage::setDevice('files', new S3('path',AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_BUCKET_NAME, AWS_REGION, AWS_ACL_FLAG));
 
 //or you can use Digitalocean spaces storage
-Storage::setDevice('files', new DoSpaces('path',DO_SPACES_ACCESS_KEY, DO_SPACES_SECRET_KEY,DO_SPACES_BUCKET_NAME, DO_SPACES_REGION, AWS_ACL_FLAG));
+Storage::setDevice('files', new DOSpaces('path',DO_SPACES_ACCESS_KEY, DO_SPACES_SECRET_KEY,DO_SPACES_BUCKET_NAME, DO_SPACES_REGION, AWS_ACL_FLAG));
 
 $device = Storage::getDevice('files');
 
