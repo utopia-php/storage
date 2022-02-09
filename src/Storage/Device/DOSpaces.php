@@ -4,7 +4,7 @@ namespace Utopia\Storage\Device;
 
 use Utopia\Storage\Device\S3;
 
-class DoSpaces extends S3
+class DOSpaces extends S3
 {
     /**
      * Regions constants
@@ -18,7 +18,7 @@ class DoSpaces extends S3
     const AMS3 = 'AMS3';
 
     /**
-     * DoSpaces Constructor
+     * DOSpaces Constructor
      *
      * @param string $root
      * @param string $accessKey
