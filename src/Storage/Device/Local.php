@@ -96,7 +96,7 @@ class Local extends Device
             }
             return $chunks;
         }
-        $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp' . DIRECTORY_SEPARATOR . \basename($path) . '_chunks.log';
+        $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . \basename($path) . DIRECTORY_SEPARATOR . \basename($path) . '_chunks.log';
 
         if (!\file_exists(\dirname($tmp))) { // Checks if directory path to file exists
             if (!@\mkdir(\dirname($tmp), 0755, true)) {
@@ -151,7 +151,7 @@ class Local extends Device
             \unlink($path);
         }
 
-        $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp' . DIRECTORY_SEPARATOR;
+        $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . \basename($path) . DIRECTORY_SEPARATOR;
 
         if (!\file_exists(\dirname($tmp))) { // Checks if directory path to file exists
             throw new Exception('File doesn\'t exist: ' . \dirname($path));
