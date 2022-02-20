@@ -149,6 +149,58 @@ class LocalTest extends TestCase
         return $dest;
     }
 
+    public function testAbort() {
+        $source = __DIR__ . '/../../resources/disk-a/large_file.mp4';
+        $dest = $this->object->getPath('abcduploaded.mp4');
+        $totalSize = $this->object->getFileSize($source);
+        $chunkSize = 2097152;
+        $chunks = ceil($totalSize / $chunkSize);
+
+        $chunk = 1;
+        $start = 0;
+
+        $handle = @fopen($source, 'rb');
+        while ($chunk < 3) { // only upload two chunks
+            $contents = fread($handle, $chunkSize);
+            $op = __DIR__ . '/chunk.part';
+            $cc = fopen($op, 'wb');
+            fwrite($cc, $contents);
+            fclose($cc);
+            $this->object->upload($op, $dest, $chunk, $chunks);
+            $start += strlen($contents);
+            $chunk++;
+            fseek($handle, $start);
+        }
+        @fclose($handle);
+
+        // using file name with same first four chars
+        $source = __DIR__ . '/../../resources/disk-a/large_file.mp4';
+        $dest1 = $this->object->getPath('abcduploaded2.mp4');
+        $totalSize = $this->object->getFileSize($source);
+        $chunkSize = 2097152;
+        $chunks = ceil($totalSize / $chunkSize);
+
+        $chunk = 1;
+        $start = 0;
+
+        $handle = @fopen($source, 'rb');
+        while ($chunk < 3) { // only upload two chunks
+            $contents = fread($handle, $chunkSize);
+            $op = __DIR__ . '/chunk.part';
+            $cc = fopen($op, 'wb');
+            fwrite($cc, $contents);
+            fclose($cc);
+            $this->object->upload($op, $dest1, $chunk, $chunks);
+            $start += strlen($contents);
+            $chunk++;
+            fseek($handle, $start);
+        }
+        @fclose($handle);
+        
+        $this->assertTrue($this->object->abort($dest));
+        $this->assertTrue($this->object->abort($dest1));
+    }
+
     /**
      * @depends testPartUpload
      */
