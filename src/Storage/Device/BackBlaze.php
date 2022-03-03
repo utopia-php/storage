@@ -32,7 +32,7 @@ class BackBlaze extends S3
     public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_WEST_004, string $acl = self::ACL_PRIVATE)
     {
         parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl);
-        $this->headers['host'] = $bucket . '.' . 's3' . $region . '.backblazeb2.com';
+        $this->headers['host'] = $bucket . '.' . 's3' . '.' . $region . '.backblazeb2.com';
     }
 
     /**
