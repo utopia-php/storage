@@ -85,6 +85,17 @@ abstract class Device
     abstract public function read(string $path, int $offset = 0, int $length = null): string;
 
     /**
+     * Transfer
+     *
+     * @param string $path
+     * @param string $destination
+     * @param Device $device
+     *
+     * @return string
+     */
+    abstract public function transfer(string $path, string $destination, Device $device): bool;
+
+    /**
      * Write file by given path.
      *
      * @param string $path

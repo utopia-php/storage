@@ -202,6 +202,19 @@ class S3 extends Device
     }
 
     /**
+     * Transfer
+     *
+     * @param string $path
+     * @param string $destination
+     * @param Device $device
+     *
+     * @return string
+     */
+    abstract public function transfer(string $path, string $destination, Device $device): bool {
+        
+    }
+
+    /**
      * Start Multipart Upload
      * 
      * Initiate a multipart upload and return an upload ID.
