@@ -6,6 +6,31 @@ use Exception;
 
 abstract class Device
 {
+
+    /**
+     * Max chunk size while transfering file from one device to another
+     */
+    protected int $transferChunkSize = 20000000; //20 MB
+
+    /**
+     * Set Transfer Chunk Size
+     * 
+     * @param int $chunkSize
+     * @return void
+     */
+    public function setTransferChunkSize(int $chunkSize): void {
+        $this->transferChunkSize = $chunkSize;
+    }
+
+    /**
+     * Get Transfer Chunk Size
+     * 
+     * @return int
+     */
+    public function getTransferChunkSize(): int {
+        return $this->transferChunkSize;
+    }
+
     /**
      * Get Name.
      *

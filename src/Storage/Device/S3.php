@@ -210,8 +210,25 @@ class S3 extends Device
      *
      * @return string
      */
-    abstract public function transfer(string $path, string $destination, Device $device): bool {
-        
+    public function transfer(string $path, string $destination, Device $device): bool {
+        $response = $this->getInfo($path);
+        $size = (int)($response['content-length'] ?? 0);
+        $contentType = $response['content-type'] ?? '';
+
+        if($size <= $this->transferChunkSize) {
+            $source = $this->read($path);
+            return $device->write($destination, $source, $contentType);
+        }
+
+        $totalChunks = \ceil($size / $this->transferChunkSize);
+        $counter = 0;
+        $metadata = ['content_type' => $contentType];
+        for($counter; $counter < $totalChunks; $counter++) {
+            $start = $counter * $this->transferChunkSize;
+            $data = $this->read($path, $start, $this->transferChunkSize);
+            $device->upload($data, $destination, $counter+1, $totalChunks, $metadata);
+        }
+        return true;   
     }
 
     /**
