@@ -223,10 +223,14 @@ class S3 extends Device
         $totalChunks = \ceil($size / $this->transferChunkSize);
         $counter = 0;
         $metadata = ['content_type' => $contentType];
+        $local = new Local('/tmp');
         for($counter; $counter < $totalChunks; $counter++) {
             $start = $counter * $this->transferChunkSize;
             $data = $this->read($path, $start, $this->transferChunkSize);
-            $device->upload($data, $destination, $counter+1, $totalChunks, $metadata);
+            $tmp = $this->getPath('tmp_' . microtime());
+            $local->write($tmp, $data, $contentType);
+            $device->upload($tmp, $destination, $counter+1, $totalChunks, $metadata);
+            $local->delete($tmp);
         }
         return true;   
     }

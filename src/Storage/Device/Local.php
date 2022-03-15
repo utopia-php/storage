@@ -161,7 +161,10 @@ class Local extends Device
         for($counter; $counter < $totalChunks; $counter++) {
             $start = $counter * $this->transferChunkSize;
             $data = $this->read($path, $start, $this->transferChunkSize);
-            $device->upload($data, $destination, $counter+1, $totalChunks, $metadata);
+            $tmp = $this->getPath('tmp_' . microtime());
+            $this->write($tmp, $data, $contentType);
+            $device->upload($tmp, $destination, $counter+1, $totalChunks, $metadata);
+            $this->delete($tmp);
         }
         return true;   
     }
