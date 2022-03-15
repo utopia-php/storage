@@ -225,8 +225,9 @@ class LocalTest extends TestCase
     /**
      * @depends testPartUpload
      */
-    public function testTransfer($path) {
-        // smaller file
+    public function testTransferLarge($path) {
+        
+        // chunked file
         $this->object->setTransferChunkSize(10000000); //10 mb
         
         $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
@@ -242,5 +243,28 @@ class LocalTest extends TestCase
 
         $device->delete($destination);
         $this->object->delete($path);
+
+    }
+
+    public function testTransferSmall() {
+        
+        $this->object->setTransferChunkSize(10000000); //10 mb
+        
+        $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
+        $secret = $_SERVER['S3_SECRET'] ?? '';
+        $bucket = 'appwrite-storage';
+
+        $device = new S3('/root', $key, $secret, $bucket, S3::AP_SOUTH_1, S3::ACL_PRIVATE);
+        
+        $path = $this->object->getPath('text-for-read.txt');
+        $this->object->write($path, 'Hello World');
+
+        $destination = $device->getPath('hello.txt');
+        $this->assertTrue($this->object->transfer($path, $destination, $device));
+        $this->assertTrue($device->exists($destination));
+        $this->assertEquals($device->read($destination), 'Hello World');
+
+        $this->object->delete($path);
+        $device->delete($destination);
     }
 }
