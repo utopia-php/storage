@@ -4,7 +4,7 @@ namespace Utopia\Storage\Device;
 
 use Utopia\Storage\Device\S3;
 
-class ObjectStorage extends S3
+class Linode extends S3
 {
     /**
      * Regions constants
