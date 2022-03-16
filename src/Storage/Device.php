@@ -89,6 +89,25 @@ abstract class Device
     abstract public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
 
     /**
+     * Upload Data.
+     *
+     * Upload file contents to desired destination in the selected disk.
+     * return number of chunks uploaded or 0 if it fails.
+     *
+     * @param string $source
+     * @param string $path
+     * @param string $contentType
+     * @param int chunk
+     * @param int chunks
+     * @param array $metadata
+     *
+     * @throws \Exception
+     *
+     * @return int
+     */
+    abstract public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
+
+    /**
      * Abort Chunked Upload
      * 
      * @param string $path

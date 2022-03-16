@@ -181,16 +181,38 @@ class S3 extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
+        return $this->uploadData(\file_get_contents($source), $path, \mime_content_type($source), $chunk, $chunks, $metadata);
+    }
+
+    /**
+     * Upload Data.
+     *
+     * Upload file contents to desired destination in the selected disk.
+     * return number of chunks uploaded or 0 if it fails.
+     *
+     * @param string $source
+     * @param string $path
+     * @param string $contentType
+     * @param int chunk
+     * @param int chunks
+     * @param array $metadata
+     *
+     * @throws \Exception
+     *
+     * @return int
+     */
+    public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    {
         if($chunk == 1 && $chunks == 1) {
-            return $this->write($path, \file_get_contents($source), \mime_content_type($source));
+            return $this->write($path, $data, $contentType);
         }
         $uploadId = $metadata['uploadId'] ?? null;
         if(empty($uploadId)) {
-            $uploadId = $this->createMultipartUpload($path, $metadata['content_type']);
+            $uploadId = $this->createMultipartUpload($path, $contentType);
             $metadata['uploadId'] = $uploadId;
         }
 
-        $etag = $this->uploadPart($source, $path, $chunk, $uploadId);
+        $etag = $this->uploadPart($data, $path, $contentType, $chunk, $uploadId);
         $metadata['parts'] ??= [];
         $metadata['parts'][] = ['partNumber' => $chunk, 'etag' => $etag];
         $metadata['chunks'] ??= 0;
@@ -223,14 +245,10 @@ class S3 extends Device
         $totalChunks = \ceil($size / $this->transferChunkSize);
         $counter = 0;
         $metadata = ['content_type' => $contentType];
-        $local = new Local('/tmp');
         for($counter; $counter < $totalChunks; $counter++) {
             $start = $counter * $this->transferChunkSize;
             $data = $this->read($path, $start, $this->transferChunkSize);
-            $tmp = $this->getPath('tmp_' . microtime());
-            $local->write($tmp, $data, $contentType);
-            $device->upload($tmp, $destination, $counter+1, $totalChunks, $metadata);
-            $local->delete($tmp);
+            $device->uploadData($data, $destination, $contentType, $counter+1, $totalChunks, $metadata);
         }
         return true;   
     }
@@ -271,12 +289,11 @@ class S3 extends Device
      * 
      * @return string
      */
-    protected function uploadPart(string $source, string $path, int $chunk, string $uploadId) : string
+    protected function uploadPart(string $data, string $path, string $contentType, int $chunk, string $uploadId) : string
     {
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
         
-        $data = \file_get_contents($source);
-        $this->headers['content-type'] = \mime_content_type($source);
+        $this->headers['content-type'] = $contentType;
         $this->headers['content-md5'] = \base64_encode(md5($data, true));
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
         unset($this->amzHeaders['x-amz-acl']); // ACL header is not allowed in parts, only createMultipartUpload accepts this header.

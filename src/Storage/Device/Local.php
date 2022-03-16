@@ -83,11 +83,7 @@ class Local extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
-            if (!@\mkdir(\dirname($path), 0755, true)) {
-                throw new Exception('Can\'t create directory: ' . \dirname($path));
-            }
-        }
+        $this->createDirectoryToPath($path);
 
         //move_uploaded_file() verifies the file is not tampered with
         if($chunks === 1) {
@@ -98,11 +94,7 @@ class Local extends Device
         }
         $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . \basename($path) . DIRECTORY_SEPARATOR . \basename($path) . '_chunks.log';
 
-        if (!\file_exists(\dirname($tmp))) { // Checks if directory path to file exists
-            if (!@\mkdir(\dirname($tmp), 0755, true)) {
-                throw new Exception('Can\'t create directory: ' . \dirname($tmp));
-            }
-        }
+        $this->createDirectoryToPath($tmp);
         if(!file_put_contents($tmp, "$chunk\n", FILE_APPEND)) {
             throw new Exception('Can\'t write chunk log ' . $tmp);
         }
@@ -119,22 +111,95 @@ class Local extends Device
         }
         
         if ($chunks === $chunksReceived) {
-            for($i = 1; $i <= $chunks; $i++) {
-                $part = dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.'. $i;
-                $data = file_get_contents($part);
-                if(!$data) {
-                    throw new Exception('Failed to read chunk ' . $part);
-                }
-
-                if(!file_put_contents($path, $data, FILE_APPEND)) {
-                    throw new Exception('Failed to append chunk ' . $part);
-                }
-                \unlink($part);
-            }
-            \unlink($tmp);
+            $this->joinChunks($path, $chunks);
             return $chunksReceived;
         }
         return $chunksReceived;
+    }
+
+    /**
+     * Upload Data.
+     *
+     * Upload file contents to desired destination in the selected disk.
+     * return number of chunks uploaded or 0 if it fails.
+     *
+     * @param string $source
+     * @param string $path
+     * @param string $contentType
+     * @param int chunk
+     * @param int chunks
+     * @param array $metadata
+     *
+     * @throws \Exception
+     *
+     * @return int
+     */
+    public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    {
+        $this->createDirectoryToPath($path);
+
+        if($chunks === 1) {
+            if(!\file_put_contents($path, $data)) {
+                throw new Exception('Can\'t write file ' . $path);
+            }
+            return $chunks;
+        }
+        $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . \basename($path) . DIRECTORY_SEPARATOR . \basename($path) . '_chunks.log';
+
+        $this->createDirectoryToPath($tmp);
+        if(!file_put_contents($tmp, "$chunk\n", FILE_APPEND)) {
+            throw new Exception('Can\'t write chunk log ' . $tmp);
+        }
+
+        $chunkLogs = file($tmp);
+        if(!$chunkLogs) {
+            throw new Exception('Unable to read chunk log ' . $tmp);
+        }
+
+        $chunksReceived = count(file($tmp));
+
+        if(!\file_put_contents(dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.' . $chunk, $data)) {
+            throw new Exception('Failed to write chunk ' . $chunk);
+        }
+        
+        if ($chunks === $chunksReceived) {
+            $this->joinChunks($path, $chunks);
+            return $chunksReceived;
+        }
+        return $chunksReceived;
+    }
+
+    private function joinChunks(string $path, int $chunks) {
+        $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . \basename($path) . DIRECTORY_SEPARATOR . \basename($path) . '_chunks.log';
+        for($i = 1; $i <= $chunks; $i++) {
+            $part = dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.'. $i;
+            $data = file_get_contents($part);
+            if(!$data) {
+                throw new Exception('Failed to read chunk ' . $part);
+            }
+
+            if(!file_put_contents($path, $data, FILE_APPEND)) {
+                throw new Exception('Failed to append chunk ' . $part);
+            }
+            \unlink($part);
+        }
+        \unlink($tmp);
+    }
+
+    /**
+     * Create Directory to Path
+     * 
+     * Create's missing directory of the path, returns true on success and false on failure
+     * 
+     * @param string path
+     * @throws Exception
+     */
+    private function createDirectoryToPath(string $path): void {
+        if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
+            if (!@\mkdir(\dirname($path), 0755, true)) {
+                throw new Exception('Can\'t create directory: ' . \dirname($path));
+            }
+        }
     }
 
     /**
@@ -161,10 +226,7 @@ class Local extends Device
         for($counter; $counter < $totalChunks; $counter++) {
             $start = $counter * $this->transferChunkSize;
             $data = $this->read($path, $start, $this->transferChunkSize);
-            $tmp = $this->getPath('tmp_' . microtime());
-            $this->write($tmp, $data, $contentType);
-            $device->upload($tmp, $destination, $counter+1, $totalChunks, $metadata);
-            $this->delete($tmp);
+            $device->uploadData($data, $destination, $contentType, $counter+1, $totalChunks, $metadata);
         }
         return true;   
     }
