@@ -252,6 +252,7 @@ class S3 extends Device
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
 
         $this->headers['content-md5'] = \base64_encode(md5('', true));
+        unset($this->amzHeaders['x-amz-content-sha256']);
         $this->headers['content-type'] = $contentType;
         $this->amzHeaders['x-amz-acl'] = $this->acl;
         $response = $this->call(self::METHOD_POST, $uri, '', ['uploads' => '']);
@@ -347,6 +348,8 @@ class S3 extends Device
      */
     public function read(string $path, int $offset = 0, int $length = null): string
     {
+        unset($this->amzHeaders['x-amz-acl']);
+        unset($this->amzHeaders['x-amz-content-sha256']);
         unset($this->headers['content-type']);
         $this->headers['content-md5'] = \base64_encode(md5('', true));
         $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
@@ -415,6 +418,8 @@ class S3 extends Device
         $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
         
         unset($this->headers['content-type']);
+        unset($this->amzHeaders['x-amz-acl']);
+        unset($this->amzHeaders['x-amz-content-sha256']);
         $this->headers['content-md5'] = \base64_encode(md5('', true));
         $this->call(self::METHOD_DELETE, $uri);
 
@@ -597,6 +602,8 @@ class S3 extends Device
     private function getInfo(string $path): array
     {
         unset($this->headers['content-type']);
+        unset($this->amzHeaders['x-amz-acl']);
+        unset($this->amzHeaders['x-amz-content-sha256']);
         $this->headers['content-md5'] = \base64_encode(md5('', true));
         $uri = $path !== '' ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
         $response = $this->call(self::METHOD_HEAD, $uri);
