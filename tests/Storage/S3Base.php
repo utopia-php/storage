@@ -255,7 +255,7 @@ abstract class S3Base extends TestCase
         // chunked file
         $this->object->setTransferChunkSize(10000000); //10 mb
 
-        $device = new Local('/root');
+        $device = new Local(__DIR__ . '/../resources/disk-a');
         $destination = $device->getPath('largefile.mp4');
 
         $this->assertTrue($this->object->transfer($path, $destination, $device ));
@@ -271,7 +271,7 @@ abstract class S3Base extends TestCase
         
         $this->object->setTransferChunkSize(10000000); //10 mb
 
-        $device = new Local('/root');
+        $device = new Local(__DIR__ . '/../resources/disk-a');
         
         $path = $this->object->getPath('text-for-read.txt');
         $this->object->write($path, 'Hello World');
