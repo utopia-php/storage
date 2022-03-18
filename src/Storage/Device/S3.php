@@ -416,7 +416,10 @@ class S3 extends Device
      */
     public function move(string $source, string $target): bool
     {
-        return $this->transfer($source, $target, $this);
+        if($this->transfer($source, $target, $this)) {
+            return $this->delete($source);
+        }
+        return false;
     }
 
     /**
