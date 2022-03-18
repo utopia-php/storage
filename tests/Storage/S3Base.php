@@ -274,7 +274,7 @@ abstract class S3Base extends TestCase
         $device = new Local(__DIR__ . '/../resources/disk-a');
         
         $path = $this->object->getPath('text-for-read.txt');
-        $this->object->write($path, 'Hello World');
+        $this->object->write($path, 'Hello World', 'text/plain');
 
         $destination = $device->getPath('hello.txt');
         $this->assertTrue($this->object->transfer($path, $destination, $device));

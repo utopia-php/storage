@@ -232,7 +232,7 @@ class LocalTest extends TestCase
         
         $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['S3_SECRET'] ?? '';
-        $bucket = 'appwrite-storage';
+        $bucket = 'utopia-storage-tests';
 
         $device = new S3('/root', $key, $secret, $bucket, S3::AP_SOUTH_1, S3::ACL_PRIVATE);
         $destination = $device->getPath('largefile.mp4');
