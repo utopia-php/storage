@@ -13,7 +13,11 @@ class Storage
     const DEVICE_LOCAL = 'Local';
     const DEVICE_S3 = 'S3';
     const DEVICE_DO_SPACES = 'DOSpaces';
+<<<<<<< HEAD
     const DEVICE_LINODE='Linode';
+=======
+    const DEVICE_BACKBLAZE = 'BackBlaze';
+>>>>>>> 91f354487e987e5b0512c5a4fbe1bd3760d1e084
 
     /**
      * Devices.
