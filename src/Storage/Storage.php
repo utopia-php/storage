@@ -16,9 +16,6 @@ class Storage
     const DEVICE_BACKBLAZE = 'BackBlaze';
     const DEVICE_LINODE= 'Linode';
 
-    
-
-
     /**
      * Devices.
      *
