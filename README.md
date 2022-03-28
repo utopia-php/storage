@@ -4,7 +4,7 @@
 ![Total Downloads](https://img.shields.io/packagist/dt/utopia-php/storage.svg)
 [![Discord](https://img.shields.io/discord/564160730845151244?label=discord)](https://appwrite.io/discord)
 
-Utopia Storage library is simple and lite library for managing application storage. It supports multiple storage adapters. We already support AWS S3 storage, Digitalocean Spaces storage and Linode Object storage. This library is aiming to be as simple and easy to learn and use. This library is maintained by the [Appwrite team](https://appwrite.io).
+Utopia Storage library is simple and lite library for managing application storage. It supports multiple storage adapters. We already support AWS S3 storage, Digitalocean Spaces storage, Backblaze B2 Cloud storage, Linode Object storage and Wasabi Cloud storage. This library is aiming to be as simple and easy to learn and use. This library is maintained by the [Appwrite team](https://appwrite.io).
 
 This library is part of the [Utopia Framework](https://github.com/utopia-php/framework) project.
 
