@@ -363,11 +363,7 @@
             "support": {
                 "irc": "irc://irc.freenode.org/composer",
                 "issues": "https://github.com/composer/semver/issues",
-<<<<<<< HEAD
                 "source": "https://github.com/composer/semver/tree/3.3.1"
-=======
-                "source": "https://github.com/composer/semver/tree/3.2.9"
->>>>>>> 91f354487e987e5b0512c5a4fbe1bd3760d1e084
             },
             "funding": [
                 {
@@ -383,11 +379,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
             "time": "2022-03-16T11:22:07+00:00"
-=======
-            "time": "2022-02-04T13:58:43+00:00"
->>>>>>> 91f354487e987e5b0512c5a4fbe1bd3760d1e084
         },
         {
             "name": "composer/xdebug-handler",
