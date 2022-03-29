@@ -12,7 +12,7 @@ class WasabiTest extends S3Base
         $this->root = 'root';
         $key = $_SERVER['WASABI_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['WASABI_SECRET'] ?? '';
-        $bucket = "";
+        $bucket = "everly-wasabi-test";
 
         $this->object = new Wasabi($this->root, $key, $secret, $bucket, Wasabi::EU_CENTRAL_1, WASABI::ACL_PRIVATE);
 
