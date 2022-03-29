@@ -18,8 +18,8 @@ class Wasabi extends S3
     const EU_WEST_1='eu-west-1';
     const EU_WEST_2='eu-west-2';
     const US_CENTRAL_1='us-central-1';
-    const US_EAST_1='eu-east-1';
-    const US_EAST_2='eu-east-2';
+    const US_EAST_1='us-east-1';
+    const US_EAST_2='us-east-2';
 
 
     /**
