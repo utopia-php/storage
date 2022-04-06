@@ -131,7 +131,7 @@ class S3 extends Device
      */
     public function getDescription(): string
     {
-        return 'S3 Bucket Storage drive for AWS or on premise solution';
+        return 'S3 Bucket Storage drive for AWS or on premise solution...';
     }
 
     /**
