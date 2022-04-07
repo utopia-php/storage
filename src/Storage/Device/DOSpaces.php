@@ -32,7 +32,6 @@ class DOSpaces extends Generic
     {
         $hostName = $bucket . '.' . $region . '.digitaloceanspaces.com';
         parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl, $hostName);
-
     }
 
     /**

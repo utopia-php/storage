@@ -82,7 +82,6 @@ class Generic extends Device
         $this->root = $root;
         $this->acl = $acl;
         $this->hostName = $hostName;
-
     }
 
     /**
@@ -98,7 +97,7 @@ class Generic extends Device
      */
     public function getDescription(): string
     {
-        return 'S3 Generic Bucket Storage drive for AWS compatible or on premise solution';
+        return 'S3 Generic Bucket Storage drive for AWS compatible solutions';
     }
 
     /**
@@ -217,13 +216,11 @@ class Generic extends Device
         \curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
         \curl_setopt($curl, CURLOPT_URL, $url);
 
-
         // Headers
         $httpHeaders = [];
         $headers['x-amz-date'] = \gmdate('Ymd\THis\Z');
         $headers['date'] = \gmdate('D, d M Y H:i:s T');
         $headers['host'] = $this->hostName;
-
 
         if (!isset($headers['x-amz-content-sha256'])) {
             $headers['x-amz-content-sha256'] = \hash('sha256', $data);
@@ -306,7 +303,6 @@ class Generic extends Device
     {
         $service = 's3';
         $region = $this->region;
-
         $algorithm = 'AWS4-HMAC-SHA256';
         $combinedHeaders = [];
         $amzDateStamp = \substr($headers['x-amz-date'], 0, 8);
@@ -327,7 +323,6 @@ class Generic extends Device
 
         $qsPos = \strpos($uri, '?');
         $amzPayload[] = ($qsPos === false ? $uri : \substr($uri, 0, $qsPos));
-
         $amzPayload[] = $queryString;
 
         foreach ($combinedHeaders as $k => $v) { // add header as string to requests
@@ -378,7 +373,6 @@ class Generic extends Device
     protected function createMultipartUpload(string $path, string $contentType): string
     {
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
-
         $response = $this->call(self::METHOD_POST, $uri, '', ['uploads' => ''], [
             'content-type' => $contentType,
             'content-md5' => \base64_encode(md5('', true)),
@@ -461,7 +455,6 @@ class Generic extends Device
     public function abort(string $path, string $extra = ''): bool
     {
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
-
         $this->call(self::METHOD_DELETE, $uri, '', [
             'uploadId' => $extra
         ], [

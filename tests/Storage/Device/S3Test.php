@@ -10,7 +10,6 @@ class S3Test extends S3Base
     
     protected function init(): void
     {
-        $this->root = '/root';
         $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['S3_SECRET'] ?? '';
         $bucket = 'utopia-storage-tests';
