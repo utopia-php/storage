@@ -2,9 +2,10 @@
 
 namespace Utopia\Storage\Device;
 
-use Utopia\Storage\Device\S3;
+use Utopia\Storage\Device\Generic;
 
-class DOSpaces extends S3
+
+class DOSpaces extends Generic
 {
     /**
      * Regions constants
@@ -29,8 +30,9 @@ class DOSpaces extends S3
      */
     public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::NYC3, string $acl = self::ACL_PRIVATE)
     {
-        parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl);
-        $this->headers['host'] = $bucket . '.' . $region . '.digitaloceanspaces.com';
+        $hostName = $bucket . '.' . $region . '.digitaloceanspaces.com';
+        parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl, $hostName);
+
     }
 
     /**

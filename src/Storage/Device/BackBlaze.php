@@ -2,9 +2,10 @@
 
 namespace Utopia\Storage\Device;
 
-use Utopia\Storage\Device\S3;
+use Utopia\Storage\Device\Generic;
 
-class BackBlaze extends S3
+
+class BackBlaze extends Generic
 {
     /**
      * Regions constants
@@ -31,8 +32,8 @@ class BackBlaze extends S3
      */
     public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_WEST_004, string $acl = self::ACL_PRIVATE)
     {
-        parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl);
-        $this->headers['host'] = $bucket . '.' . 's3' . '.' . $region . '.backblazeb2.com';
+        $hostName = $bucket . '.' . 's3' . '.' . $region . '.backblazeb2.com';
+        parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl, $hostName);
     }
 
     /**
