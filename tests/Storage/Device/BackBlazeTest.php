@@ -12,9 +12,9 @@ class BackBlazeTest extends S3Base
 
         $key = $_SERVER['BACKBLAZE_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['BACKBLAZE_SECRET'] ?? '';
-        $bucket = "backblaze-demo";
+        $bucket = "backblaze-demo-1";
 
-        $this->object = new BackBlaze($this->root, $key, $secret, $bucket, BackBlaze::US_WEST_004, BackBlaze::ACL_PRIVATE);
+        $this->object = new BackBlaze($this->root, $key, $secret, $bucket, BackBlaze::EU_CENTRAL_003, BackBlaze::ACL_PRIVATE);
     }
 
     protected function getAdapterName(): string
