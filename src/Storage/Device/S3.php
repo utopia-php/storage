@@ -48,7 +48,7 @@ class S3 extends Generic
      * @param string $region
      * @param string $acl
      */
-    public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_EAST_1, string $acl = self::ACL_PRIVATE)
+    public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::EU_WEST_1, string $acl = self::ACL_PRIVATE)
     {
         $hostName = $bucket . '.s3.'.$region.'.amazonaws.com';
         parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl,  $hostName);
