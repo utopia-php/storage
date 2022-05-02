@@ -234,7 +234,6 @@ class Generic extends Device
         }
 
         $httpHeaders[] = 'Authorization: ' . $this->getSignatureV4($method, $uri, $parameters, $headers);
-
         \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
         \curl_setopt($curl, CURLOPT_HEADER, false);
         \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
