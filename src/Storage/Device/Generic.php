@@ -82,6 +82,7 @@ class Generic extends Device
         $this->root = $root;
         $this->acl = $acl;
         $this->hostName = $hostName;
+
     }
 
     /**
