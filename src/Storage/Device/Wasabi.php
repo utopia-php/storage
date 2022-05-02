@@ -5,20 +5,26 @@ namespace Utopia\Storage\Device;
 use Utopia\Storage\Device\Generic;
 
 
-class Linode extends Generic
+class Wasabi extends Generic
 {
     /**
      * Regions constants
      *
      */
-    const EU_CENTRAL_1 = 'eu-central-1';
-    const US_SOUTHEAST_1 = 'us-southeast-1';
-    const US_EAST_1 = 'us-east-1';
-    const AP_SOUTH_1 = 'ap-south-1';
+    const US_WEST_1='us-west-1';
+    const AP_NORTHEAST_1='ap-northeast-1';
+    const AP_NORTHEAST_2='ap-northeast-2';
+    const EU_CENTRAL_1='eu-central-1';
+    const EU_CENTRAL_2='eu-central-2';
+    const EU_WEST_1='eu-west-1';
+    const EU_WEST_2='eu-west-2';
+    const US_CENTRAL_1='us-central-1';
+    const US_EAST_1='us-east-1';
+    const US_EAST_2='us-east-2';
 
 
     /**
-     * Object Storage Constructor
+     * Wasabi Constructor
      *
      * @param string $root
      * @param string $accessKey
@@ -29,7 +35,7 @@ class Linode extends Generic
      */
     public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::EU_CENTRAL_1, string $acl = self::ACL_PRIVATE)
     {
-        $hostName = $bucket.'.'.$region.'.'.'linodeobjects.com';
+        $hostName = $bucket . '.'.'s3'.'.'.$region.'.'.'wasabisys'.'.'.'com';
         parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl, $hostName);
     }
 
@@ -38,7 +44,7 @@ class Linode extends Generic
      */
     public function getName(): string
     {
-        return 'Linode Object Storage';
+        return 'Wasabi Storage';
     }
 
     /**
@@ -46,6 +52,6 @@ class Linode extends Generic
      */
     public function getDescription(): string
     {
-        return 'Linode Object Storage';
+        return 'Wasabi Storage';
     }
 }
