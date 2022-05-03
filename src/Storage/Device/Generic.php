@@ -207,6 +207,11 @@ class Generic extends Device
      */
     private function call(string $method, string $uri, string $data = '', array $parameters = [], array $headers = [])
     {
+
+        if(str_starts_with($uri,'//')){
+            $uri = substr($uri, 1);
+        }
+
         $url = 'https://' . $this->hostName . $uri . '?' . \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
         $response->body = '';
@@ -575,8 +580,11 @@ class Generic extends Device
      */
     public function deletePath(string $path): bool
     {
-        $path = $this->getRoot() . '/' . $path;
-
+        $root = $this->getRoot();
+        if(str_starts_with($root, '/')){
+            $root = substr($root, 1);
+        }
+        $path = $root . '/' . $path;
         $uri = '/';
 
         $continuationToken = '';

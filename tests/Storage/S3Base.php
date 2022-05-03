@@ -27,7 +27,7 @@ abstract class S3Base extends TestCase
     /**
      * @var string
      */
-    protected $root = 'root';
+    protected $root = '/root';
 
     public function setUp(): void
     {
