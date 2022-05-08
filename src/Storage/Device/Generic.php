@@ -180,7 +180,17 @@ class Generic extends Device
      */
     public function write(string $path, string $data, string $contentType = ''): bool
     {
-        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+
+        $uri = '/';
+
+        if($path !== '') {
+
+            $uri = \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path));
+
+            if (!str_starts_with($uri, '/')) {
+                $uri .= '/' . $uri;
+            }
+        }
 
         $this->call(self::METHOD_PUT, $uri, $data, [], [
             'content-type' => $contentType,
@@ -207,10 +217,6 @@ class Generic extends Device
      */
     private function call(string $method, string $uri, string $data = '', array $parameters = [], array $headers = [])
     {
-
-        if(str_starts_with($uri,'//')){
-            $uri = substr($uri, 1);
-        }
 
         $url = 'https://' . $this->hostName . $uri . '?' . \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
@@ -377,12 +383,23 @@ class Generic extends Device
      */
     protected function createMultipartUpload(string $path, string $contentType): string
     {
-        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+        $uri = '/';
+
+        if($path !== '') {
+
+            $uri = \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path));
+
+            if (!str_starts_with($uri, '/')) {
+                $uri .= '/' . $uri;
+            }
+        }
+
         $response = $this->call(self::METHOD_POST, $uri, '', ['uploads' => ''], [
             'content-type' => $contentType,
             'content-md5' => \base64_encode(md5('', true)),
             'x-amz-acl' => $this->acl
         ]);
+
         return $response->body['UploadId'];
     }
 
@@ -400,7 +417,17 @@ class Generic extends Device
      */
     protected function uploadPart(string $source, string $path, int $chunk, string $uploadId): string
     {
-        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+        $uri = '/';
+
+        if($path !== '') {
+
+            $uri = \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path));
+
+            if (!str_starts_with($uri, '/')) {
+                $uri .= '/' . $uri;
+            }
+        }
+
         $data = \file_get_contents($source);
         $response = $this->call(self::METHOD_PUT, $uri, $data, [
             'partNumber' => $chunk,
@@ -428,7 +455,16 @@ class Generic extends Device
     protected function completeMultipartUpload(string $path, string $uploadId, array $parts, $source): bool
     {
 
-        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+        $uri = '/';
+
+        if($path !== '') {
+
+            $uri = \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path));
+
+            if (!str_starts_with($uri, '/')) {
+                $uri .= '/' . $uri;
+            }
+        }
 
         $body = '<CompleteMultipartUpload>';
         foreach ($parts as $part) {
@@ -459,12 +495,23 @@ class Generic extends Device
      */
     public function abort(string $path, string $extra = ''): bool
     {
-        $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+        $uri = '/';
+
+        if($path !== '') {
+
+            $uri = \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path));
+
+            if (!str_starts_with($uri, '/')) {
+                $uri .= '/' . $uri;
+            }
+        }
+
         $this->call(self::METHOD_DELETE, $uri, '', [
             'uploadId' => $extra
         ], [
             'content-md5' => \base64_encode(md5('', true))
         ]);
+
         return true;
     }
 
@@ -512,7 +559,16 @@ class Generic extends Device
      */
     private function getInfo(string $path): array
     {
-        $uri = $path !== '' ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        $uri = '/';
+
+        if($path !== '') {
+
+            $uri = \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path));
+
+            if (!str_starts_with($uri, '/')) {
+                $uri .= '/' . $uri;
+            }
+        }
 
         $response = $this->call(self::METHOD_HEAD, $uri, '', [], ['content-md5' => \base64_encode(md5('', true))]);
 
@@ -532,7 +588,17 @@ class Generic extends Device
      */
     public function read(string $path, int $offset = 0, int $length = null): string
     {
-        $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        $uri = '/';
+
+        if($path !== '') {
+
+            $uri = \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path));
+
+            if (!str_starts_with($uri, '/')) {
+                $uri .= '/' . $uri;
+            }
+        }
+
         $headers = [
             'content-md5' => \base64_encode(md5('', true))
         ];
@@ -560,7 +626,16 @@ class Generic extends Device
      */
     public function delete(string $path, bool $recursive = false): bool
     {
-        $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
+        $uri = '/';
+
+        if($path !== '') {
+
+            $uri = \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path));
+
+            if (!str_starts_with($uri, '/')) {
+                $uri .= '/' . $uri;
+            }
+        }
 
         $this->call(self::METHOD_DELETE, $uri, '', [], [
             'content-md5' => \base64_encode(md5('', true)),
@@ -581,9 +656,11 @@ class Generic extends Device
     public function deletePath(string $path): bool
     {
         $root = $this->getRoot();
+
         if(str_starts_with($root, '/')){
             $root = substr($root, 1);
         }
+
         $path = $root . '/' . $path;
         $uri = '/';
 
