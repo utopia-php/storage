@@ -11,7 +11,7 @@ class LinodeTest extends S3Base
     {
         $key    = $_SERVER['LINODE_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['LINODE_SECRET'] ?? '';
-        $bucket = 'shimon-test';
+        $bucket = 'appwrite-test';
 
         $this->object = new Linode($this->root, $key, $secret, $bucket, Linode::US_EAST_1, Linode::ACL_PRIVATE);
     }
