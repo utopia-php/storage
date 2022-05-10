@@ -15,7 +15,8 @@ class Storage
     const DEVICE_DO_SPACES = 'DOSpaces';
     const DEVICE_BACKBLAZE = 'BackBlaze';
     const DEVICE_LINODE= 'Linode';
-    const DEVICE_WASABI= 'Wasabi';
+    const DEVICE_WASABI = 'Wasabi';
+
 
     /**
      * Devices.

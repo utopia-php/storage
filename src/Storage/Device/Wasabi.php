@@ -4,7 +4,6 @@ namespace Utopia\Storage\Device;
 
 use Utopia\Storage\Device\S3;
 
-
 class Wasabi extends S3
 {
     /**
@@ -54,4 +53,6 @@ class Wasabi extends S3
     {
         return 'Wasabi Storage';
     }
+
 }
+
