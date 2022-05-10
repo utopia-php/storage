@@ -39,7 +39,7 @@ abstract class Device
      * Each device hold a complex directory structure that is being build in this method.
      *
      * @param string $filename
-     * @param string $prefix
+     * @param string|null $prefix
      *
      * @return string
      */

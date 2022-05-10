@@ -2,6 +2,7 @@
 
 namespace Utopia\Storage\Device;
 
+use JetBrains\PhpStorm\Pure;
 use Utopia\Storage\Device\S3;
 
 class Wasabi extends S3
