@@ -2,10 +2,10 @@
 
 namespace Utopia\Storage\Device;
 
-use Utopia\Storage\Device\Generic;
+use Utopia\Storage\Device\S3;
 
 
-class BackBlaze extends Generic
+class BackBlaze extends S3
 {
     /**
      * Regions constants

@@ -2,10 +2,10 @@
 
 namespace Utopia\Storage\Device;
 
-use Utopia\Storage\Device\Generic;
+use Utopia\Storage\Device\S3;
 
 
-class Wasabi extends Generic
+class Wasabi extends S3
 {
     /**
      * Regions constants
