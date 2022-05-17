@@ -9,7 +9,6 @@ class DOSpacesTest extends S3Base
 {
     protected function init(): void
     {
-        $this->root = '/root';
         $key = $_SERVER['DO_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['DO_SECRET'] ?? '';
         $bucket = "utopia-storage-tests";

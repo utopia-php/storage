@@ -14,8 +14,9 @@ class Storage
     const DEVICE_S3 = 'S3';
     const DEVICE_DO_SPACES = 'DOSpaces';
     const DEVICE_WASABI = 'Wasabi';
-    const DEVICE_BACKBLAZE = 'BackBlaze';
+    const DEVICE_BACKBLAZE = 'Backblaze';
     const DEVICE_LINODE= 'Linode';
+
 
     /**
      * Devices.
@@ -24,7 +25,7 @@ class Storage
      *
      * @var array
      */
-    public static $devices = [];
+    public static array $devices = [];
 
     /**
      * Set Device.
@@ -34,11 +35,11 @@ class Storage
      * @param string $name
      * @param Device $device
      *
-     * @throws Exception
-     *
      * @return void
+     *@throws Exception
+     *
      */
-    public static function setDevice($name, Device $device): void
+    public static function setDevice(string $name, Device $device): void
     {
         self::$devices[$name] = $device;
     }
@@ -54,7 +55,7 @@ class Storage
      *
      * @throws Exception
      */
-    public static function getDevice($name)
+    public static function getDevice(string $name): Device
     {
         if (!\array_key_exists($name, self::$devices)) {
             throw new Exception('The device "'.$name.'" is not listed');
@@ -72,7 +73,7 @@ class Storage
      *
      * @return bool
      */
-    public static function exists($name)
+    public static function exists(string $name): bool
     {
         return (bool) \array_key_exists($name, self::$devices);
     }
@@ -88,7 +89,7 @@ class Storage
      *
      * @return string
      */
-    public static function human(int $bytes, $decimals = 2, $system = 'metric')
+    public static function human(int $bytes, int $decimals = 2, string $system = 'metric'): string
     {
         $mod = ($system === 'binary') ? 1024 : 1000;
 

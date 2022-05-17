@@ -4,7 +4,8 @@ namespace Utopia\Storage\Device;
 
 use Utopia\Storage\Device\S3;
 
-class BackBlaze extends S3
+
+class Backblaze extends S3
 {
     /**
      * Regions constants
@@ -20,7 +21,7 @@ class BackBlaze extends S3
     const EU_CENTRAL_004 = 'eu-central-004';
 
     /**
-     * BackBlaze Constructor
+     * Backblaze Constructor
      *
      * @param string $root
      * @param string $accessKey
@@ -31,8 +32,8 @@ class BackBlaze extends S3
      */
     public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_WEST_004, string $acl = self::ACL_PRIVATE)
     {
-        parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl);
-        $this->headers['host'] = $bucket . '.' . 's3' . '.' . $region . '.backblazeb2.com';
+        $hostName = $bucket . '.' . 's3' . '.' . $region . '.backblazeb2.com';
+        parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl, $hostName);
     }
 
     /**
@@ -40,7 +41,7 @@ class BackBlaze extends S3
      */
     public function getName(): string
     {
-        return 'BackBlaze B2 Storage';
+        return 'Backblaze B2 Storage';
     }
 
     /**
@@ -48,6 +49,6 @@ class BackBlaze extends S3
      */
     public function getDescription(): string
     {
-        return 'BackBlaze B2 Storage';
+        return 'Backblaze B2 Storage';
     }
 }

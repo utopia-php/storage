@@ -133,7 +133,7 @@ abstract class S3Base extends TestCase
         $this->assertEquals(true, $this->object->exists($path));
         $this->assertEquals(true, $this->object->deletePath('bucket'));
         $this->assertEquals(false, $this->object->exists($path));
-        
+
         // Test Multiple Objects
         $path = $this->object->getPath('text-for-delete-path1.txt');
         $path = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path);
@@ -148,7 +148,7 @@ abstract class S3Base extends TestCase
         $this->assertEquals(true, $this->object->deletePath('bucket'));
         $this->assertEquals(false, $this->object->exists($path));
         $this->assertEquals(false, $this->object->exists($path2));
-        
+
 
     }
 
