@@ -14,7 +14,7 @@ class BackblazeTest extends S3Base
         $secret = $_SERVER['BACKBLAZE_SECRET'] ?? '';
         $bucket = "backblaze-demo";
 
-        $this->object = new Backblaze($this->root, $key, $secret, $bucket, BackBlaze::US_WEST_004, Backblaze::ACL_PRIVATE);
+        $this->object = new Backblaze($this->root, $key, $secret, $bucket, Backblaze::US_WEST_004, Backblaze::ACL_PRIVATE);
 
     }
 
