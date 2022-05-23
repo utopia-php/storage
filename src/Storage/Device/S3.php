@@ -403,26 +403,6 @@ class S3 extends Device
     }
 
     /**
-     * Move file from given source to given path, Return true on success and false on failure.
-     *
-     * @see http://php.net/manual/en/function.filesize.php
-     *
-     * @param string $source
-     * @param string $target
-     * 
-     * @throw \Exception
-     *
-     * @return bool
-     */
-    public function move(string $source, string $target): bool
-    {
-        if($this->transfer($source, $target, $this)) {
-            return $this->delete($source);
-        }
-        return false;
-    }
-
-    /**
      * Delete file in given path, Return true on success and false on failure.
      *
      * @see http://php.net/manual/en/function.filesize.php

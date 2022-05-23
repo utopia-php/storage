@@ -94,7 +94,7 @@ abstract class Device
      * Upload file contents to desired destination in the selected disk.
      * return number of chunks uploaded or 0 if it fails.
      *
-     * @param string $source
+     * @param string $data
      * @param string $path
      * @param string $contentType
      * @param int chunk
@@ -159,7 +159,13 @@ abstract class Device
      *
      * @return bool
      */
-    abstract public function move(string $source, string $target): bool;
+    public function move(string $source, string $target): bool
+    {
+        if($this->transfer($source, $target, $this)) {
+            return $this->delete($source);
+        }
+        return false;
+    }
 
     /**
      * Delete file in given path return true on success and false on failure.
