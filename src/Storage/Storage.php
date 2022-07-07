@@ -16,6 +16,7 @@ class Storage
     const DEVICE_WASABI = 'Wasabi';
     const DEVICE_BACKBLAZE = 'Backblaze';
     const DEVICE_LINODE= 'Linode';
+    const DEVICE_MINIO= 'MinIO';
 
     /**
      * Devices.
