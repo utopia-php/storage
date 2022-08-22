@@ -14,5 +14,7 @@ services:
       - DO_SECRET
       - LINODE_ACCESS_KEY
       - LINODE_SECRET
+      - BACKBLAZE_ACCESS_KEY
+      - BACKBLAZE_SECRET
       - WASABI_ACCESS_KEY
       - WASABI_SECRET
