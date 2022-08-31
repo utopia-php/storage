@@ -40,7 +40,7 @@ LABEL maintainer="team@appwrite.io"
 
 WORKDIR /usr/src/code
 
-RUN echo extension=zstd.so >> /usr/local/etc/php/conf.d/redis.ini
+RUN echo extension=zstd.so >> /usr/local/etc/php/conf.d/zstd.ini
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
   && echo "opcache.enable_cli=1" >> $PHP_INI_DIR/php.ini \
