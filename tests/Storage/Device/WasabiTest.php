@@ -15,7 +15,6 @@ class WasabiTest extends S3Base
         $bucket = 'utopia-php-storage-tests';
 
         $this->object = new Wasabi($this->root, $key, $secret, $bucket, Wasabi::EU_CENTRAL_1, WASABI::ACL_PRIVATE);
-
     }
 
     protected function getAdapterName(): string
