@@ -150,17 +150,7 @@ class S3 extends Device
      */
     public function getPath(string $filename, string $prefix = null): string
     {
-        $path = '';
-
-        for ($i = 0; $i < 4; ++$i) {
-            $path = ($i < \strlen($filename)) ? $path . DIRECTORY_SEPARATOR . $filename[$i] : $path . DIRECTORY_SEPARATOR . 'x';
-        }
-
-        if(!is_null($prefix)) {
-            $path = $prefix . DIRECTORY_SEPARATOR . $path;
-        }
-
-        return $this->getRoot() . $path . DIRECTORY_SEPARATOR . $filename;
+        return $this->getRoot() . DIRECTORY_SEPARATOR . $filename;
     }
 
     /**

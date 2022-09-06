@@ -7,7 +7,7 @@ use Utopia\Tests\S3Base;
 
 class S3Test extends S3Base
 {
-    
+
     protected function init(): void
     {
         $this->root = '/root';

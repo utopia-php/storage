@@ -7,17 +7,16 @@ use Utopia\Storage\Device\S3;
 class Backblaze extends S3
 {
     /**
-     * Regions constants
-     *
+     * Region constants
+     * 
+     * (Technically, these are clusters. There are two Backblaze regions,
+     * US West and EU Central.)
      */
+    const US_WEST_000 = 'us-west-000';
     const US_WEST_001 = 'us-west-001';
     const US_WEST_002 = 'us-west-002';
-    const US_WEST_003 = 'us-west-003';
     const US_WEST_004 = 'us-west-004';
-    const EU_CENTRAL_001 = 'eu-central-001';
-    const EU_CENTRAL_002 = 'eu-central-002';
     const EU_CENTRAL_003 = 'eu-central-003';
-    const EU_CENTRAL_004 = 'eu-central-004';
 
     /**
      * Backblaze Constructor

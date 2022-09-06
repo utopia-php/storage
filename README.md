@@ -26,14 +26,14 @@ use Utopia\Storage\Device\Local
 use Utopia\Storage\Device\S3
 use Utopia\Storage\Device\DOSpaces
 
-// instiantiating local storage
+// Instantiating local storage
 Storage::setDevice('files', new Local('path'));
 
-//or you can use s3 storage
-Storage::setDevice('files', new S3('path',AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_BUCKET_NAME, AWS_REGION, AWS_ACL_FLAG));
+// Or you can use AWS S3 storage
+Storage::setDevice('files', new S3('path', AWS_ACCESS_KEY, AWS_SECRET_KEY,AWS_BUCKET_NAME, AWS_REGION, AWS_ACL_FLAG));
 
-//or you can use Digitalocean spaces storage
-Storage::setDevice('files', new DOSpaces('path',DO_SPACES_ACCESS_KEY, DO_SPACES_SECRET_KEY,DO_SPACES_BUCKET_NAME, DO_SPACES_REGION, AWS_ACL_FLAG));
+// Or you can use DigitalOcean Spaces storage
+Storage::setDevice('files', new DOSpaces('path', DO_SPACES_ACCESS_KEY, DO_SPACES_SECRET_KEY, DO_SPACES_BUCKET_NAME, DO_SPACES_REGION, AWS_ACL_FLAG));
 
 $device = Storage::getDevice('files');
 
