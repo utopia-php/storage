@@ -112,7 +112,7 @@ class S3 extends Device
         $this->secretKey = $secretKey;
         $this->bucket = $bucket;
         $this->region = $region;
-        $this->root = $root;
+        $this->root = trim( $root,"/" );
         $this->acl = $acl;
         $this->headers['host'] = $this->bucket . '.s3.'.$this->region.'.amazonaws.com';
         $this->amzHeaders = [];
