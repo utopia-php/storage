@@ -9,7 +9,7 @@ class LinodeTest extends S3Base
 {
     protected function init(): void
     {
-        $this->root = 'root';
+        $this->root = '/root';
         $key = $_SERVER['LINODE_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['LINODE_SECRET'] ?? '';
         $bucket = 'everly-test';

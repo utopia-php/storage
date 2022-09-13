@@ -68,12 +68,12 @@ abstract class S3Base extends TestCase
 
     public function testRoot()
     {
-        $this->assertEquals($this->root, $this->object->getRoot());
+        $this->assertEquals( trim($this->root, "/"), $this->object->getRoot());
     }
 
     public function testPath()
     {
-        $this->assertEquals($this->root . '/image.png', $this->object->getPath('image.png'));
+        $this->assertEquals(trim($this->root, "/") . '/image.png', $this->object->getPath('image.png'));
     }
 
     public function testWrite()
