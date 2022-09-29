@@ -44,7 +44,7 @@ class MinIO extends S3
      *
      * @return array
      */
-    public function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
+    private function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
     {
         $uri = '/' . $this->getRoot();
         $this->headers['content-type'] = 'text/plain';

@@ -724,7 +724,7 @@ class S3 extends Device
      *
      * @throws \Exception
      */
-    private function call(string $method, string $uri, string $data = '', array $parameters = [])
+    protected function call(string $method, string $uri, string $data = '', array $parameters=[])
     {
         $uri = $this->getAbsolutePath($uri);
         $url = 'https://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
