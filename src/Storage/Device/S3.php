@@ -660,7 +660,7 @@ class S3 extends Device
      *
      * @return  object
      */
-    public function call(string $method, string $uri, string $data = '', array $parameters=[])
+    protected function call(string $method, string $uri, string $data = '', array $parameters=[])
     {
         $url = $this->protocol . '://' . $this->headers['host'] . $uri . '?' . \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
