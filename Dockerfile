@@ -17,8 +17,8 @@ RUN composer update \
 
 FROM php:8.0-cli-alpine as compile
 
-ENV PHP_ZSTD_VERSION="master"
-ENV PHP_SNAPPY_VERSION="master"
+ENV PHP_ZSTD_VERSION="master" \
+    PHP_SNAPPY_VERSION=0.2.1
 
 RUN apk add --no-cache \
     git \
