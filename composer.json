@@ -20,6 +20,7 @@
         "ext-fileinfo": "*",
         "ext-zlib": "*",
         "ext-zstd": "*",
+        "ext-snappy": "*",
         "php": ">=8.0",
         "utopia-php/framework": "0.*.*"
     },

@@ -18,6 +18,7 @@ RUN composer update \
 FROM php:8.0-cli-alpine as compile
 
 ENV PHP_ZSTD_VERSION="master"
+ENV PHP_SNAPPY_VERSION="master"
 
 RUN apk add --no-cache \
     git \
@@ -34,6 +35,14 @@ RUN git clone --recursive --depth 1 --branch $PHP_ZSTD_VERSION https://github.co
   && ./configure --with-libzstd \
   && make && make install
 
+## Snappy Extension
+FROM compile AS snappy
+RUN git clone --recursive --depth 1 --branch $PHP_SNAPPY_VERSION https://github.com/kjdev/php-ext-snappy.git \
+  && cd php-ext-snappy \
+  && phpize \
+  && ./configure \
+  && make && make install
+
 FROM compile as final
 
 LABEL maintainer="team@appwrite.io"
@@ -41,6 +50,7 @@ LABEL maintainer="team@appwrite.io"
 WORKDIR /usr/src/code
 
 RUN echo extension=zstd.so >> /usr/local/etc/php/conf.d/zstd.ini
+RUN echo extension=snappy.so >> /usr/local/etc/php/conf.d/snappy.ini
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
   && echo "opcache.enable_cli=1" >> $PHP_INI_DIR/php.ini \
@@ -48,6 +58,7 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
 
 COPY --from=composer /usr/local/src/vendor /usr/src/code/vendor
 COPY --from=zstd /usr/local/lib/php/extensions/no-debug-non-zts-20200930/zstd.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
+COPY --from=snappy /usr/local/lib/php/extensions/no-debug-non-zts-20200930/snappy.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
 
 # Add Source Code
 COPY . /usr/src/code
