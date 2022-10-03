@@ -40,7 +40,7 @@ class LZ4 extends Compression
     public function setLevel(int $level): void
     {
         if ($level < 0 || $level > 12) {
-            throw new \InvalidArgumentException('Level must be between 1 and 12');
+            throw new \InvalidArgumentException('Level must be between 0 and 12');
         }
         $this->level = $level;
     }
