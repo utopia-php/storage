@@ -17,7 +17,8 @@ RUN composer update \
 
 FROM php:8.0-cli-alpine as compile
 
-ENV PHP_ZSTD_VERSION="master"
+ENV PHP_ZSTD_VERSION="master" \
+    PHP_XZ_VERSION=5.2.7
 
 RUN apk add --no-cache \
     git \
@@ -34,6 +35,25 @@ RUN git clone --recursive --depth 1 --branch $PHP_ZSTD_VERSION https://github.co
   && ./configure --with-libzstd \
   && make && make install
 
+## Xz Extension
+FROM compile as xz
+RUN wget https://tukaani.org/xz/xz-${PHP_XZ_VERSION}.tar.xz -O xz.tar.xz \
+    && tar -xJf xz.tar.xz \
+    && rm xz.tar.xz \
+    && ( \
+        cd xz-${PHP_XZ_VERSION} \
+        && ./configure \
+        && make \
+        && make install \
+    ) \
+    && rm -r xz-${PHP_XZ_VERSION}
+
+RUN git clone https://github.com/codemasher/php-ext-xz.git \
+  && cd php-ext-xz \
+  && phpize \
+  && ./configure \
+  && make && make install
+
 FROM compile as final
 
 LABEL maintainer="team@appwrite.io"
@@ -41,6 +61,7 @@ LABEL maintainer="team@appwrite.io"
 WORKDIR /usr/src/code
 
 RUN echo extension=zstd.so >> /usr/local/etc/php/conf.d/zstd.ini
+RUN echo extension=xz.so >> /usr/local/etc/php/conf.d/xz.ini
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
   && echo "opcache.enable_cli=1" >> $PHP_INI_DIR/php.ini \
@@ -48,6 +69,7 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
 
 COPY --from=composer /usr/local/src/vendor /usr/src/code/vendor
 COPY --from=zstd /usr/local/lib/php/extensions/no-debug-non-zts-20200930/zstd.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
+COPY --from=xz /usr/local/lib/php/extensions/no-debug-non-zts-20200930/xz.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
 
 # Add Source Code
 COPY . /usr/src/code
