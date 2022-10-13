@@ -3,7 +3,6 @@
 namespace Utopia\Tests;
 
 use Utopia\Storage\Device\Wasabi;
-use Utopia\Tests\S3Base;
 
 class WasabiTest extends S3Base
 {

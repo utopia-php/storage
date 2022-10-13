@@ -17,20 +17,19 @@ class Upload extends Validator
     /**
      * Check if a file is a valid upload file
      *
-     * @param mixed $path
-     *
+     * @param  mixed  $path
      * @return bool
      */
     public function isValid($path): bool
     {
-        if (!is_string($path)) {
+        if (! is_string($path)) {
             return false;
         }
-        
+
         if (\is_uploaded_file($path)) {
             return true;
         }
-        
+
         return false;
     }
 

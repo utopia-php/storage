@@ -2,8 +2,8 @@
 
 namespace Utopia\Tests;
 
-use Utopia\Storage\Compression\Algorithms\GZIP;
 use PHPUnit\Framework\TestCase;
+use Utopia\Storage\Compression\Algorithms\GZIP;
 
 class GZIPTest extends TestCase
 {
@@ -25,7 +25,7 @@ class GZIPTest extends TestCase
     {
         $this->assertEquals($this->object->getName(), 'gzip');
     }
-    
+
     public function testCompressDecompressWithText()
     {
         $demo = 'This is a demo string';
@@ -36,13 +36,13 @@ class GZIPTest extends TestCase
 
         $this->assertEquals($demoSize, 21);
         $this->assertEquals($dataSize, 39);
-        
+
         $this->assertEquals($this->object->decompress($data), $demo);
     }
-    
+
     public function testCompressDecompressWithJPGImage()
     {
-        $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-a/kitten-1.jpg');
+        $demo = \file_get_contents(__DIR__.'/../../../resources/disk-a/kitten-1.jpg');
         $demoSize = mb_strlen($demo, '8bit');
 
         $data = $this->object->compress($demo);
@@ -50,18 +50,18 @@ class GZIPTest extends TestCase
 
         $this->assertEquals($demoSize, 599639);
         $this->assertEquals($dataSize, 599107);
-        
+
         $this->assertGreaterThan($dataSize, $demoSize);
-        
+
         $data = $this->object->decompress($data);
         $dataSize = mb_strlen($data, '8bit');
-        
+
         $this->assertEquals($dataSize, 599639);
     }
-    
+
     public function testCompressDecompressWithPNGImage()
     {
-        $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-b/kitten-1.png');
+        $demo = \file_get_contents(__DIR__.'/../../../resources/disk-b/kitten-1.png');
         $demoSize = mb_strlen($demo, '8bit');
 
         $data = $this->object->compress($demo);
@@ -69,12 +69,12 @@ class GZIPTest extends TestCase
 
         $this->assertEquals($demoSize, 3038056);
         $this->assertEquals($dataSize, 3029202);
-        
+
         $this->assertGreaterThan($dataSize, $demoSize);
-        
+
         $data = $this->object->decompress($data);
         $dataSize = mb_strlen($data, '8bit');
-        
+
         $this->assertEquals($dataSize, 3038056);
     }
 }
