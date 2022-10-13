@@ -21,12 +21,12 @@ class GZIPTest extends TestCase
     {
     }
 
-    public function testName()
+    public function testName(): void
     {
         $this->assertEquals($this->object->getName(), 'gzip');
     }
     
-    public function testCompressDecompressWithText()
+    public function testCompressDecompressWithText(): void
     {
         $demo = 'This is a demo string';
         $demoSize = mb_strlen($demo, '8bit');
@@ -40,7 +40,7 @@ class GZIPTest extends TestCase
         $this->assertEquals($this->object->decompress($data), $demo);
     }
     
-    public function testCompressDecompressWithJPGImage()
+    public function testCompressDecompressWithJPGImage(): void
     {
         $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-a/kitten-1.jpg');
         $demoSize = mb_strlen($demo, '8bit');
@@ -59,7 +59,7 @@ class GZIPTest extends TestCase
         $this->assertEquals($dataSize, 599639);
     }
     
-    public function testCompressDecompressWithPNGImage()
+    public function testCompressDecompressWithPNGImage(): void
     {
         $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-b/kitten-1.png');
         $demoSize = mb_strlen($demo, '8bit');

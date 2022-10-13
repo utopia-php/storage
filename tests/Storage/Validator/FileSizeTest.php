@@ -21,7 +21,7 @@ class FileSizeTest extends TestCase
     {
     }
 
-    public function testValues()
+    public function testValues(): void
     {
         $this->assertEquals($this->object->isValid(1001), false);
         $this->assertEquals($this->object->isValid(1000), true);

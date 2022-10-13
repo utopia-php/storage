@@ -11,7 +11,7 @@
         }
     ],
     "scripts": {
-        "check": "./vendor/bin/phpstan analyse --level 0 src tests"
+        "check": "./vendor/bin/phpstan analyse --level 5 src tests"
     },
     "autoload": {
         "psr-4": {"Utopia\\Storage\\":"src/Storage"}

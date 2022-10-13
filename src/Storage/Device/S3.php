@@ -161,8 +161,8 @@ class S3 extends Device
      *
      * @param string $source
      * @param string $path
-     * @param int chunk
-     * @param int chunks
+     * @param int $chunk
+     * @param int $chunks
      * @param array $metadata
      *
      * @throws \Exception
@@ -172,7 +172,7 @@ class S3 extends Device
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
         if($chunk == 1 && $chunks == 1) {
-            return $this->write($path, \file_get_contents($source), \mime_content_type($source));
+            return intval($this->write($path, \file_get_contents($source), \mime_content_type($source)));
         }
         $uploadId = $metadata['uploadId'] ?? null;
         if(empty($uploadId)) {
@@ -295,8 +295,8 @@ class S3 extends Device
      * Read file or part of file by given path, offset and length.
      *
      * @param string $path
-     * @param int offset
-     * @param int length
+     * @param int $offset
+     * @param int $length
      * 
      * @throws \Exception
      *
@@ -391,7 +391,9 @@ class S3 extends Device
     /**
      * Get list of objects in the given path.
      *
-     * @param string $path
+     * @param string $prefix
+     * @param int $maxKeys
+     * @param string $continuationToken
      * 
      * @throws \Exception
      *
@@ -577,7 +579,7 @@ class S3 extends Device
      * Generate the headers for AWS Signature V4
      * @param string $method
      * @param string $uri
-     * @param array parameters
+     * @param array $parameters
      * 
      * @return string
      */
@@ -701,7 +703,7 @@ class S3 extends Device
             $response->body .= $data;
             return \strlen($data);
         });
-        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $header) use (&$response) {
+        \curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $header) use (&$response) {
             $len = strlen($header);
             $header = explode(':', $header, 2);
 
@@ -742,7 +744,10 @@ class S3 extends Device
         \curl_close($curl);
 
         // Parse body into XML
-        if ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml')) {
+        if (array_key_exists('content-type', $response->headers) 
+            && ($response->headers['content-type'] == 'application/xml'
+                || (str_starts_with($response->body, '<?xml') && $response->headers['content-type'] == 'image/svg+xml'))) {
+
             $response->body = \simplexml_load_string($response->body);
             $response->body = json_decode(json_encode($response->body), true);
         }

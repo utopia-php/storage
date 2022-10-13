@@ -21,27 +21,27 @@ class LocalTest extends TestCase
     {
     }
 
-    public function testName()
+    public function testName(): void
     {
         $this->assertEquals($this->object->getName(), 'Local Storage');
     }
 
-    public function testDescription()
+    public function testDescription(): void
     {
         $this->assertEquals($this->object->getDescription(), 'Adapter for Local storage that is in the physical or virtual machine or mounted to it.');
     }
 
-    public function testRoot()
+    public function testRoot(): void
     {
         $this->assertEquals($this->object->getRoot(),realpath( __DIR__ . '/../../resources/disk-a'));
     }
 
-    public function testPath()
+    public function testPath(): void
     {
         $this->assertEquals($this->object->getPath('image.png'), realpath(__DIR__ . '/../../resources/disk-a').'/image.png');
     }
 
-    public function testWrite()
+    public function testWrite(): void
     {
         $this->assertEquals($this->object->write($this->object->getPath('text.txt'), 'Hello World'), true);
         $this->assertEquals(file_exists($this->object->getPath('text.txt')), true);
@@ -50,7 +50,7 @@ class LocalTest extends TestCase
         $this->object->delete($this->object->getPath('text.txt'));
     }
 
-    public function testRead()
+    public function testRead(): void
     {
         $this->assertEquals($this->object->write($this->object->getPath('text-for-read.txt'), 'Hello World'), true);
         $this->assertEquals($this->object->read($this->object->getPath('text-for-read.txt')), 'Hello World');
@@ -58,7 +58,7 @@ class LocalTest extends TestCase
         $this->object->delete($this->object->getPath('text-for-read.txt'));
     }
 
-    public function testFileExists()
+    public function testFileExists(): void
     {
         $this->assertEquals($this->object->write($this->object->getPath('text-for-test-exists.txt'), 'Hello World'), true);
         $this->assertEquals($this->object->exists($this->object->getPath('text-for-test-exists.txt')), true);
@@ -67,7 +67,7 @@ class LocalTest extends TestCase
         $this->object->delete($this->object->getPath('text-for-test-exists.txt'));
     }
 
-    public function testMove()
+    public function testMove(): void
     {
         $this->assertEquals($this->object->write($this->object->getPath('text-for-move.txt'), 'Hello World'), true);
         $this->assertEquals($this->object->read($this->object->getPath('text-for-move.txt')), 'Hello World');
@@ -81,7 +81,7 @@ class LocalTest extends TestCase
         $this->object->delete($this->object->getPath('text-for-move-new.txt'));
     }
 
-    public function testDelete()
+    public function testDelete(): void
     {
         $this->assertEquals($this->object->write($this->object->getPath('text-for-delete.txt'), 'Hello World'), true);
         $this->assertEquals($this->object->read($this->object->getPath('text-for-delete.txt')), 'Hello World');
@@ -90,13 +90,13 @@ class LocalTest extends TestCase
         $this->assertEquals(is_readable($this->object->getPath('text-for-delete.txt')), false);
     }
     
-    public function testFileSize()
+    public function testFileSize(): void
     {
         $this->assertEquals($this->object->getFileSize(__DIR__ . '/../../resources/disk-a/kitten-1.jpg'), 599639);
         $this->assertEquals($this->object->getFileSize(__DIR__ . '/../../resources/disk-a/kitten-2.jpg'), 131958);
     }
     
-    public function testFileMimeType()
+    public function testFileMimeType(): void
     {
         $this->assertEquals($this->object->getFileMimeType(__DIR__ . '/../../resources/disk-a/kitten-1.jpg'), 'image/jpeg');
         $this->assertEquals($this->object->getFileMimeType(__DIR__ . '/../../resources/disk-a/kitten-2.jpg'), 'image/jpeg');
@@ -104,7 +104,7 @@ class LocalTest extends TestCase
         $this->assertEquals($this->object->getFileMimeType(__DIR__ . '/../../resources/disk-b/kitten-2.png'), 'image/png');
     }
     
-    public function testFileHash()
+    public function testFileHash(): void
     {
         $this->assertEquals($this->object->getFileHash(__DIR__ . '/../../resources/disk-a/kitten-1.jpg'), '7551f343143d2e24ab4aaf4624996b6a');
         $this->assertEquals($this->object->getFileHash(__DIR__ . '/../../resources/disk-a/kitten-2.jpg'), '81702fdeef2e55b1a22617bce4951cb5');
@@ -112,19 +112,20 @@ class LocalTest extends TestCase
         $this->assertEquals($this->object->getFileHash(__DIR__ . '/../../resources/disk-b/kitten-2.png'), '8a9ed992b77e4b62b10e3a5c8ed72062');
     }
     
-    public function testDirectorySize()
+    public function testDirectorySize(): void
     {
         $this->assertGreaterThan(0, $this->object->getDirectorySize(__DIR__ . '/../../resources/disk-a/'));
         $this->assertGreaterThan(0, $this->object->getDirectorySize(__DIR__ . '/../../resources/disk-b/'));
     }
 
-    public function testPartUpload() {
+    public function testPartUpload(): string
+    {
         $source = __DIR__ . '/../../resources/disk-a/large_file.mp4';
         $dest = $this->object->getPath('uploaded.mp4');
         $totalSize = $this->object->getFileSize($source);
         $chunkSize = 2097152;
 
-        $chunks = ceil($totalSize / $chunkSize);
+        $chunks = intval(ceil($totalSize / $chunkSize));
 
         $chunk = 1;
         $start = 0;
@@ -147,12 +148,13 @@ class LocalTest extends TestCase
         return $dest;
     }
 
-    public function testAbort() {
+    public function testAbort(): void
+    {
         $source = __DIR__ . '/../../resources/disk-a/large_file.mp4';
         $dest = $this->object->getPath('abcduploaded.mp4');
         $totalSize = $this->object->getFileSize($source);
         $chunkSize = 2097152;
-        $chunks = ceil($totalSize / $chunkSize);
+        $chunks = intval(ceil($totalSize / $chunkSize));
 
         $chunk = 1;
         $start = 0;
@@ -176,7 +178,7 @@ class LocalTest extends TestCase
         $dest1 = $this->object->getPath('abcduploaded2.mp4');
         $totalSize = $this->object->getFileSize($source);
         $chunkSize = 2097152;
-        $chunks = ceil($totalSize / $chunkSize);
+        $chunks = intval(ceil($totalSize / $chunkSize));
 
         $chunk = 1;
         $start = 0;
@@ -202,7 +204,8 @@ class LocalTest extends TestCase
     /**
      * @depends testPartUpload
      */
-    public function testPartRead($path) {
+    public function testPartRead(string $path): void
+    {
         $source = __DIR__ . '/../../resources/disk-a/large_file.mp4';
         $chunk = file_get_contents($source, false,null, 0, 500);
         $readChunk = $this->object->read($path, 0, 500);
@@ -210,12 +213,12 @@ class LocalTest extends TestCase
         $this->object->delete($path);
     }
     
-    public function testPartitionFreeSpace()
+    public function testPartitionFreeSpace(): void
     {
         $this->assertGreaterThan(0, $this->object->getPartitionFreeSpace());
     }
     
-    public function testPartitionTotalSpace()
+    public function testPartitionTotalSpace(): void
     {
         $this->assertGreaterThan(0, $this->object->getPartitionTotalSpace());
     }

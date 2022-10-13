@@ -18,12 +18,12 @@ class ZstdTest extends TestCase
     {
     }
 
-    public function testName()
+    public function testName(): void
     {
         $this->assertEquals($this->object->getName(), 'zstd');
     }
     
-    public function testCompressDecompressWithText()
+    public function testCompressDecompressWithText(): void
     {
         $demo = 'This is a demo string';
         $demoSize = \mb_strlen($demo, '8bit');
@@ -37,7 +37,7 @@ class ZstdTest extends TestCase
         $this->assertEquals($demo, $this->object->decompress($data));
     }
     
-    public function testCompressDecompressWithJPGImage()
+    public function testCompressDecompressWithJPGImage(): void
     {
         $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-a/kitten-1.jpg');
         $demoSize = \mb_strlen($demo, '8bit');
@@ -56,7 +56,7 @@ class ZstdTest extends TestCase
         $this->assertEquals(599639, $dataSize);
     }
     
-    public function testCompressDecompressWithPNGImage()
+    public function testCompressDecompressWithPNGImage(): void
     {
         $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-b/kitten-1.png');
         $demoSize = \mb_strlen($demo, '8bit');
