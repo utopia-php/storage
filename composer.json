@@ -10,6 +10,9 @@
             "email": "eldad@appwrite.io"
         }
     ],
+    "scripts": {
+        "check": "./vendor/bin/phpstan analyse --level 0 src tests"
+    },
     "autoload": {
         "psr-4": {"Utopia\\Storage\\":"src/Storage"}
     },
@@ -25,7 +28,8 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^9.3",
-        "vimeo/psalm": "4.0.1"
+        "vimeo/psalm": "4.0.1",
+        "phpstan/phpstan": "1.9.x-dev"
     },
     "minimum-stability": "dev"
 }
