@@ -18,7 +18,7 @@ RUN composer update \
 FROM php:8.0-cli-alpine as compile
 
 ENV PHP_ZSTD_VERSION="master"
-ENV PHP_LZ4_VERSION="master"
+ENV PHP_LZ4_VERSION="8ce521e086fcc4d81c57a60915676673e341ab05"
 
 RUN apk add --no-cache \
     git \
