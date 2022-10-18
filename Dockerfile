@@ -18,7 +18,7 @@ RUN composer update \
 FROM php:8.0-cli-alpine as compile
 
 ENV PHP_ZSTD_VERSION="master"
-ENV PHP_BROTLI_VERSION="master"
+ENV PHP_BROTLI_VERSION="4504e4186e79b197cfcb75d4d09aa47ef7d92fe"
 
 RUN apk add --no-cache \
     git \
