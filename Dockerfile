@@ -18,7 +18,7 @@ RUN composer update \
 FROM php:8.0-cli-alpine as compile
 
 ENV PHP_ZSTD_VERSION="master"
-ENV PHP_BROTLI_VERSION="4504e4186e79b197cfcb75d4d09aa47ef7d92fe"
+ENV PHP_BROTLI_COMMIT="7ae4fcd8b81a65d7521c298cae49af386d1ea4e3"
 
 RUN apk add --no-cache \
     git \
@@ -37,8 +37,9 @@ RUN git clone --recursive --depth 1 --branch $PHP_ZSTD_VERSION https://github.co
   && make && make install
 
 FROM compile as brotli
-RUN git clone --branch $PHP_BROTLI_VERSION https://github.com/kjdev/php-ext-brotli.git \
+RUN git clone https://github.com/kjdev/php-ext-brotli.git \
  && cd php-ext-brotli \
+ && git reset --hard $PHP_BROTLI_COMMIT \
  && phpize \
  && ./configure --with-libbrotli \
  && make && make install
