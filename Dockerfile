@@ -18,7 +18,7 @@ RUN composer update \
 FROM php:8.0-cli-alpine as compile
 
 ENV PHP_ZSTD_VERSION="master" \
-    PHP_SNAPPY_VERSION=0.2.1
+    PHP_SNAPPY_VERSION=bfefe4906e0abb1f6cc19005b35f9af5240d9025
 
 RUN apk add --no-cache \
     git \
@@ -37,8 +37,9 @@ RUN git clone --recursive --depth 1 --branch $PHP_ZSTD_VERSION https://github.co
 
 ## Snappy Extension
 FROM compile AS snappy
-RUN git clone --recursive --depth 1 --branch $PHP_SNAPPY_VERSION https://github.com/kjdev/php-ext-snappy.git \
+RUN git clone --recursive --depth 1 https://github.com/kjdev/php-ext-snappy.git \
   && cd php-ext-snappy \
+  && git checkout $PHP_SNAPPY_VERSION \
   && phpize \
   && ./configure \
   && make && make install

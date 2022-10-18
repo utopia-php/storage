@@ -1,6 +1,6 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage\Compression\Algorithms;
 
 use Utopia\Storage\Compression\Algorithms\Snappy;
 use PHPUnit\Framework\TestCase;
@@ -32,7 +32,6 @@ class SnappyTest extends TestCase
         $demoSize = \mb_strlen($demo, '8bit');
 
         $data = $this->object->compress($demo);
-
 
         $dataSize = \mb_strlen($data, '8bit');
 
