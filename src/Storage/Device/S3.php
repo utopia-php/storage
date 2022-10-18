@@ -68,22 +68,22 @@ class S3 extends Device
      * @var string
      */
     protected $bucket;
-    
+
     /**
      * @var string
      */
     protected $region;
-    
+
     /**
      * @var string
      */
     protected $acl = self::ACL_PRIVATE;
-    
+
     /**
      * @var string
      */
     protected $root = 'temp';
-    
+
     /**
      * @var array
      */
@@ -114,7 +114,7 @@ class S3 extends Device
         $this->region = $region;
         $this->root = trim($root, "/");
         $this->acl = $acl;
-        $this->headers['host'] = $this->bucket . '.s3.'.$this->region.'.amazonaws.com';
+        $this->headers['host'] = $this->bucket . '.s3.' . $this->region . '.amazonaws.com';
         $this->amzHeaders = [];
     }
 
@@ -171,11 +171,11 @@ class S3 extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        if($chunk == 1 && $chunks == 1) {
+        if ($chunk == 1 && $chunks == 1) {
             return $this->write($path, \file_get_contents($source), \mime_content_type($source));
         }
         $uploadId = $metadata['uploadId'] ?? null;
-        if(empty($uploadId)) {
+        if (empty($uploadId)) {
             $uploadId = $this->createMultipartUpload($path, $metadata['content_type']);
             $metadata['uploadId'] = $uploadId;
         }
@@ -185,7 +185,7 @@ class S3 extends Device
         $metadata['parts'][] = ['partNumber' => $chunk, 'etag' => $etag];
         $metadata['chunks'] ??= 0;
         $metadata['chunks']++;
-        if($metadata['chunks'] == $chunks) {
+        if ($metadata['chunks'] == $chunks) {
             $this->completeMultipartUpload($path, $uploadId, $metadata['parts']);
         }
         return $metadata['chunks'];
@@ -227,10 +227,10 @@ class S3 extends Device
      * 
      * @return string
      */
-    protected function uploadPart(string $source, string $path, int $chunk, string $uploadId) : string
+    protected function uploadPart(string $source, string $path, int $chunk, string $uploadId): string
     {
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
-        
+
         $data = \file_get_contents($source);
         $this->headers['content-type'] = \mime_content_type($source);
         $this->headers['content-md5'] = \base64_encode(md5($data, true));
@@ -238,7 +238,7 @@ class S3 extends Device
         unset($this->amzHeaders['x-amz-acl']); // ACL header is not allowed in parts, only createMultipartUpload accepts this header.
 
         $response = $this->call(self::METHOD_PUT, $uri, $data, [
-            'partNumber'=>$chunk,
+            'partNumber' => $chunk,
             'uploadId' => $uploadId
         ]);
 
@@ -268,7 +268,7 @@ class S3 extends Device
 
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
         $this->headers['content-md5'] = \base64_encode(md5($body, true));
-        $this->call(self::METHOD_POST, $uri, $body , ['uploadId' => $uploadId]);
+        $this->call(self::METHOD_POST, $uri, $body, ['uploadId' => $uploadId]);
         return true;
     }
 
@@ -309,7 +309,7 @@ class S3 extends Device
         unset($this->headers['content-type']);
         $this->headers['content-md5'] = \base64_encode(md5('', true));
         $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
-        if($length !== null) {
+        if ($length !== null) {
             $end = $offset + $length - 1;
             $this->headers['range'] = "bytes=$offset-$end";
         }
@@ -330,7 +330,7 @@ class S3 extends Device
     public function write(string $path, string $data, string $contentType = ''): bool
     {
         $uri = $path !== '' ? '/' . \str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
-        
+
         $this->headers['content-type'] = $contentType;
         $this->headers['content-md5'] = \base64_encode(md5($data, true)); //TODO whould this work well with big file? can we skip it?
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
@@ -378,7 +378,7 @@ class S3 extends Device
     public function delete(string $path, bool $recursive = false): bool
     {
         $uri = ($path !== '') ? '/' . \str_replace('%2F', '/', \rawurlencode($path)) : '/';
-        
+
         unset($this->headers['content-type']);
         unset($this->amzHeaders['x-amz-acl']);
         unset($this->amzHeaders['x-amz-content-sha256']);
@@ -408,7 +408,7 @@ class S3 extends Device
             'prefix' => $prefix,
             'max-keys' => $maxKeys,
         ];
-        if(!empty($continuationToken)) {
+        if (!empty($continuationToken)) {
             $parameters['continuation-token'] = $continuationToken;
         }
         $response = $this->call(self::METHOD_GET, $uri, '', $parameters);
@@ -432,24 +432,24 @@ class S3 extends Device
         do {
             $objects = $this->listObjects($path, continuationToken: $continuationToken);
             $count = (int) ($objects['KeyCount'] ?? 1);
-            if($count < 1) {
+            if ($count < 1) {
                 break;
             }
             $continuationToken = $objects['NextContinuationToken'] ?? '';
             $body = '<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">';
-            if($count > 1) {
+            if ($count > 1) {
                 foreach ($objects['Contents'] as $object) {
                     $body .= "<Object><Key>{$object['Key']}</Key></Object>";
                 }
             } else {
-                $body .= "<Object><Key>{$objects['Contents']['Key']}</Key></Object>"; 
+                $body .= "<Object><Key>{$objects['Contents']['Key']}</Key></Object>";
             }
             $body .= '<Quiet>true</Quiet>';
             $body .= '</Delete>';
             $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
             $this->headers['content-md5'] = \base64_encode(md5($body, true));
-            $this->call(self::METHOD_POST, $uri, $body, ['delete'=>'']);
-        } while(!empty($continuationToken));
+            $this->call(self::METHOD_POST, $uri, $body, ['delete' => '']);
+        } while (!empty($continuationToken));
 
         return true;
     }
@@ -514,7 +514,7 @@ class S3 extends Device
     public function getFileHash(string $path): string
     {
         $etag = $this->getInfo($path)['etag'] ?? '';
-        return  (!empty($etag)) ? substr($etag, 1, -1) : $etag;
+        return (!empty($etag)) ? substr($etag, 1, -1) : $etag;
     }
 
     /**
@@ -600,10 +600,10 @@ class S3 extends Device
             $combinedHeaders[\strtolower($k)] = \trim($v);
         }
 
-        uksort($combinedHeaders, [ & $this, 'sortMetaHeadersCmp']);
+        uksort($combinedHeaders, [&$this, 'sortMetaHeadersCmp']);
 
         // Convert null query string parameters to strings and sort
-        uksort($parameters, [ & $this, 'sortMetaHeadersCmp']);
+        uksort($parameters, [&$this, 'sortMetaHeadersCmp']);
         $queryString = \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 
         // Payload
@@ -613,23 +613,25 @@ class S3 extends Device
         $amzPayload[] = ($qsPos === false ? $uri : \substr($uri, 0, $qsPos));
 
         $amzPayload[] = $queryString;
-        
+
         foreach ($combinedHeaders as $k => $v) { // add header as string to requests
             $amzPayload[] = $k . ':' . $v;
         }
-        
+
         $amzPayload[] = ''; // add a blank entry so we end up with an extra line break
         $amzPayload[] = \implode(';', \array_keys($combinedHeaders)); // SignedHeaders
         $amzPayload[] = $this->amzHeaders['x-amz-content-sha256']; // payload hash
-        
+
         $amzPayloadStr = \implode("\n", $amzPayload); // request as string
 
         // CredentialScope
         $credentialScope = [$amzDateStamp, $region, $service, 'aws4_request'];
 
         // stringToSign
-        $stringToSignStr = \implode("\n", [$algorithm, $this->amzHeaders['x-amz-date'],
-            \implode('/', $credentialScope), \hash('sha256', $amzPayloadStr)]);
+        $stringToSignStr = \implode("\n", [
+            $algorithm, $this->amzHeaders['x-amz-date'],
+            \implode('/', $credentialScope), \hash('sha256', $amzPayloadStr)
+        ]);
 
         // Make Signature
         $kSecret = 'AWS4' . $this->secretKey;
@@ -659,7 +661,7 @@ class S3 extends Device
      *
      * @return  object
      */
-    private function call(string $method, string $uri, string $data = '', array $parameters=[])
+    private function call(string $method, string $uri, string $data = '', array $parameters = [])
     {
         $url = 'https://' . $this->headers['host'] . $uri . '?' . \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
@@ -715,7 +717,7 @@ class S3 extends Device
         });
         \curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
         \curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
-        
+
         // Request types
         switch ($method) {
             case self::METHOD_PUT:
@@ -729,11 +731,11 @@ class S3 extends Device
         }
 
         $result = \curl_exec($curl);
-        
+
         if (!$result) {
             throw new Exception(\curl_error($curl));
         }
-        
+
         $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
         if ($response->code >= 400) {
             throw new Exception($response->body, $response->code);
