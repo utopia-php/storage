@@ -18,7 +18,8 @@ RUN composer update \
 FROM php:8.0-cli-alpine as compile
 
 ENV PHP_ZSTD_VERSION="master" \
-    PHP_XZ_VERSION=5.2.7
+    PHP_XZ_VERSION=5.2.7 \
+    PHP_EXT_XZ_VERSION=1.1.2
 
 RUN apk add --no-cache \
     git \
@@ -48,7 +49,7 @@ RUN wget https://tukaani.org/xz/xz-${PHP_XZ_VERSION}.tar.xz -O xz.tar.xz \
     ) \
     && rm -r xz-${PHP_XZ_VERSION}
 
-RUN git clone https://github.com/codemasher/php-ext-xz.git \
+RUN git clone https://github.com/codemasher/php-ext-xz.git --branch ${PHP_EXT_XZ_VERSION} \
   && cd php-ext-xz \
   && phpize \
   && ./configure \
