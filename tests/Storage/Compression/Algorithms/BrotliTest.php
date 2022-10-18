@@ -1,6 +1,6 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage\Compression\Algorithms;
 
 use InvalidArgumentException;
 use Utopia\Storage\Compression\Algorithms\Brotli;
