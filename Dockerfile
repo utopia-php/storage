@@ -18,7 +18,7 @@ RUN composer update \
 FROM php:8.0-cli-alpine as compile
 
 ENV PHP_ZSTD_VERSION="master"
-ENV PHP_LZ4_VERSION="8ce521e086fcc4d81c57a60915676673e341ab05"
+ENV PHP_LZ4_COMMIT="8ce521e086fcc4d81c57a60915676673e341ab05"
 
 RUN apk add --no-cache \
     git \
@@ -38,8 +38,9 @@ RUN git clone --recursive --depth 1 --branch $PHP_ZSTD_VERSION https://github.co
 
 ## LZ4 Extension
 FROM compile AS lz4
-RUN git clone --recursive --depth 1 --branch $PHP_LZ4_VERSION https://github.com/kjdev/php-ext-lz4.git \
+RUN git clone --recursive --depth 1 https://github.com/kjdev/php-ext-lz4.git \
   && cd php-ext-lz4 \
+  && git reset --hard $PHP_LZ4_COMMIT \
   && phpize \
   && ./configure --with-lz4-includedir=/usr \
   && make && make install
