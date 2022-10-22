@@ -15,7 +15,8 @@ class Storage
     const DEVICE_DO_SPACES = 'DOSpaces';
     const DEVICE_WASABI = 'Wasabi';
     const DEVICE_BACKBLAZE = 'Backblaze';
-    const DEVICE_LINODE= 'Linode';
+    const DEVICE_LINODE = 'Linode';
+    const DEVICE_GOOGLE_CLOUD = 'GoogleCloud';
 
     /**
      * Devices.
@@ -57,7 +58,7 @@ class Storage
     public static function getDevice($name)
     {
         if (!\array_key_exists($name, self::$devices)) {
-            throw new Exception('The device "'.$name.'" is not listed');
+            throw new Exception('The device "' . $name . '" is not listed');
         }
 
         return self::$devices[$name];
