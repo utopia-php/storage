@@ -2,29 +2,28 @@
 
 namespace Utopia\Storage;
 
-use Exception;
-
 class Storage
 {
 
     /**
      * Supported devices
      */
-    const DEVICE_LOCAL = 'Local';
-    const DEVICE_S3 = 'S3';
-    const DEVICE_DO_SPACES = 'DOSpaces';
-    const DEVICE_WASABI = 'Wasabi';
-    const DEVICE_BACKBLAZE = 'Backblaze';
-    const DEVICE_LINODE= 'Linode';
+    public const DEVICE_LOCAL = 'Local';
+    public const DEVICE_S3 = 'S3';
+    public const DEVICE_DO_SPACES = 'DOSpaces';
+    public const DEVICE_WASABI = 'Wasabi';
+    public const DEVICE_BACKBLAZE = 'Backblaze';
+    public const DEVICE_LINODE= 'Linode';
+    public const DEVICE_SCALITY = 'Scality';
 
     /**
      * Devices.
      *
      * List of all available storage devices
      *
-     * @var array
+     * @var array<string, Device>
      */
-    public static $devices = [];
+    public static array $devices = [];
 
     /**
      * Set Device.
@@ -34,11 +33,9 @@ class Storage
      * @param string $name
      * @param Device $device
      *
-     * @throws Exception
-     *
      * @return void
      */
-    public static function setDevice($name, Device $device): void
+    public static function setDevice(string $name, Device $device): void
     {
         self::$devices[$name] = $device;
     }
@@ -52,12 +49,12 @@ class Storage
      *
      * @return Device
      *
-     * @throws Exception
+     * @throws \Exception
      */
-    public static function getDevice($name)
+    public static function getDevice(string $name): Device
     {
-        if (!\array_key_exists($name, self::$devices)) {
-            throw new Exception('The device "'.$name.'" is not listed');
+        if (!isset(self::$devices[$name])) {
+            throw new \Exception('The device "'.$name.'" is not listed');
         }
 
         return self::$devices[$name];
@@ -72,13 +69,13 @@ class Storage
      *
      * @return bool
      */
-    public static function exists($name)
+    public static function exists(string $name): bool
     {
-        return (bool) \array_key_exists($name, self::$devices);
+        return isset(self::$devices[$name]);
     }
 
     /**
-     * Human readable data size format from bytes input.
+     * Human-readable data size format from bytes input.
      *
      * Based on: https://stackoverflow.com/a/38659168/2299554
      *
@@ -88,12 +85,12 @@ class Storage
      *
      * @return string
      */
-    public static function human(int $bytes, $decimals = 2, $system = 'metric')
+    public static function human(int $bytes, int $decimals = 2, string $system = 'metric'): string
     {
         $mod = ($system === 'binary') ? 1024 : 1000;
 
-        $units = array(
-            'binary' => array(
+        $units = [
+            'binary' => [
                 'B',
                 'KiB',
                 'MiB',
@@ -103,8 +100,8 @@ class Storage
                 'EiB',
                 'ZiB',
                 'YiB',
-            ),
-            'metric' => array(
+            ],
+            'metric' => [
                 'B',
                 'kB',
                 'MB',
@@ -114,8 +111,8 @@ class Storage
                 'EB',
                 'ZB',
                 'YB',
-            ),
-        );
+            ],
+        ];
 
         $factor = (int)floor((strlen((string)$bytes) - 1) / 3);
 

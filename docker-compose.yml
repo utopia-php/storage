@@ -18,3 +18,5 @@ services:
       - BACKBLAZE_SECRET
       - WASABI_ACCESS_KEY
       - WASABI_SECRET
+      - SCALITY_SECRET
+      - SCALITY_ACCESS_KEY
