@@ -17,14 +17,18 @@
         "psr-4": {"Utopia\\Tests\\":"tests/Storage"}
     },
     "require": {
+        "php": ">=8.0",
         "ext-fileinfo": "*",
         "ext-zlib": "*",
         "ext-zstd": "*",
-        "php": ">=8.0",
         "utopia-php/framework": "0.*.*"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",
         "vimeo/psalm": "4.0.1"
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
     }
 }
