@@ -1,6 +1,6 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage\Device;
 
 use Utopia\Storage\Device\Local;
 use PHPUnit\Framework\TestCase;

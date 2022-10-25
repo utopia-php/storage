@@ -1,6 +1,6 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage\Validator;
 
 use Utopia\Storage\Validator\FileSize;
 use PHPUnit\Framework\TestCase;
