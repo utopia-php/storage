@@ -9,7 +9,7 @@ class BackblazeTest extends S3Base
 {
     protected function init(): void
     {
-        $this->root = 'root';
+        $this->root = '/root';
         $key = $_SERVER['BACKBLAZE_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['BACKBLAZE_SECRET'] ?? '';
         $bucket = "backblaze-demo";
