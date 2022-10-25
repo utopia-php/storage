@@ -14,7 +14,7 @@
         "psr-4": {"Utopia\\Storage\\":"src/Storage"}
     },
     "autoload-dev": {
-        "psr-4": {"Utopia\\Tests\\":"tests/Storage"}
+        "psr-4": {"Utopia\\Tests\\Storage\\":"tests/Storage"}
     },
     "require": {
         "ext-fileinfo": "*",

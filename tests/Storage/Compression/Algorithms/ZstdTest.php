@@ -1,6 +1,6 @@
 <?php
 
-namespace Utopia\Tests\Compression\Algorithms;
+namespace Utopia\Tests\Storage\Compression\Algorithms;
 
 use Utopia\Storage\Compression\Algorithms\Zstd;
 use PHPUnit\Framework\TestCase;

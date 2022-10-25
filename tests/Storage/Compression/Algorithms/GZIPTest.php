@@ -1,6 +1,6 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage\Compression\Algorithms;
 
 use Utopia\Storage\Compression\Algorithms\GZIP;
 use PHPUnit\Framework\TestCase;
