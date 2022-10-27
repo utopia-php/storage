@@ -1,6 +1,6 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage;
 
 use Exception;
 use PHPUnit\Framework\TestCase;

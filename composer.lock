@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ed69fbb6b77d65407b11bf0e945f39eb",
+    "content-hash": "e968ba6362f252d347db4f34b1515ca4",
     "packages": [
         {
             "name": "utopia-php/framework",
-            "version": "0.22.1",
+            "version": "0.23.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/utopia-php/framework.git",
-                "reference": "9f35d36ed4b8fa1c92962c77ef02b49c2f5919df"
+                "reference": "d595df075aa9ee46147a388c63064b03aeeac466"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/utopia-php/framework/zipball/9f35d36ed4b8fa1c92962c77ef02b49c2f5919df",
-                "reference": "9f35d36ed4b8fa1c92962c77ef02b49c2f5919df",
+                "url": "https://api.github.com/repos/utopia-php/framework/zipball/d595df075aa9ee46147a388c63064b03aeeac466",
+                "reference": "d595df075aa9ee46147a388c63064b03aeeac466",
                 "shasum": ""
             },
             "require": {
@@ -37,12 +37,6 @@
             "license": [
                 "MIT"
             ],
-            "authors": [
-                {
-                    "name": "Eldad Fux",
-                    "email": "eldad@appwrite.io"
-                }
-            ],
             "description": "A simple, light and advanced PHP framework",
             "keywords": [
                 "framework",
@@ -51,9 +45,9 @@
             ],
             "support": {
                 "issues": "https://github.com/utopia-php/framework/issues",
-                "source": "https://github.com/utopia-php/framework/tree/0.22.1"
+                "source": "https://github.com/utopia-php/framework/tree/0.23.1"
             },
-            "time": "2022-10-07T14:51:40+00:00"
+            "time": "2022-10-19T10:35:44+00:00"
         }
     ],
     "packages-dev": [
@@ -1304,12 +1298,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "8be4d431796da1afc21bd9d11b73105f17b3522b"
+                "reference": "74b7413e8d9788df77e296adabd7c1f6ca801a99"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/8be4d431796da1afc21bd9d11b73105f17b3522b",
-                "reference": "8be4d431796da1afc21bd9d11b73105f17b3522b",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/74b7413e8d9788df77e296adabd7c1f6ca801a99",
+                "reference": "74b7413e8d9788df77e296adabd7c1f6ca801a99",
                 "shasum": ""
             },
             "require": {
@@ -1373,7 +1367,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2022-10-17T06:29:29+00:00"
+            "time": "2022-10-21T12:10:51+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -1622,12 +1616,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "daa0bff0a1c08a4e10cdb9729b84a49f1934c30f"
+                "reference": "7847a4a920f686db261da1ccc92120800822661f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/daa0bff0a1c08a4e10cdb9729b84a49f1934c30f",
-                "reference": "daa0bff0a1c08a4e10cdb9729b84a49f1934c30f",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/7847a4a920f686db261da1ccc92120800822661f",
+                "reference": "7847a4a920f686db261da1ccc92120800822661f",
                 "shasum": ""
             },
             "require": {
@@ -1716,7 +1710,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-10-17T06:29:58+00:00"
+            "time": "2022-10-19T10:44:50+00:00"
         },
         {
             "name": "psr/container",
@@ -2792,12 +2786,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/console.git",
-                "reference": "984ea2c0f45f42dfed01d2f3987b187467c4b16d"
+                "reference": "ae0727b4b524bebd61096c967d130bd12d6c0f22"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/console/zipball/984ea2c0f45f42dfed01d2f3987b187467c4b16d",
-                "reference": "984ea2c0f45f42dfed01d2f3987b187467c4b16d",
+                "url": "https://api.github.com/repos/symfony/console/zipball/ae0727b4b524bebd61096c967d130bd12d6c0f22",
+                "reference": "ae0727b4b524bebd61096c967d130bd12d6c0f22",
                 "shasum": ""
             },
             "require": {
@@ -2883,7 +2877,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-10-07T08:01:20+00:00"
+            "time": "2022-10-18T13:11:10+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",

@@ -1,8 +1,9 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage\Device;
 
 use Utopia\Storage\Device\Linode;
+use Utopia\Tests\Storage\S3Base;
 
 class LinodeTest extends S3Base
 {
