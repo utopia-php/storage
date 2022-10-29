@@ -1,9 +1,9 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage\Device;
 
 use Utopia\Storage\Device\Wasabi;
-use Utopia\Tests\S3Base;
+use Utopia\Tests\Storage\S3Base;
 
 class WasabiTest extends S3Base
 {
