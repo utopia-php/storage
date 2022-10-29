@@ -686,6 +686,12 @@ class S3 extends Device
         }
 
         $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
+        
+        // if cn zone selected, switch to amazonaws.cn
+        if ($this->region == 'cn-north-4' || $this->region == 'cn-northwest-1') {
+            $this->headers['host'] = $this->bucket . '.s3.'.$this->region.'.amazonaws.cn';
+        }
+
         foreach ($this->headers as $header => $value) {
             if (\strlen($value) > 0) {
                 $httpHeaders[] = $header . ': ' . $value;
