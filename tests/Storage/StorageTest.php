@@ -2,41 +2,35 @@
 
 namespace Utopia\Tests\Storage;
 
-use Exception;
-use Utopia\Storage\Storage;
-use Utopia\Storage\Device\Local;
 use PHPUnit\Framework\TestCase;
-
-Storage::setDevice('disk-a', new Local(__DIR__ . '/../resources/disk-a'));
-Storage::setDevice('disk-b', new Local(__DIR__ . '/../resources/disk-b'));
+use Utopia\Storage\Device\Local;
+use Utopia\Storage\Storage;
 
 class StorageTest extends TestCase
 {
-    public function setUp(): void
+    public static function setUpBeforeClass(): void
     {
+        Storage::setDevice('disk-a', new Local(__DIR__ . '/../resources/disk-a'));
+        Storage::setDevice('disk-b', new Local(__DIR__ . '/../resources/disk-b'));
     }
 
-    public function tearDown(): void
+    public function testGetDevice(): void
     {
-    }
-
-    public function testGetters()
-    {
-        $this->assertEquals(get_class(Storage::getDevice('disk-a')), 'Utopia\Storage\Device\Local');
-        $this->assertEquals(get_class(Storage::getDevice('disk-b')), 'Utopia\Storage\Device\Local');
+        $this->assertInstanceOf(Local::class, Storage::getDevice('disk-a'));
+        $this->assertInstanceOf(Local::class, Storage::getDevice('disk-b'));
 
         try {
-            get_class(Storage::getDevice('disk-c'));
-            $this->fail("Expected exception not thrown");
-        } catch (Exception $e) {
-            $this->assertEquals('The device "disk-c" is not listed', $e->getMessage());
+            Storage::getDevice('disk-c');
+            $this->fail('Expected exception not thrown');
+        } catch (\Exception $e) {
+            $this->assertSame('The device "disk-c" is not listed', $e->getMessage());
         }
     }
 
-    public function testExists()
+    public function testExists(): void
     {
-        $this->assertEquals(Storage::exists('disk-a'), true);
-        $this->assertEquals(Storage::exists('disk-b'), true);
-        $this->assertEquals(Storage::exists('disk-c'), false);
+        $this->assertTrue(Storage::exists('disk-a'));
+        $this->assertTrue(Storage::exists('disk-b'));
+        $this->assertFalse(Storage::exists('disk-c'));
     }
 }

@@ -1,9 +1,9 @@
 <?php
 
-namespace Utopia\Tests\Device;
+namespace Utopia\Tests\Storage\Device;
 
 use Utopia\Storage\Device\Scality;
-use Utopia\Tests\S3Base;
+use Utopia\Tests\Storage\S3Base;
 
 class ScalityTest extends S3Base
 {
