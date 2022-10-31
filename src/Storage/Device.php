@@ -78,7 +78,7 @@ abstract class Device
      *
      * @param string $path
      * @param int $offset
-     * @param int $length
+     * @param int|null $length
      *
      * @return string
      */

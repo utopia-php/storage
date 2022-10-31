@@ -16,11 +16,11 @@ class File extends Validator
      *
      * TODO think what to do here, currently only used for parameter to be present in SDKs
      *
-     * @param mixed $name
+     * @param mixed $value
      *
      * @return bool
      */
-    public function isValid($name): bool
+    public function isValid($value): bool
     {
         return true;
     }

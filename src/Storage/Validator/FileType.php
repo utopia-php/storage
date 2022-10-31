@@ -63,26 +63,25 @@ class FileType extends Validator
      *
      * @see http://stackoverflow.com/a/3313196
      *
-     * @param mixed $path
+     * @param mixed $value
      *
      * @return bool
      */
-    public function isValid($path): bool
+    public function isValid(mixed $value): bool
     {
-        if (!\is_readable($path)) {
+        if (!\is_readable($value)) {
             return false;
         }
 
-        $handle = \fopen($path, 'r');
-
-        if (!$handle) {
+        $handle = \fopen($value, 'r');
+        if ($handle === false) {
             return false;
         }
 
         $bytes = \fgets($handle, 8);
 
         foreach ($this->allowed as $key) {
-            if (\strpos($bytes, $this->types[$key]) === 0) {
+            if (str_starts_with($bytes, $this->types[$key])) {
                 \fclose($handle);
 
                 return true;

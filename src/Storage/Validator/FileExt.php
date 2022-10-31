@@ -35,21 +35,17 @@ class FileExt extends Validator
     }
 
     /**
-     * Check if file extenstion is allowed
+     * Check if file extension is allowed
      * 
-     * @param mixed $filename
+     * @param mixed $value
      *
      * @return bool
      */
-    public function isValid($filename): bool
+    public function isValid(mixed $value): bool
     {
-        $ext = pathinfo($filename, PATHINFO_EXTENSION);
-        
-        if (!in_array($ext, $this->allowed)) {
-            return false;
-        }
+        $ext = pathinfo($value, PATHINFO_EXTENSION);
 
-        return true;
+        return \in_array($ext, $this->allowed, true);
     }
 
     /**

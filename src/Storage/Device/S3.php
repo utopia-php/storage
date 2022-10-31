@@ -171,11 +171,11 @@ class S3 extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        if($chunk == 1 && $chunks == 1) {
-            return $this->write($path, \file_get_contents($source), \mime_content_type($source));
+        if ($chunk == 1 && $chunks == 1) {
+            return (int) $this->write($path, \file_get_contents($source), \mime_content_type($source));
         }
         $uploadId = $metadata['uploadId'] ?? null;
-        if(empty($uploadId)) {
+        if (empty($uploadId)) {
             $uploadId = $this->createMultipartUpload($path, $metadata['content_type']);
             $metadata['uploadId'] = $uploadId;
         }
@@ -185,7 +185,7 @@ class S3 extends Device
         $metadata['parts'][] = ['partNumber' => $chunk, 'etag' => $etag];
         $metadata['chunks'] ??= 0;
         $metadata['chunks']++;
-        if($metadata['chunks'] == $chunks) {
+        if ($metadata['chunks'] == $chunks) {
             $this->completeMultipartUpload($path, $uploadId, $metadata['parts']);
         }
         return $metadata['chunks'];
@@ -391,9 +391,9 @@ class S3 extends Device
     /**
      * Get list of objects in the given path.
      *
-     * @param string $path
-     * 
-     * @throws \Exception
+     * @param string $prefix
+     * @param int $maxKeys
+     * @param string $continuationToken
      *
      * @return array
      */
@@ -697,11 +697,11 @@ class S3 extends Device
         \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
         \curl_setopt($curl, CURLOPT_HEADER, false);
         \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
-        \curl_setopt($curl, CURLOPT_WRITEFUNCTION, function ($curl, string $data) use ($response) {
+        \curl_setopt($curl, CURLOPT_WRITEFUNCTION, function (mixed $curl, string $data) use ($response) {
             $response->body .= $data;
             return \strlen($data);
         });
-        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $header) use (&$response) {
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function (mixed $curl, string $header) use (&$response) {
             $len = strlen($header);
             $header = explode(':', $header, 2);
 

@@ -32,21 +32,17 @@ class FileSize extends Validator
     /**
      * Finds whether a file size is smaller than required limit.
      *
-     * @param mixed $fileSize
+     * @param mixed $value
      *
      * @return bool
      */
-    public function isValid($fileSize): bool
+    public function isValid(mixed $value): bool
     {
-        if (!is_int($fileSize)) {
-            return false;
-        }
-        
-        if ($fileSize > $this->max) {
+        if (!is_int($value)) {
             return false;
         }
 
-        return true;
+        return $value <= $this->max;
     }
 
     /**

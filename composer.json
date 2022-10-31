@@ -19,13 +19,14 @@
     "require": {
         "php": ">=8.0",
         "ext-fileinfo": "*",
+        "ext-curl": "*",
         "ext-zlib": "*",
         "ext-zstd": "*",
         "utopia-php/framework": "0.*.*"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",
-        "vimeo/psalm": "4.0.1"
+        "vimeo/psalm": "^4.0"
     },
     "config": {
         "sort-packages": true,

@@ -17,21 +17,21 @@ class FileName extends Validator
     /**
      * The file name can only contain "a-z", "A-Z", "0-9" and "-" and not empty.
      *
-     * @param mixed $name
+     * @param mixed $value
      *
      * @return bool
      */
-    public function isValid($name): bool
+    public function isValid(mixed $value): bool
     {
-        if (empty($name)) {
+        if (empty($value)) {
             return false;
         }
 
-        if (!is_string($name)) {
+        if (!is_string($value)) {
             return false;
         }
 
-        if (!\preg_match('/^[a-zA-Z0-9.]+$/', $name)) {
+        if (!\preg_match('/^[a-zA-Z0-9.]+$/', $value)) {
             return false;
         }
 

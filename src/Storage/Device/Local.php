@@ -161,17 +161,17 @@ class Local extends Device
      * Read file by given path.
      *
      * @param string $path
-     * @param int offset
-     * @param int length
+     * @param int $offset
+     * @param int|null $length
      *
      * @return string
      */
     public function read(string $path, int $offset = 0, int $length = null): string
     {
-        if(!$this->exists($path)) {
+        if (!$this->exists($path)) {
             throw new Exception('File Not Found');
         }
-        return \file_get_contents($path, use_include_path: false, context: null, offset: $offset, length: $length);
+        return \file_get_contents($path, context: null, offset: $offset, length: $length);
     }
 
     /**
