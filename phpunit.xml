@@ -4,8 +4,14 @@
          bootstrap="vendor/autoload.php"
          colors="true">
     <testsuites>
-        <testsuite name="Application Test Suite">
-            <directory>./tests/</directory>
+        <testsuite name="unit">
+            <directory>./tests/Storage/Compression</directory>
+            <file>./tests/Storage/Device/LocalTest.php</file>
+            <directory>./tests/Storage/Validator</directory>
+            <file>./tests/Storage/StorageTest.php</file>
+        </testsuite>
+        <testsuite name="e2e">
+            <directory>./tests/Storage/Device</directory>
         </testsuite>
     </testsuites>
 </phpunit>
