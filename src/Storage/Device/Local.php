@@ -335,8 +335,8 @@ class Local extends Device
      */
     public function createDirectory(string $path): bool
     {
-        if (!\file_exists(\dirname($path))) {
-            if (!@\mkdir(\dirname($path), 0755, true)) {
+        if (!\file_exists($path)) {
+            if (!@\mkdir($path, 0755, true)) {
                 return false;
             }
         }

@@ -175,10 +175,8 @@ abstract class S3Base extends TestCase
     public function testDirectoryCreate()
     {
         $this->assertTrue($this->object->createDirectory('temp'));
-        $this->assertTrue($this->object->delete('temp'));
-        $this->assertFalse($this->object->exists('temp'));
     }
-    
+
     public function testDirectorySize()
     {
         $this->assertEquals(-1, $this->object->getDirectorySize('resources/disk-a/'));

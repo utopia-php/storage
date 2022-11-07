@@ -114,10 +114,9 @@ class LocalTest extends TestCase
 
     public function testDirectoryCreate()
     {
-        $this->assertTrue($this->object->createDirectory('temp'));
-        $this->assertTrue($this->object->exists('temp'));
-        $this->assertTrue($this->object->delete('temp'));
-        $this->assertFalse($this->object->exists('temp'));
+        $directory = uniqid();
+        $this->assertTrue($this->object->createDirectory(__DIR__ . "/$directory"));
+        $this->assertTrue($this->object->exists(__DIR__ . "/$directory"));
     }
     
     public function testDirectorySize()
