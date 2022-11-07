@@ -172,6 +172,11 @@ abstract class S3Base extends TestCase
         $this->assertEquals('8a9ed992b77e4b62b10e3a5c8ed72062', $this->object->getFileHash($this->object->getPath('testing/kitten-2.png')));
     }
 
+    public function testDirectoryCreate()
+    {
+        $this->assertTrue($this->object->createDirectory('temp'));
+    }
+
     public function testDirectorySize()
     {
         $this->assertEquals(-1, $this->object->getDirectorySize('resources/disk-a/'));
