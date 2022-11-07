@@ -115,6 +115,7 @@ class LocalTest extends TestCase
     public function testDirectoryCreate()
     {
         $this->assertTrue($this->object->createDirectory('temp'));
+        $this->assertTrue($this->object->exists('temp'));
         $this->assertTrue($this->object->delete('temp'));
         $this->assertFalse($this->object->exists('temp'));
     }
