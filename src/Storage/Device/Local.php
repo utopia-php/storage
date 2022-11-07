@@ -325,6 +325,26 @@ class Local extends Device
     }
 
     /**
+     * Create a directory at the specified path.
+     *
+     * Returns true on success or if the directory already exists and false on error
+     *
+     * @param $path
+     *
+     * @return bool
+     */
+    public function createDirectory(string $path): bool
+    {
+        if (!\file_exists(\dirname($path))) {
+            if (!@\mkdir(\dirname($path), 0755, true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Get directory size in bytes.
      *
      * Return -1 on error
