@@ -116,6 +116,7 @@ class S3 extends Device
         $this->acl = $acl;
         $this->headers['host'] = $this->bucket . '.s3.'.$this->region.'.amazonaws.com';
         $this->amzHeaders = [];
+        $this->protocol = 'https';
     }
 
     /**
@@ -674,9 +675,9 @@ class S3 extends Device
      *
      * @return  object
      */
-    private function call(string $method, string $uri, string $data = '', array $parameters=[])
+    protected function call(string $method, string $uri, string $data = '', array $parameters=[])
     {
-        $url = 'https://' . $this->headers['host'] . $uri . '?' . \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
+        $url = $this->protocol . '://' . $this->headers['host'] . $uri . '?' . \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
         $response->body = '';
         $response->headers = [];
