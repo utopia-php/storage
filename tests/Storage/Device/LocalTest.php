@@ -111,6 +111,13 @@ class LocalTest extends TestCase
         $this->assertEquals($this->object->getFileHash(__DIR__ . '/../../resources/disk-b/kitten-1.png'), '03010f4f02980521a8fd6213b52ec313');
         $this->assertEquals($this->object->getFileHash(__DIR__ . '/../../resources/disk-b/kitten-2.png'), '8a9ed992b77e4b62b10e3a5c8ed72062');
     }
+
+    public function testDirectoryCreate()
+    {
+        $directory = uniqid();
+        $this->assertTrue($this->object->createDirectory(__DIR__ . "/$directory"));
+        $this->assertTrue($this->object->exists(__DIR__ . "/$directory"));
+    }
     
     public function testDirectorySize()
     {
