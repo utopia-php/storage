@@ -547,6 +547,21 @@ class S3 extends Device
     }
 
     /**
+     * Create a directory at the specified path.
+     *
+     * Returns true on success or if the directory already exists and false on error
+     *
+     * @param $path
+     *
+     * @return bool
+     */
+    public function createDirectory(string $path): bool
+    {
+        /* S3 is an object store and does not have the concept of directories */
+        return true;
+    }
+
+    /**
      * Get directory size in bytes.
      *
      * Return -1 on error
