@@ -22,6 +22,11 @@ class WasabiTest extends S3Base
         return 'Wasabi Storage';
     }
 
+    protected function getAdapterType(): string
+    {
+        return this->object->getType();
+    }
+
     protected function getAdapterDescription(): string
     {
         return 'Wasabi Storage';

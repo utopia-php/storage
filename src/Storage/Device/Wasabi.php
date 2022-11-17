@@ -53,4 +53,12 @@ class Wasabi extends S3
     {
         return 'Wasabi Storage';
     }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return Storage::DEVICE_WASABI;
+    }
 }

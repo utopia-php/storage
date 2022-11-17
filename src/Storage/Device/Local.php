@@ -33,6 +33,14 @@ class Local extends Device
     /**
      * @return string
      */
+    public function getType(): string
+    {
+        return Storage::DEVICE_LOCAL;
+    }
+
+    /**
+     * @return string
+     */
     public function getDescription(): string
     {
         return 'Adapter for Local storage that is in the physical or virtual machine or mounted to it.';

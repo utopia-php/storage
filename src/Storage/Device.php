@@ -16,6 +16,15 @@ abstract class Device
     abstract public function getName(): string;
 
     /**
+     * Get Type.
+     *
+     * Get storage device type
+     *
+     * @return string
+     */
+    abstract public function getType(): string;
+
+    /**
      * Get Description.
      *
      * Get storage device description and purpose.

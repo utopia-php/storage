@@ -47,4 +47,12 @@ class Linode extends S3
     {
         return 'Linode Object Storage';
     }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return Storage::DEVICE_LINODE;
+    }
 }

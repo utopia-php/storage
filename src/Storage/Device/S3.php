@@ -129,6 +129,14 @@ class S3 extends Device
     /**
      * @return string
      */
+    public function getType(): string
+    {
+        return Storage::DEVICE_S3;
+    }
+
+    /**
+     * @return string
+     */
     public function getDescription(): string
     {
         return 'S3 Bucket Storage drive for AWS or on premise solution';

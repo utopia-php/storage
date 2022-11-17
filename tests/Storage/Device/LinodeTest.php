@@ -23,6 +23,11 @@ class LinodeTest extends S3Base
         return 'Linode Object Storage';
     }
 
+    protected function getAdapterType(): string
+    {
+        return this->object->getType();
+    }
+
     protected function getAdapterDescription(): string
     {
         return 'Linode Object Storage';

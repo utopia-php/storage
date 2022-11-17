@@ -49,4 +49,12 @@ class Backblaze extends S3
     {
         return 'Backblaze B2 Storage';
     }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return Storage::DEVICE_BACKBLAZE;
+    }
 }

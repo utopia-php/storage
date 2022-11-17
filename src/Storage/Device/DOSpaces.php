@@ -48,4 +48,12 @@ class DOSpaces extends S3
     {
         return 'Digitalocean Spaces Storage';
     }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return Storage::DEVICE_DO_SPACES;
+    }
 }
