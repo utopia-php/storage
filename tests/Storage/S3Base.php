@@ -63,7 +63,7 @@ abstract class S3Base extends TestCase
 
     public function testType()
     {
-        $this->assertEquals($this->object->getAdapterType(), $this->object->getType());
+        $this->assertEquals($this->getAdapterType(), $this->object->getType());
     }
 
     public function testDescription()
