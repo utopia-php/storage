@@ -4,6 +4,7 @@ namespace Utopia\Storage\Device;
 
 use Exception;
 use Utopia\Storage\Device;
+use Utopia\Storage\Storage;
 
 class S3 extends Device
 {

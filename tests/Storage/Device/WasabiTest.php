@@ -24,7 +24,7 @@ class WasabiTest extends S3Base
 
     protected function getAdapterType(): string
     {
-        return this->object->getType();
+        return $this->object->getType();
     }
 
     protected function getAdapterDescription(): string
