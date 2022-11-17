@@ -23,6 +23,11 @@ class BackblazeTest extends S3Base
         return 'Backblaze B2 Storage';
     }
 
+    protected function getAdapterType(): string
+    {
+        return $this->object->getType();
+    }
+
     protected function getAdapterDescription(): string
     {
         return 'Backblaze B2 Storage';
