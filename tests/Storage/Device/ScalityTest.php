@@ -27,4 +27,9 @@ class ScalityTest extends S3Base
     {
         return 'Scality Storage';
     }
+
+    protected function getAdapterType(): string
+    {
+        return $this->object->getType();
+    }
 }
