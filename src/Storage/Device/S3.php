@@ -4,6 +4,7 @@ namespace Utopia\Storage\Device;
 
 use Exception;
 use Utopia\Storage\Device;
+use Utopia\Storage\Storage;
 
 class S3 extends Device
 {
@@ -124,6 +125,14 @@ class S3 extends Device
     public function getName(): string
     {
         return 'S3 Storage';
+    }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return Storage::DEVICE_S3;
     }
 
     /**

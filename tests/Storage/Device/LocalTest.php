@@ -26,6 +26,11 @@ class LocalTest extends TestCase
         $this->assertEquals($this->object->getName(), 'Local Storage');
     }
 
+    public function testType()
+    {
+        $this->assertEquals($this->object->getType(), 'local');
+    }
+
     public function testDescription()
     {
         $this->assertEquals($this->object->getDescription(), 'Adapter for Local storage that is in the physical or virtual machine or mounted to it.');

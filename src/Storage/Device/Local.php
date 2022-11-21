@@ -4,6 +4,7 @@ namespace Utopia\Storage\Device;
 
 use Exception;
 use Utopia\Storage\Device;
+use Utopia\Storage\Storage;
 
 class Local extends Device
 {
@@ -28,6 +29,14 @@ class Local extends Device
     public function getName(): string
     {
         return 'Local Storage';
+    }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return Storage::DEVICE_LOCAL;
     }
 
     /**
