@@ -21,7 +21,7 @@ class Local extends Device
      */
     public function __construct(string $root = '')
     {
-        $this->root = $this->getAbsolutePath($root);
+        $this->root = $root;
     }
 
     /**
