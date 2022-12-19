@@ -8,19 +8,20 @@ use Utopia\Storage\Storage;
 
 class Local extends Device
 {
+
     /**
      * @var string
      */
-    protected $root = 'temp';
+    protected string $root = 'temp';
 
     /**
      * Local constructor.
      *
      * @param string $root
      */
-    public function __construct($root = '')
+    public function __construct(string $root = '')
     {
-        $this->root = $root;
+        $this->root = $this->getAbsolutePath($root);
     }
 
     /**
@@ -57,7 +58,7 @@ class Local extends Device
 
     /**
      * @param string $filename
-     * @param string $prefix
+     * @param string|null $prefix
      *
      * @return string
      */
@@ -171,9 +172,9 @@ class Local extends Device
      *
      * @param string $path
      * @param int offset
-     * @param int length
-     *
+     * @param int|null $length
      * @return string
+     * @throws Exception
      */
     public function read(string $path, int $offset = 0, int $length = null): string
     {

@@ -223,19 +223,20 @@ abstract class Device
 
     /**
      * Get the absolute path by resolving strings like ../, .., //, /\ and so on.
-     * 
+     *
      * Works like the realpath function but works on files that does not exist
-     * 
+     *
      * Reference https://www.php.net/manual/en/function.realpath.php#84012
-     * 
-     * @param $path
-     * 
+     *
+     * @param string $path
+     *
      * @return string
      */
-    protected function getAbsolutePath(string $path): string 
+    public function getAbsolutePath(string $path): string
     {
         $path = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $path);
         $parts = array_filter(explode(DIRECTORY_SEPARATOR, $path), 'strlen');
+
         $absolutes = array();
         foreach ($parts as $part) {
             if ('.' == $part) continue;
@@ -245,6 +246,6 @@ abstract class Device
                 $absolutes[] = $part;
             }
         }
-        return implode(DIRECTORY_SEPARATOR, $absolutes);
+        return DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $absolutes);
     }
 }
