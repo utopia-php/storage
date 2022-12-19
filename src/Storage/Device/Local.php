@@ -63,7 +63,7 @@ class Local extends Device
      */
     public function getPath(string $filename, string $prefix = null): string
     {
-        return realpath($this->getRoot()  . DIRECTORY_SEPARATOR . $filename);
+        return $this->getAbsolutePath($this->getRoot()  . DIRECTORY_SEPARATOR . $filename);
     }
 
     /**
