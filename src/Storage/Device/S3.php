@@ -411,6 +411,7 @@ class S3 extends Device
     private function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
     {
         $uri = '/';
+        $prefix = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */ 
         $this->headers['content-type'] = 'text/plain';
         $this->headers['content-md5'] = \base64_encode(md5('', true));
 

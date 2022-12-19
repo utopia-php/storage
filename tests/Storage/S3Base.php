@@ -152,7 +152,6 @@ abstract class S3Base extends TestCase
         $this->assertEquals(false, $this->object->exists($path));
         $this->assertEquals(false, $this->object->exists($path2));
         
-
     }
 
     public function testFileSize()
