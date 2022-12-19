@@ -115,7 +115,7 @@ class S3 extends Device
         $this->secretKey = $secretKey;
         $this->bucket = $bucket;
         $this->region = $region;
-        $this->root   = $root;
+        $this->root = $root;
         $this->acl = $acl;
         $this->headers['host'] = $this->bucket . '.s3.' . $this->region . '.amazonaws.com';
         $this->amzHeaders = [];
@@ -438,6 +438,7 @@ class S3 extends Device
     public function deletePath(string $path): bool
     {
         $path = $this->getRoot() . '/' . $path;
+
         $uri = '/';
         $continuationToken = '';
         do {
@@ -689,7 +690,8 @@ class S3 extends Device
      */
     private function call(string $method, string $uri, string $data = '', array $parameters = [])
     {
-        $url = 'https://' . $this->headers['host'] . $this->getAbsolutePath($uri) . '?' . \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
+        $uri = $this->getAbsolutePath($uri);
+        $url = 'https://' . $this->headers['host'] . $uri . '?' . \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
         $response->body = '';
         $response->headers = [];
