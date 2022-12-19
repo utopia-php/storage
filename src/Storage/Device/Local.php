@@ -20,7 +20,7 @@ class Local extends Device
      */
     public function __construct($root = '')
     {
-        $this->root = trim($root,"/");
+        $this->root = $root;
     }
 
     /**
@@ -63,7 +63,7 @@ class Local extends Device
      */
     public function getPath(string $filename, string $prefix = null): string
     {
-        return $this->getRoot()  . DIRECTORY_SEPARATOR . $filename;
+        return realpath($this->getRoot()  . DIRECTORY_SEPARATOR . $filename);
     }
 
     /**
@@ -264,7 +264,8 @@ class Local extends Device
      */
     public function deletePath(string $path): bool
     {
-        $path = $this->getRoot() . DIRECTORY_SEPARATOR . $path;
+        $path = realpath($this->getRoot() . DIRECTORY_SEPARATOR . $path);
+
         if (\is_dir($path)) {
             $files = \glob($path . '*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
 
