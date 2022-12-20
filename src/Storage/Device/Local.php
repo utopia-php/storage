@@ -20,7 +20,7 @@ class Local extends Device
      */
     public function __construct($root = '')
     {
-        $this->root = $root;
+        $this->root = trim($root,"/");
     }
 
     /**
