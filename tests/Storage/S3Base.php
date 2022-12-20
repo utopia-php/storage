@@ -73,12 +73,12 @@ abstract class S3Base extends TestCase
 
     public function testRoot()
     {
-        $this->assertEquals( trim($this->root, "/"), $this->object->getRoot());
+        $this->assertEquals( $this->root, $this->object->getRoot());
     }
 
     public function testPath()
     {
-        $this->assertEquals(trim($this->root, "/") . '/image.png', $this->object->getPath('image.png'));
+        $this->assertEquals($this->root . '/image.png', $this->object->getPath('image.png'));
     }
 
     public function testWrite()
@@ -152,7 +152,6 @@ abstract class S3Base extends TestCase
         $this->assertEquals(false, $this->object->exists($path));
         $this->assertEquals(false, $this->object->exists($path2));
         
-
     }
 
     public function testFileSize()

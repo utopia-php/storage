@@ -58,44 +58,46 @@ class S3 extends Device
     /**
      * @var string
      */
-    protected $accessKey;
+    protected string $accessKey;
 
     /**
      * @var string
      */
-    protected $secretKey;
+    protected string $secretKey;
 
     /**
      * @var string
      */
-    protected $bucket;
+    protected string $bucket;
 
     /**
      * @var string
      */
-    protected $region;
+    protected string $region;
 
     /**
      * @var string
      */
-    protected $acl = self::ACL_PRIVATE;
+    protected string $acl = self::ACL_PRIVATE;
 
     /**
      * @var string
      */
-    protected $root = 'temp';
+    protected string $root = 'temp';
 
     /**
      * @var array
      */
-    protected $headers = [
-        'host' => '', 'date' => '', 'content-md5' => '', 'content-type' => '',
+    protected array $headers = [
+        'host' => '', 'date' => '',
+        'content-md5' => '',
+        'content-type' => '',
     ];
 
     /**
      * @var array
      */
-    protected $amzHeaders;
+    protected array $amzHeaders;
 
     /**
      * S3 Constructor
@@ -113,7 +115,7 @@ class S3 extends Device
         $this->secretKey = $secretKey;
         $this->bucket = $bucket;
         $this->region = $region;
-        $this->root = trim($root, "/");
+        $this->root = $root;
         $this->acl = $acl;
         $this->headers['host'] = $this->bucket . '.s3.' . $this->region . '.amazonaws.com';
         $this->amzHeaders = [];
@@ -153,7 +155,7 @@ class S3 extends Device
 
     /**
      * @param string $filename
-     * @param string $prefix
+     * @param string|null $prefix
      *
      * @return string
      */
@@ -409,6 +411,7 @@ class S3 extends Device
     private function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
     {
         $uri = '/';
+        $prefix = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */ 
         $this->headers['content-type'] = 'text/plain';
         $this->headers['content-md5'] = \base64_encode(md5('', true));
 
@@ -436,6 +439,7 @@ class S3 extends Device
     public function deletePath(string $path): bool
     {
         $path = $this->getRoot() . '/' . $path;
+
         $uri = '/';
         $continuationToken = '';
         do {
@@ -687,6 +691,7 @@ class S3 extends Device
      */
     private function call(string $method, string $uri, string $data = '', array $parameters = [])
     {
+        $uri = $this->getAbsolutePath($uri);
         $url = 'https://' . $this->headers['host'] . $uri . '?' . \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
         $response->body = '';
