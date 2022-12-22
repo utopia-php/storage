@@ -1,9 +1,9 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage\Device;
 
 use Utopia\Storage\Device\S3;
-use Utopia\Tests\S3Base;
+use Utopia\Tests\Storage\S3Base;
 
 class S3Test extends S3Base
 {
@@ -24,6 +24,11 @@ class S3Test extends S3Base
     protected function getAdapterName() : string
     {
         return 'S3 Storage';
+    }
+
+    protected function getAdapterType(): string
+    {
+        return $this->object->getType();
     }
 
     protected function getAdapterDescription(): string

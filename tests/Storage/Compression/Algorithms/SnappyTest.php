@@ -2,19 +2,19 @@
 
 namespace Utopia\Tests\Storage\Compression\Algorithms;
 
-use Utopia\Storage\Compression\Algorithms\GZIP;
+use Utopia\Storage\Compression\Algorithms\Snappy;
 use PHPUnit\Framework\TestCase;
 
-class GZIPTest extends TestCase
+class SnappyTest extends TestCase
 {
     /**
-     * @var GZIP
+     * @var Snappy
      */
     protected $object = null;
 
     public function setUp(): void
     {
-        $this->object = new GZIP();
+        $this->object = new Snappy();
     }
 
     public function tearDown(): void
@@ -23,58 +23,59 @@ class GZIPTest extends TestCase
 
     public function testName()
     {
-        $this->assertEquals($this->object->getName(), 'gzip');
+        $this->assertEquals($this->object->getName(), 'snappy');
     }
     
     public function testCompressDecompressWithText()
     {
         $demo = 'This is a demo string';
-        $demoSize = mb_strlen($demo, '8bit');
+        $demoSize = \mb_strlen($demo, '8bit');
 
         $data = $this->object->compress($demo);
-        $dataSize = mb_strlen($data, '8bit');
 
-        $this->assertEquals($demoSize, 21);
-        $this->assertEquals($dataSize, 39);
-        
+        $dataSize = \mb_strlen($data, '8bit');
+
+        $this->assertEquals(21, $demoSize);
+        $this->assertEquals(23, $dataSize);
+
         $this->assertEquals($this->object->decompress($data), $demo);
     }
     
     public function testCompressDecompressWithJPGImage()
     {
         $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-a/kitten-1.jpg');
-        $demoSize = mb_strlen($demo, '8bit');
+        $demoSize = \mb_strlen($demo, '8bit');
 
         $data = $this->object->compress($demo);
-        $dataSize = mb_strlen($data, '8bit');
+        $dataSize = \mb_strlen($data, '8bit');
 
-        $this->assertEquals($demoSize, 599639);
-        $this->assertEquals($dataSize, 599107);
+        $this->assertEquals(599639, $demoSize);
+        $this->assertEquals(599504, $dataSize);
         
         $this->assertGreaterThan($dataSize, $demoSize);
         
         $data = $this->object->decompress($data);
-        $dataSize = mb_strlen($data, '8bit');
+        $dataSize = \mb_strlen($data, '8bit');
         
-        $this->assertEquals($dataSize, 599639);
+        $this->assertEquals(599639, $dataSize);
     }
     
     public function testCompressDecompressWithPNGImage()
     {
         $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-b/kitten-1.png');
-        $demoSize = mb_strlen($demo, '8bit');
+        $demoSize = \mb_strlen($demo, '8bit');
 
         $data = $this->object->compress($demo);
-        $dataSize = mb_strlen($data, '8bit');
+        $dataSize = \mb_strlen($data, '8bit');
 
-        $this->assertEquals($demoSize, 3038056);
-        $this->assertEquals($dataSize, 3029202);
+        $this->assertEquals(3038056, $demoSize);
+        $this->assertEquals(3038200, $dataSize);
         
-        $this->assertGreaterThan($dataSize, $demoSize);
+        $this->assertGreaterThan($demoSize, $dataSize);
         
         $data = $this->object->decompress($data);
-        $dataSize = mb_strlen($data, '8bit');
-        
-        $this->assertEquals($dataSize, 3038056);
+        $dataSize = \mb_strlen($data, '8bit');
+
+        $this->assertEquals(3038056, $dataSize);
     }
 }

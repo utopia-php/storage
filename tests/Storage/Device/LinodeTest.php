@@ -1,15 +1,15 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage\Device;
 
 use Utopia\Storage\Device\Linode;
-use Utopia\Tests\S3Base;
+use Utopia\Tests\Storage\S3Base;
 
 class LinodeTest extends S3Base
 {
     protected function init(): void
     {
-        $this->root = 'root';
+        $this->root = '/root';
         $key = $_SERVER['LINODE_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['LINODE_SECRET'] ?? '';
         $bucket = 'everly-test';
@@ -21,6 +21,11 @@ class LinodeTest extends S3Base
     protected function getAdapterName(): string
     {
         return 'Linode Object Storage';
+    }
+
+    protected function getAdapterType(): string
+    {
+        return $this->object->getType();
     }
 
     protected function getAdapterDescription(): string
