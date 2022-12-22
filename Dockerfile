@@ -19,7 +19,7 @@ FROM php:8.0-cli-alpine as compile
 
 ENV PHP_ZSTD_VERSION="master" \
     PHP_XZ_VERSION=5.2.7 \
-    PHP_EXT_XZ_VERSION=1.1.2
+    PHP_EXT_XZ_VERSION=1.1.2 \
     PHP_SNAPPY_VERSION=bfefe4906e0abb1f6cc19005b35f9af5240d9025
 
 RUN apk add --no-cache \
