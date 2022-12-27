@@ -8,19 +8,20 @@ use Utopia\Storage\Storage;
 
 class Local extends Device
 {
+
     /**
      * @var string
      */
-    protected $root = 'temp';
+    protected string $root = 'temp';
 
     /**
      * Local constructor.
      *
      * @param string $root
      */
-    public function __construct($root = '')
+    public function __construct(string $root = '')
     {
-        $this->root = trim($root,"/");
+        $this->root = $root;
     }
 
     /**
@@ -57,13 +58,13 @@ class Local extends Device
 
     /**
      * @param string $filename
-     * @param string $prefix
+     * @param string|null $prefix
      *
      * @return string
      */
     public function getPath(string $filename, string $prefix = null): string
     {
-        return $this->getRoot()  . DIRECTORY_SEPARATOR . $filename;
+        return $this->getAbsolutePath($this->getRoot()  . DIRECTORY_SEPARATOR . $filename);
     }
 
     /**
@@ -264,7 +265,8 @@ class Local extends Device
      */
     public function deletePath(string $path): bool
     {
-        $path = $this->getRoot() . DIRECTORY_SEPARATOR . $path;
+        $path = realpath($this->getRoot() . DIRECTORY_SEPARATOR . $path);
+
         if (\is_dir($path)) {
             $files = \glob($path . '*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
 

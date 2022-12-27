@@ -21,6 +21,17 @@ class LocalTest extends TestCase
     {
     }
 
+    public function testPaths()
+    {
+        $this->assertEquals($this->object->getAbsolutePath('////storage/functions') ,  '/storage/functions');
+        $this->assertEquals($this->object->getAbsolutePath('storage/functions') ,  '/storage/functions');
+        $this->assertEquals($this->object->getAbsolutePath('/storage/functions') ,  '/storage/functions');
+        $this->assertEquals($this->object->getAbsolutePath('//storage///functions//') ,  '/storage/functions');
+        $this->assertEquals($this->object->getAbsolutePath('\\\\\storage\functions') ,  '/storage/functions');
+        $this->assertEquals($this->object->getAbsolutePath('..\\\\\//storage\\//functions') ,  '/storage/functions');
+        $this->assertEquals($this->object->getAbsolutePath('./..\\\\\//storage\\//functions') ,  '/storage/functions');;
+    }
+
     public function testName()
     {
         $this->assertEquals($this->object->getName(), 'Local Storage');
@@ -38,12 +49,12 @@ class LocalTest extends TestCase
 
     public function testRoot()
     {
-        $this->assertEquals($this->object->getRoot(),trim(realpath( __DIR__ . '/../../resources/disk-a'),"/"));
+        $this->assertEquals($this->object->getRoot(), $this->object->getAbsolutePath( __DIR__ . '/../../resources/disk-a'));
     }
 
     public function testPath()
     {
-        $this->assertEquals($this->object->getPath('image.png'), trim(realpath(__DIR__ . '/../../resources/disk-a').'/image.png',"/"));
+        $this->assertEquals($this->object->getPath('image.png'), $this->object->getAbsolutePath(__DIR__ . '/../../resources/disk-a').'/image.png');
     }
 
     public function testWrite()

@@ -220,4 +220,32 @@ abstract class Device
      * @return float
      */
     abstract public function getPartitionTotalSpace(): float;
+
+    /**
+     * Get the absolute path by resolving strings like ../, .., //, /\ and so on.
+     *
+     * Works like the realpath function but works on files that does not exist
+     *
+     * Reference https://www.php.net/manual/en/function.realpath.php#84012
+     *
+     * @param string $path
+     *
+     * @return string
+     */
+    public function getAbsolutePath(string $path): string
+    {
+        $path = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $path);
+        $parts = array_filter(explode(DIRECTORY_SEPARATOR, $path), 'strlen');
+
+        $absolutes = array();
+        foreach ($parts as $part) {
+            if ('.' == $part) continue;
+            if ('..' == $part) {
+                array_pop($absolutes);
+            } else {
+                $absolutes[] = $part;
+            }
+        }
+        return DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $absolutes);
+    }
 }
