@@ -37,7 +37,7 @@ RUN git clone --recursive --depth 1 --branch $PHP_ZSTD_VERSION https://github.co
 
 ## Snappy Extension
 FROM compile AS snappy
-RUN git clone --recursive --depth 1 https://github.com/kjdev/php-ext-snappy.git \
+RUN git clone --recursive https://github.com/kjdev/php-ext-snappy.git \
   && cd php-ext-snappy \
   && git checkout $PHP_SNAPPY_VERSION \
   && phpize \
