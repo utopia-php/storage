@@ -1,6 +1,6 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Device\S3;
@@ -61,6 +61,11 @@ abstract class S3Base extends TestCase
         $this->assertEquals( $this->getAdapterName(), $this->object->getName());
     }
 
+    public function testType()
+    {
+        $this->assertEquals($this->getAdapterType(), $this->object->getType());
+    }
+
     public function testDescription()
     {
         $this->assertEquals($this->getAdapterDescription(), $this->object->getDescription());
@@ -68,7 +73,7 @@ abstract class S3Base extends TestCase
 
     public function testRoot()
     {
-        $this->assertEquals($this->root, $this->object->getRoot());
+        $this->assertEquals( $this->root, $this->object->getRoot());
     }
 
     public function testPath()
@@ -147,7 +152,6 @@ abstract class S3Base extends TestCase
         $this->assertEquals(false, $this->object->exists($path));
         $this->assertEquals(false, $this->object->exists($path2));
         
-
     }
 
     public function testFileSize()
@@ -170,6 +174,11 @@ abstract class S3Base extends TestCase
         $this->assertEquals('81702fdeef2e55b1a22617bce4951cb5', $this->object->getFileHash($this->object->getPath('testing/kitten-2.jpg')));
         $this->assertEquals('03010f4f02980521a8fd6213b52ec313', $this->object->getFileHash($this->object->getPath('testing/kitten-1.png')));
         $this->assertEquals('8a9ed992b77e4b62b10e3a5c8ed72062', $this->object->getFileHash($this->object->getPath('testing/kitten-2.png')));
+    }
+
+    public function testDirectoryCreate()
+    {
+        $this->assertTrue($this->object->createDirectory('temp'));
     }
 
     public function testDirectorySize()
