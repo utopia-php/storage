@@ -16,6 +16,15 @@ abstract class Device
     abstract public function getName(): string;
 
     /**
+     * Get Type.
+     *
+     * Get storage device type
+     *
+     * @return string
+     */
+    abstract public function getType(): string;
+
+    /**
      * Get Description.
      *
      * Get storage device description and purpose.
@@ -171,6 +180,17 @@ abstract class Device
     abstract public function getFileHash(string $path): string;
 
     /**
+     * Create a directory at the specified path.
+     *
+     * Returns true on success or if the directory already exists and false on error
+     *
+     * @param $path
+     *
+     * @return bool
+     */
+    abstract public function createDirectory(string $path): bool;
+
+    /**
      * Get directory size in bytes.
      *
      * Return -1 on error
@@ -200,4 +220,32 @@ abstract class Device
      * @return float
      */
     abstract public function getPartitionTotalSpace(): float;
+
+    /**
+     * Get the absolute path by resolving strings like ../, .., //, /\ and so on.
+     *
+     * Works like the realpath function but works on files that does not exist
+     *
+     * Reference https://www.php.net/manual/en/function.realpath.php#84012
+     *
+     * @param string $path
+     *
+     * @return string
+     */
+    public function getAbsolutePath(string $path): string
+    {
+        $path = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $path);
+        $parts = array_filter(explode(DIRECTORY_SEPARATOR, $path), 'strlen');
+
+        $absolutes = array();
+        foreach ($parts as $part) {
+            if ('.' == $part) continue;
+            if ('..' == $part) {
+                array_pop($absolutes);
+            } else {
+                $absolutes[] = $part;
+            }
+        }
+        return DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $absolutes);
+    }
 }

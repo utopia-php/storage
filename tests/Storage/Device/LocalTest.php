@@ -21,9 +21,25 @@ class LocalTest extends TestCase
     {
     }
 
+    public function testPaths()
+    {
+        $this->assertEquals($this->object->getAbsolutePath('////storage/functions') ,  '/storage/functions');
+        $this->assertEquals($this->object->getAbsolutePath('storage/functions') ,  '/storage/functions');
+        $this->assertEquals($this->object->getAbsolutePath('/storage/functions') ,  '/storage/functions');
+        $this->assertEquals($this->object->getAbsolutePath('//storage///functions//') ,  '/storage/functions');
+        $this->assertEquals($this->object->getAbsolutePath('\\\\\storage\functions') ,  '/storage/functions');
+        $this->assertEquals($this->object->getAbsolutePath('..\\\\\//storage\\//functions') ,  '/storage/functions');
+        $this->assertEquals($this->object->getAbsolutePath('./..\\\\\//storage\\//functions') ,  '/storage/functions');;
+    }
+
     public function testName()
     {
         $this->assertEquals($this->object->getName(), 'Local Storage');
+    }
+
+    public function testType()
+    {
+        $this->assertEquals($this->object->getType(), 'local');
     }
 
     public function testDescription()
@@ -33,12 +49,12 @@ class LocalTest extends TestCase
 
     public function testRoot()
     {
-        $this->assertEquals($this->object->getRoot(),realpath( __DIR__ . '/../../resources/disk-a'));
+        $this->assertEquals($this->object->getRoot(), $this->object->getAbsolutePath( __DIR__ . '/../../resources/disk-a'));
     }
 
     public function testPath()
     {
-        $this->assertEquals($this->object->getPath('image.png'), realpath(__DIR__ . '/../../resources/disk-a').'/image.png');
+        $this->assertEquals($this->object->getPath('image.png'), $this->object->getAbsolutePath(__DIR__ . '/../../resources/disk-a').'/image.png');
     }
 
     public function testWrite()
@@ -110,6 +126,13 @@ class LocalTest extends TestCase
         $this->assertEquals($this->object->getFileHash(__DIR__ . '/../../resources/disk-a/kitten-2.jpg'), '81702fdeef2e55b1a22617bce4951cb5');
         $this->assertEquals($this->object->getFileHash(__DIR__ . '/../../resources/disk-b/kitten-1.png'), '03010f4f02980521a8fd6213b52ec313');
         $this->assertEquals($this->object->getFileHash(__DIR__ . '/../../resources/disk-b/kitten-2.png'), '8a9ed992b77e4b62b10e3a5c8ed72062');
+    }
+
+    public function testDirectoryCreate()
+    {
+        $directory = uniqid();
+        $this->assertTrue($this->object->createDirectory(__DIR__ . "/$directory"));
+        $this->assertTrue($this->object->exists(__DIR__ . "/$directory"));
     }
     
     public function testDirectorySize()

@@ -3,6 +3,7 @@
 namespace Utopia\Storage\Device;
 
 use Utopia\Storage\Device\S3;
+use Utopia\Storage\Storage;
 
 class Linode extends S3
 {
@@ -46,5 +47,13 @@ class Linode extends S3
     public function getDescription(): string
     {
         return 'Linode Object Storage';
+    }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return Storage::DEVICE_LINODE;
     }
 }
