@@ -17,9 +17,9 @@ RUN composer update \
 
 FROM php:8.0-cli-alpine as compile
 
-ENV PHP_ZSTD_VERSION="master" \
-    PHP_SNAPPY_VERSION=bfefe4906e0abb1f6cc19005b35f9af5240d9025 \
-    PHP_LZ4_COMMIT="8ce521e086fcc4d81c57a60915676673e341ab05"
+ENV PHP_ZSTD_VERSION="master"
+ENV PHP_SNAPPY_VERSION="bfefe4906e0abb1f6cc19005b35f9af5240d9025"
+ENV PHP_LZ4_VERSION="2f006c3e4f1fb3a60d2656fc164f9ba26b71e995"
     
 RUN apk add --no-cache \
     git \
@@ -41,9 +41,10 @@ RUN git clone --recursive --depth 1 --branch $PHP_ZSTD_VERSION https://github.co
 FROM compile AS lz4
 RUN git clone --recursive --depth 1 https://github.com/kjdev/php-ext-lz4.git \
   && cd php-ext-lz4 \
-  && git reset --hard $PHP_LZ4_COMMIT \
+  && git reset --hard $PHP_LZ4_VERSION \
   && phpize \
-  && ./configure --with-lz4-includedir=/usr \
+  && ./configure --with-lz4-includedir=/usr \ 
+  && make && make install
 
 ## Snappy Extension
 FROM compile AS snappy
