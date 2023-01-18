@@ -39,7 +39,7 @@ RUN git clone --recursive --depth 1 --branch $PHP_ZSTD_VERSION https://github.co
 
 ## LZ4 Extension
 FROM compile AS lz4
-RUN git clone --recursive --depth 1 https://github.com/kjdev/php-ext-lz4.git \
+RUN git clone --recursive https://github.com/kjdev/php-ext-lz4.git \
   && cd php-ext-lz4 \
   && git reset --hard $PHP_LZ4_VERSION \
   && phpize \
@@ -48,7 +48,7 @@ RUN git clone --recursive --depth 1 https://github.com/kjdev/php-ext-lz4.git \
 
 ## Snappy Extension
 FROM compile AS snappy
-RUN git clone --recursive --depth 1 https://github.com/kjdev/php-ext-snappy.git \
+RUN git clone --recursive https://github.com/kjdev/php-ext-snappy.git \
   && cd php-ext-snappy \
   && git reset --hard $PHP_SNAPPY_VERSION \
   && phpize \
