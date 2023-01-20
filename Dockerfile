@@ -28,7 +28,7 @@ RUN apk add --no-cache \
     make \
     g++  \
     zstd-dev \
-    brotli-dev
+    brotli-dev \
     lz4-dev
 
 ## Zstandard Extension
