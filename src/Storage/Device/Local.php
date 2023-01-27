@@ -8,7 +8,6 @@ use Utopia\Storage\Storage;
 
 class Local extends Device
 {
-
     /**
      * @var string
      */
@@ -57,14 +56,13 @@ class Local extends Device
     }
 
     /**
-     * @param string $filename
-     * @param string|null $prefix
-     *
+     * @param  string  $filename
+     * @param  string|null  $prefix
      * @return string
      */
     public function getPath(string $filename, string $prefix = null): string
     {
-        return $this->getAbsolutePath($this->getRoot()  . DIRECTORY_SEPARATOR . $filename);
+        return $this->getAbsolutePath($this->getRoot().DIRECTORY_SEPARATOR.$filename);
     }
 
     /**
@@ -173,8 +171,9 @@ class Local extends Device
      *
      * @param  string  $path
      * @param int offset
-     * @param int|null $length
+     * @param  int|null  $length
      * @return string
+     *
      * @throws Exception
      */
     public function read(string $path, int $offset = 0, int $length = null): string
@@ -263,7 +262,7 @@ class Local extends Device
      */
     public function deletePath(string $path): bool
     {
-        $path = realpath($this->getRoot() . DIRECTORY_SEPARATOR . $path);
+        $path = realpath($this->getRoot().DIRECTORY_SEPARATOR.$path);
 
         if (\is_dir($path)) {
             $files = \glob($path.'*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
@@ -336,13 +335,12 @@ class Local extends Device
      * Returns true on success or if the directory already exists and false on error
      *
      * @param $path
-     *
      * @return bool
      */
     public function createDirectory(string $path): bool
     {
-        if (!\file_exists($path)) {
-            if (!@\mkdir($path, 0755, true)) {
+        if (! \file_exists($path)) {
+            if (! @\mkdir($path, 0755, true)) {
                 return false;
             }
         }

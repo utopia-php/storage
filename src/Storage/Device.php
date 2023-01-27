@@ -171,7 +171,6 @@ abstract class Device
      * Returns true on success or if the directory already exists and false on error
      *
      * @param $path
-     *
      * @return bool
      */
     abstract public function createDirectory(string $path): bool;
@@ -213,24 +212,26 @@ abstract class Device
      *
      * Reference https://www.php.net/manual/en/function.realpath.php#84012
      *
-     * @param string $path
-     *
+     * @param  string  $path
      * @return string
      */
     public function getAbsolutePath(string $path): string
     {
-        $path = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $path);
+        $path = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
         $parts = array_filter(explode(DIRECTORY_SEPARATOR, $path), 'strlen');
 
-        $absolutes = array();
+        $absolutes = [];
         foreach ($parts as $part) {
-            if ('.' == $part) continue;
+            if ('.' == $part) {
+                continue;
+            }
             if ('..' == $part) {
                 array_pop($absolutes);
             } else {
                 $absolutes[] = $part;
             }
         }
-        return DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $absolutes);
+
+        return DIRECTORY_SEPARATOR.implode(DIRECTORY_SEPARATOR, $absolutes);
     }
 }
