@@ -67,7 +67,7 @@ class Brotli extends Compression
      *
      * Allow values from 0 up to a current max of 11.
      *
-     * @param int $level
+     * @param  int  $level
      * @return void
      */
     public function setLevel(int $level): void
@@ -83,11 +83,10 @@ class Brotli extends Compression
     /**
      * Compress.
      *
-     * @param string $data
-     *
+     * @param  string  $data
      * @return string
      */
-    public function compress(string $data):string
+    public function compress(string $data): string
     {
         return \brotli_compress($data, $this->getLevel(), $this->mode);
     }
@@ -95,11 +94,10 @@ class Brotli extends Compression
     /**
      * Decompress.
      *
-     * @param string $data
-     *
+     * @param  string  $data
      * @return string
      */
-    public function decompress(string $data):string
+    public function decompress(string $data): string
     {
         return \brotli_uncompress($data);
     }

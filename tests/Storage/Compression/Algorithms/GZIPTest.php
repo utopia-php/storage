@@ -42,7 +42,7 @@ class GZIPTest extends TestCase
 
     public function testCompressDecompressWithLargeText()
     {
-        $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-a/lorem.txt');
+        $demo = \file_get_contents(__DIR__.'/../../../resources/disk-a/lorem.txt');
         $demoSize = mb_strlen($demo, '8bit');
 
         $data = $this->object->compress($demo);

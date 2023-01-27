@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4d4af121067314effbd7bcdb319bf88a",
+    "content-hash": "0e15ac0ae89a77c7420f825af10e33fc",
     "packages": [
         {
             "name": "utopia-php/framework",
@@ -3919,6 +3919,7 @@
         "ext-fileinfo": "*",
         "ext-zlib": "*",
         "ext-zstd": "*",
+        "ext-brotli": "*",
         "ext-lz4": "*",
         "ext-snappy": "*",
         "php": ">=8.0"
