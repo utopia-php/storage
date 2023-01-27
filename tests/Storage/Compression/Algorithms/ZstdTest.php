@@ -36,7 +36,26 @@ class ZstdTest extends TestCase
 
         $this->assertEquals($demo, $this->object->decompress($data));
     }
-    
+
+    public function testCompressDecompressWithLargeText()
+    {
+        $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-a/lorem.txt');
+        $demoSize = mb_strlen($demo, '8bit');
+
+        $data = $this->object->compress($demo);
+        $dataSize = mb_strlen($data, '8bit');
+
+        $this->assertEquals($demoSize, 386795);
+        $this->assertEquals($dataSize, 56324);
+
+        $this->assertGreaterThan($dataSize, $demoSize);
+
+        $data = $this->object->decompress($data);
+        $dataSize = mb_strlen($data, '8bit');
+
+        $this->assertEquals($dataSize, 386795);
+    }
+
     public function testCompressDecompressWithJPGImage()
     {
         $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-a/kitten-1.jpg');

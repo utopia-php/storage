@@ -15,6 +15,7 @@
         "ext-fileinfo": "*",
         "ext-zlib": "*",
         "ext-zstd": "*",
+        "ext-brotli": "*",
         "ext-lz4": "*",
         "ext-snappy": "*",
         "php": ">=8.0",
