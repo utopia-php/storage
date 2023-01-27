@@ -2,8 +2,8 @@
 
 namespace Utopia\Tests\Compression\Algorithms;
 
-use Utopia\Storage\Compression\Algorithms\LZ4;
 use PHPUnit\Framework\TestCase;
+use Utopia\Storage\Compression\Algorithms\LZ4;
 
 class LZ4Test extends TestCase
 {
@@ -39,7 +39,7 @@ class LZ4Test extends TestCase
 
     public function testCompressDecompressWithJPGImage()
     {
-        $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-a/kitten-1.jpg');
+        $demo = \file_get_contents(__DIR__.'/../../../resources/disk-a/kitten-1.jpg');
         $demoSize = \mb_strlen($demo, '8bit');
 
         $data = $this->object->compress($demo);
@@ -58,7 +58,7 @@ class LZ4Test extends TestCase
 
     public function testCompressDecompressWithPNGImage()
     {
-        $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-b/kitten-1.png');
+        $demo = \file_get_contents(__DIR__.'/../../../resources/disk-b/kitten-1.png');
         $demoSize = \mb_strlen($demo, '8bit');
 
         $data = $this->object->compress($demo);

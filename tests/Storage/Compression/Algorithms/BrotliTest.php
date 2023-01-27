@@ -3,8 +3,8 @@
 namespace Utopia\Tests\Storage\Compression\Algorithms;
 
 use InvalidArgumentException;
-use Utopia\Storage\Compression\Algorithms\Brotli;
 use PHPUnit\Framework\TestCase;
+use Utopia\Storage\Compression\Algorithms\Brotli;
 
 class BrotliTest extends TestCase
 {
@@ -49,7 +49,7 @@ class BrotliTest extends TestCase
 
     public function testCompressDecompressWithLargeText()
     {
-        $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-a/lorem.txt');
+        $demo = \file_get_contents(__DIR__.'/../../../resources/disk-a/lorem.txt');
         $demoSize = mb_strlen($demo, '8bit');
 
         $this->object->setLevel(8);
@@ -70,7 +70,7 @@ class BrotliTest extends TestCase
 
     public function testCompressDecompressWithJPGImage()
     {
-        $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-a/kitten-1.jpg');
+        $demo = \file_get_contents(__DIR__.'/../../../resources/disk-a/kitten-1.jpg');
         $demoSize = mb_strlen($demo, '8bit');
 
         $this->object->setLevel(8);
@@ -89,7 +89,7 @@ class BrotliTest extends TestCase
 
     public function testCompressDecompressWithPNGImage()
     {
-        $demo = \file_get_contents(__DIR__ . '/../../../resources/disk-b/kitten-1.png');
+        $demo = \file_get_contents(__DIR__.'/../../../resources/disk-b/kitten-1.png');
         $demoSize = mb_strlen($demo, '8bit');
 
         $this->object->setLevel(8);

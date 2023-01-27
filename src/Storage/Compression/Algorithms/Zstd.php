@@ -34,7 +34,7 @@ class Zstd extends Compression
      *
      * Allow values from 1 up to a current max of 22.
      *
-     * @param int $level
+     * @param  int  $level
      * @return void
      */
     public function setLevel(int $level): void
@@ -58,8 +58,7 @@ class Zstd extends Compression
     /**
      * Compress.
      *
-     * @param string $data
-     *
+     * @param  string  $data
      * @return string
      */
     public function compress(string $data): string
@@ -70,8 +69,7 @@ class Zstd extends Compression
     /**
      * Decompress.
      *
-     * @param string $data
-     *
+     * @param  string  $data
      * @return string
      */
     public function decompress(string $data): string

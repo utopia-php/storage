@@ -17,11 +17,10 @@ class Snappy extends Compression
     /**
      * Compress.
      *
-     * @param string $data
-     *
+     * @param  string  $data
      * @return string
      */
-    public function compress(string $data):string
+    public function compress(string $data): string
     {
         return \snappy_compress($data);
     }
@@ -29,11 +28,10 @@ class Snappy extends Compression
     /**
      * Decompress.
      *
-     * @param string $data
-     *
+     * @param  string  $data
      * @return string
      */
-    public function decompress(string $data):string
+    public function decompress(string $data): string
     {
         return \snappy_uncompress($data);
     }

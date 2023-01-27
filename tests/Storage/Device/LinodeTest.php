@@ -15,7 +15,6 @@ class LinodeTest extends S3Base
         $bucket = 'everly-test';
 
         $this->object = new Linode($this->root, $key, $secret, $bucket, Linode::EU_CENTRAL_1, Linode::ACL_PRIVATE);
-
     }
 
     protected function getAdapterName(): string
