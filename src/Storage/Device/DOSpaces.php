@@ -2,6 +2,9 @@
 
 namespace Utopia\Storage\Device;
 
+use Utopia\Storage\Device\S3;
+use Utopia\Storage\Storage;
+
 class DOSpaces extends S3
 {
     /**
@@ -49,5 +52,13 @@ class DOSpaces extends S3
     public function getDescription(): string
     {
         return 'Digitalocean Spaces Storage';
+    }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return Storage::DEVICE_DO_SPACES;
     }
 }

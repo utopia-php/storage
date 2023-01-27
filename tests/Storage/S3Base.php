@@ -61,6 +61,11 @@ abstract class S3Base extends TestCase
         $this->assertEquals($this->getAdapterName(), $this->object->getName());
     }
 
+    public function testType()
+    {
+        $this->assertEquals($this->getAdapterType(), $this->object->getType());
+    }
+
     public function testDescription()
     {
         $this->assertEquals($this->getAdapterDescription(), $this->object->getDescription());
@@ -68,7 +73,7 @@ abstract class S3Base extends TestCase
 
     public function testRoot()
     {
-        $this->assertEquals($this->root, $this->object->getRoot());
+        $this->assertEquals( $this->root, $this->object->getRoot());
     }
 
     public function testPath()
@@ -147,6 +152,7 @@ abstract class S3Base extends TestCase
         $this->assertEquals(true, $this->object->deletePath('bucket'));
         $this->assertEquals(false, $this->object->exists($path));
         $this->assertEquals(false, $this->object->exists($path2));
+        
     }
 
     public function testFileSize()

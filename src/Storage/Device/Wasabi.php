@@ -2,6 +2,9 @@
 
 namespace Utopia\Storage\Device;
 
+use Utopia\Storage\Device\S3;
+use Utopia\Storage\Storage;
+
 class Wasabi extends S3
 {
     /**
@@ -57,5 +60,13 @@ class Wasabi extends S3
     public function getDescription(): string
     {
         return 'Wasabi Storage';
+    }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return Storage::DEVICE_WASABI;
     }
 }

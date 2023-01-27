@@ -2,6 +2,9 @@
 
 namespace Utopia\Storage\Device;
 
+use Utopia\Storage\Device\S3;
+use Utopia\Storage\Storage;
+
 class Backblaze extends S3
 {
     /**
@@ -50,5 +53,13 @@ class Backblaze extends S3
     public function getDescription(): string
     {
         return 'Backblaze B2 Storage';
+    }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return Storage::DEVICE_BACKBLAZE;
     }
 }

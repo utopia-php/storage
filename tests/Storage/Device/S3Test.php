@@ -25,6 +25,11 @@ class S3Test extends S3Base
         return 'S3 Storage';
     }
 
+    protected function getAdapterType(): string
+    {
+        return $this->object->getType();
+    }
+
     protected function getAdapterDescription(): string
     {
         return 'S3 Bucket Storage drive for AWS or on premise solution';

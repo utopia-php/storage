@@ -4,12 +4,7 @@
     "type": "library",
     "keywords": ["php","framework","upf","utopia","storage"],
     "license": "MIT",
-    "authors": [
-        {
-            "name": "Eldad Fux",
-            "email": "eldad@appwrite.io"
-        }
-    ],
+    "authors": [],
     "autoload": {
         "psr-4": {"Utopia\\Storage\\":"src/Storage"}
     },
@@ -24,6 +19,8 @@
         "ext-fileinfo": "*",
         "ext-zlib": "*",
         "ext-zstd": "*",
+        "ext-lz4": "*",
+        "ext-snappy": "*",
         "php": ">=8.0",
         "utopia-php/framework": "0.*.*"
     },

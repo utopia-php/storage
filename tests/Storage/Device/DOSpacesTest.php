@@ -22,6 +22,11 @@ class DOSpacesTest extends S3Base
         return 'Digitalocean Spaces Storage';
     }
 
+    protected function getAdapterType(): string
+    {
+        return $this->object->getType();
+    }
+    
     protected function getAdapterDescription(): string
     {
         return 'Digitalocean Spaces Storage';

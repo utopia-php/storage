@@ -4,20 +4,22 @@ namespace Utopia\Storage\Device;
 
 use Exception;
 use Utopia\Storage\Device;
+use Utopia\Storage\Storage;
 
 class Local extends Device
 {
+
     /**
      * @var string
      */
-    protected $root = 'temp';
+    protected string $root = 'temp';
 
     /**
      * Local constructor.
      *
      * @param  string  $root
      */
-    public function __construct($root = '')
+    public function __construct(string $root = '')
     {
         $this->root = $root;
     }
@@ -28,6 +30,14 @@ class Local extends Device
     public function getName(): string
     {
         return 'Local Storage';
+    }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return Storage::DEVICE_LOCAL;
     }
 
     /**
@@ -47,13 +57,14 @@ class Local extends Device
     }
 
     /**
-     * @param  string  $filename
-     * @param  string  $prefix
+     * @param string $filename
+     * @param string|null $prefix
+     *
      * @return string
      */
     public function getPath(string $filename, string $prefix = null): string
     {
-        return $this->getRoot().DIRECTORY_SEPARATOR.$filename;
+        return $this->getAbsolutePath($this->getRoot()  . DIRECTORY_SEPARATOR . $filename);
     }
 
     /**
@@ -162,8 +173,9 @@ class Local extends Device
      *
      * @param  string  $path
      * @param int offset
-     * @param int length
+     * @param int|null $length
      * @return string
+     * @throws Exception
      */
     public function read(string $path, int $offset = 0, int $length = null): string
     {
@@ -251,7 +263,8 @@ class Local extends Device
      */
     public function deletePath(string $path): bool
     {
-        $path = $this->getRoot().DIRECTORY_SEPARATOR.$path;
+        $path = realpath($this->getRoot() . DIRECTORY_SEPARATOR . $path);
+
         if (\is_dir($path)) {
             $files = \glob($path.'*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
 
