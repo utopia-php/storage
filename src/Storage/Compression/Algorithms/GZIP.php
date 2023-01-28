@@ -22,11 +22,10 @@ class GZIP extends Compression
      *
      * @see http://php.net/manual/en/function.gzencode.php
      *
-     * @param string $data
-     *
+     * @param  string  $data
      * @return string
      */
-    public function compress(string $data):string
+    public function compress(string $data): string
     {
         return \gzencode($data);
     }
@@ -34,11 +33,10 @@ class GZIP extends Compression
     /**
      * Decompress.
      *
-     * @param string $data
-     *
+     * @param  string  $data
      * @return string
      */
-    public function decompress(string $data):string
+    public function decompress(string $data): string
     {
         return \gzdecode($data);
     }
