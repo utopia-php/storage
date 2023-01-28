@@ -52,6 +52,9 @@ RUN wget https://tukaani.org/xz/xz-${PHP_XZ_VERSION}.tar.xz -O xz.tar.xz \
 
 RUN git clone https://github.com/codemasher/php-ext-xz.git --branch ${PHP_EXT_XZ_VERSION} \
   && cd php-ext-xz \
+  && phpize \
+  && ./configure \
+  && make && make install
 
 ## Snappy Extension
 FROM compile AS snappy
