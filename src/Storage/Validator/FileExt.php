@@ -7,9 +7,13 @@ use Utopia\Validator;
 class FileExt extends Validator
 {
     const TYPE_JPEG = 'jpeg';
+
     const TYPE_JPG = 'jpg';
+
     const TYPE_GIF = 'gif';
+
     const TYPE_PNG = 'png';
+
     const TYPE_GZIP = 'gz';
 
     /**
@@ -18,8 +22,7 @@ class FileExt extends Validator
     protected $allowed;
 
     /**
-     * @param array $allowed
-     *
+     * @param  array  $allowed
      */
     public function __construct(array $allowed)
     {
@@ -36,16 +39,15 @@ class FileExt extends Validator
 
     /**
      * Check if file extenstion is allowed
-     * 
-     * @param mixed $filename
      *
+     * @param  mixed  $filename
      * @return bool
      */
     public function isValid($filename): bool
     {
         $ext = pathinfo($filename, PATHINFO_EXTENSION);
-        
-        if (!in_array($ext, $this->allowed)) {
+
+        if (! in_array($ext, $this->allowed)) {
             return false;
         }
 

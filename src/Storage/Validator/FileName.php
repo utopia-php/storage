@@ -17,8 +17,7 @@ class FileName extends Validator
     /**
      * The file name can only contain "a-z", "A-Z", "0-9" and "-" and not empty.
      *
-     * @param mixed $name
-     *
+     * @param  mixed  $name
      * @return bool
      */
     public function isValid($name): bool
@@ -27,11 +26,11 @@ class FileName extends Validator
             return false;
         }
 
-        if (!is_string($name)) {
+        if (! is_string($name)) {
             return false;
         }
 
-        if (!\preg_match('/^[a-zA-Z0-9.]+$/', $name)) {
+        if (! \preg_match('/^[a-zA-Z0-9.]+$/', $name)) {
             return false;
         }
 

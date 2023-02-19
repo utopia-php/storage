@@ -9,7 +9,7 @@ class WasabiTest extends S3Base
 {
     protected function init(): void
     {
-        $this->root = 'root';
+        $this->root = '/root';
         $key = $_SERVER['WASABI_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['WASABI_SECRET'] ?? '';
         $bucket = 'utopia-storage-tests';
@@ -20,6 +20,11 @@ class WasabiTest extends S3Base
     protected function getAdapterName(): string
     {
         return 'Wasabi Storage';
+    }
+
+    protected function getAdapterType(): string
+    {
+        return $this->object->getType();
     }
 
     protected function getAdapterDescription(): string

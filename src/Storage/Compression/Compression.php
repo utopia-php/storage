@@ -13,14 +13,12 @@ abstract class Compression
 
     /**
      * @param $data
-     *
      * @return string
      */
     abstract public function compress(string $data);
 
     /**
      * @param $data
-     *
      * @return string
      */
     abstract public function decompress(string $data);

@@ -4,30 +4,25 @@ namespace Utopia\Storage\Compression\Algorithms;
 
 use Utopia\Storage\Compression\Compression;
 
-class GZIP extends Compression
+class Snappy extends Compression
 {
     /**
      * @return string
      */
     public function getName(): string
     {
-        return 'gzip';
+        return 'snappy';
     }
 
     /**
      * Compress.
-     *
-     * We use gzencode over gzcompress for better support of the first format among other tools.
-     * (http://stackoverflow.com/a/621987/2299554)
-     *
-     * @see http://php.net/manual/en/function.gzencode.php
      *
      * @param  string  $data
      * @return string
      */
     public function compress(string $data): string
     {
-        return \gzencode($data);
+        return \snappy_compress($data);
     }
 
     /**
@@ -38,6 +33,6 @@ class GZIP extends Compression
      */
     public function decompress(string $data): string
     {
-        return \gzdecode($data);
+        return \snappy_uncompress($data);
     }
 }
