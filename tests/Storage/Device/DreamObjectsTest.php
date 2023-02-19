@@ -3,6 +3,8 @@
 namespace Utopia\Tests;
 
 use Utopia\Storage\Device\DreamObjects;
+use Utopia\Tests\Storage\S3Base;
+
 
 class DreamObjectsTest extends S3Base
 {
