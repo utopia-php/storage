@@ -72,9 +72,9 @@ class S3 extends Device
     const CN_NORTH_1 = 'cn-north-1';
 
     const CN_NORTH_4 = 'cn-north-4';
-    
+
     const CN_NORTHWEST_1 = 'cn-northwest-1';
-    
+
     const ME_SOUTH_1 = 'me-south-1';
 
     const US_GOV_EAST_1 = 'us-gov-east-1';
@@ -157,8 +157,8 @@ class S3 extends Device
         $this->amzHeaders = [];
 
         $host = match ($region) {
-            self::CN_NORTH_1, self::CN_NORTH_4, self::CN_NORTHWEST_1 => $bucket . '.s3.'. $region . '.amazonaws.cn',
-            default => $bucket . '.s3.'.$region.'.amazonaws.com'
+            self::CN_NORTH_1, self::CN_NORTH_4, self::CN_NORTHWEST_1 => $bucket.'.s3.'.$region.'.amazonaws.cn',
+            default => $bucket.'.s3.'.$region.'.amazonaws.com'
         };
 
         $this->headers['host'] = $host;
