@@ -41,8 +41,9 @@ class S3 extends Device
     const EU_NORTH_1 = 'eu-north-1';
     const SA_EAST_1 = 'eu-north-1';
     const CN_NORTH_1 = 'cn-north-1';
-    const ME_SOUTH_1 = 'me-south-1';
+    const CN_NORTH_4 = 'cn-north-4';
     const CN_NORTHWEST_1 = 'cn-northwest-1';
+    const ME_SOUTH_1 = 'me-south-1';
     const US_GOV_EAST_1 = 'us-gov-east-1';
     const US_GOV_WEST_1 = 'us-gov-west-1';
 
@@ -114,8 +115,14 @@ class S3 extends Device
         $this->region = $region;
         $this->root = $root;
         $this->acl = $acl;
-        $this->headers['host'] = $this->bucket . '.s3.'.$this->region.'.amazonaws.com';
         $this->amzHeaders = [];
+
+        $host = match ($this->region) {
+            self::CN_NORTH_1, self::CN_NORTH_4, self::CN_NORTHWEST_1 => $this->bucket . '.s3.'.$this->region.'.amazonaws.cn',
+            default => $this->bucket . '.s3.'.$this->region.'.amazonaws.com'
+        };
+
+        $this->headers['host'] = $host;
     }
 
     /**
@@ -686,11 +693,6 @@ class S3 extends Device
         }
 
         $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
-        
-        // if cn zone selected, switch to amazonaws.cn
-        if ($this->region == 'cn-north-4' || $this->region == 'cn-northwest-1') {
-            $this->headers['host'] = $this->bucket . '.s3.'.$this->region.'.amazonaws.cn';
-        }
 
         foreach ($this->headers as $header => $value) {
             if (\strlen($value) > 0) {
