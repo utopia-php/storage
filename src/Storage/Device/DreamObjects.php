@@ -2,25 +2,22 @@
 
 namespace Utopia\Storage\Device;
 
-use Utopia\Storage\Device\S3;
-
 class DreamObjects extends S3
 {
     /**
      * Regions constants
-     *
      */
-    const US_EAST_1='us-east-1';
+    const US_EAST_1 = 'us-east-1';
 
     /**
      * Object Storage Constructor
      *
-     * @param string $root
-     * @param string $accessKey
-     * @param string $secretKey
-     * @param string $bucket
-     * @param string $region
-     * @param string $acl
+     * @param  string  $root
+     * @param  string  $accessKey
+     * @param  string  $secretKey
+     * @param  string  $bucket
+     * @param  string  $region
+     * @param  string  $acl
      */
     public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_EAST_1, string $acl = self::ACL_PRIVATE)
     {
