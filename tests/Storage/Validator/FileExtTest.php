@@ -1,9 +1,9 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage\Validator;
 
-use Utopia\Storage\Validator\FileExt;
 use PHPUnit\Framework\TestCase;
+use Utopia\Storage\Validator\FileExt;
 
 class FileExtTest extends TestCase
 {
