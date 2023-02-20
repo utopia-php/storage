@@ -35,7 +35,7 @@ abstract class S3Base extends TestCase
         $this->uploadTestFiles();
     }
 
-    private function uploadTestFiles()
+    private function uploadTestFiles(): void
     {
         $this->object->upload(__DIR__.'/../resources/disk-a/kitten-1.jpg', $this->object->getPath('testing/kitten-1.jpg'));
         $this->object->upload(__DIR__.'/../resources/disk-a/kitten-2.jpg', $this->object->getPath('testing/kitten-2.jpg'));
@@ -43,7 +43,7 @@ abstract class S3Base extends TestCase
         $this->object->upload(__DIR__.'/../resources/disk-b/kitten-2.png', $this->object->getPath('testing/kitten-2.png'));
     }
 
-    private function removeTestFiles()
+    private function removeTestFiles(): void
     {
         $this->object->delete($this->object->getPath('testing/kitten-1.jpg'));
         $this->object->delete($this->object->getPath('testing/kitten-2.jpg'));
@@ -56,7 +56,7 @@ abstract class S3Base extends TestCase
         $this->removeTestFiles();
     }
 
-    public function testName()
+    public function testName(): void
     {
         $this->assertEquals($this->getAdapterName(), $this->object->getName());
     }
@@ -66,29 +66,29 @@ abstract class S3Base extends TestCase
         $this->assertEquals($this->getAdapterType(), $this->object->getType());
     }
 
-    public function testDescription()
+    public function testDescription(): void
     {
         $this->assertEquals($this->getAdapterDescription(), $this->object->getDescription());
     }
 
-    public function testRoot()
+    public function testRoot(): void
     {
         $this->assertEquals($this->root, $this->object->getRoot());
     }
 
-    public function testPath()
+    public function testPath(): void
     {
         $this->assertEquals($this->root.'/image.png', $this->object->getPath('image.png'));
     }
 
-    public function testWrite()
+    public function testWrite(): void
     {
         $this->assertEquals(true, $this->object->write($this->object->getPath('text.txt'), 'Hello World', 'text/plain'));
 
         $this->object->delete($this->object->getPath('text.txt'));
     }
 
-    public function testRead()
+    public function testRead(): void
     {
         $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-read.txt'), 'Hello World', 'text/plain'));
         $this->assertEquals('Hello World', $this->object->read($this->object->getPath('text-for-read.txt')));
@@ -96,13 +96,13 @@ abstract class S3Base extends TestCase
         $this->object->delete($this->object->getPath('text-for-read.txt'));
     }
 
-    public function testFileExists()
+    public function testFileExists(): void
     {
         $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/kitten-1.jpg')));
         $this->assertEquals(false, $this->object->exists($this->object->getPath('testing/kitten-5.jpg')));
     }
 
-    public function testMove()
+    public function testMove(): void
     {
         $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-move.txt'), 'Hello World', 'text/plain'));
         $this->assertEquals(true, $this->object->exists($this->object->getPath('text-for-move.txt')));
@@ -113,7 +113,7 @@ abstract class S3Base extends TestCase
         $this->object->delete($this->object->getPath('text-for-move-new.txt'));
     }
 
-    public function testDelete()
+    public function testDelete(): void
     {
         $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-delete.txt'), 'Hello World', 'text/plain'));
         $this->assertEquals(true, $this->object->exists($this->object->getPath('text-for-delete.txt')));
@@ -128,7 +128,7 @@ abstract class S3Base extends TestCase
         $this->assertEquals(true, $this->object->delete($this->object->getPath('testing/appwrite.svg')));
     }
 
-    public function testDeletePath()
+    public function testDeletePath(): void
     {
         // Test Single Object
         $path = $this->object->getPath('text-for-delete-path.txt');
@@ -154,13 +154,13 @@ abstract class S3Base extends TestCase
         $this->assertEquals(false, $this->object->exists($path2));
     }
 
-    public function testFileSize()
+    public function testFileSize(): void
     {
         $this->assertEquals(599639, $this->object->getFileSize($this->object->getPath('testing/kitten-1.jpg')));
         $this->assertEquals(131958, $this->object->getFileSize($this->object->getPath('testing/kitten-2.jpg')));
     }
 
-    public function testFileMimeType()
+    public function testFileMimeType(): void
     {
         $this->assertEquals('image/jpeg', $this->object->getFileMimeType($this->object->getPath('testing/kitten-1.jpg')));
         $this->assertEquals('image/jpeg', $this->object->getFileMimeType($this->object->getPath('testing/kitten-2.jpg')));
@@ -168,7 +168,7 @@ abstract class S3Base extends TestCase
         $this->assertEquals('image/png', $this->object->getFileMimeType($this->object->getPath('testing/kitten-2.png')));
     }
 
-    public function testFileHash()
+    public function testFileHash(): void
     {
         $this->assertEquals('7551f343143d2e24ab4aaf4624996b6a', $this->object->getFileHash($this->object->getPath('testing/kitten-1.jpg')));
         $this->assertEquals('81702fdeef2e55b1a22617bce4951cb5', $this->object->getFileHash($this->object->getPath('testing/kitten-2.jpg')));
@@ -186,12 +186,12 @@ abstract class S3Base extends TestCase
         $this->assertEquals(-1, $this->object->getDirectorySize('resources/disk-a/'));
     }
 
-    public function testPartitionFreeSpace()
+    public function testPartitionFreeSpace(): void
     {
         $this->assertEquals(-1, $this->object->getPartitionFreeSpace());
     }
 
-    public function testPartitionTotalSpace()
+    public function testPartitionTotalSpace(): void
     {
         $this->assertEquals(-1, $this->object->getPartitionTotalSpace());
     }
@@ -204,7 +204,7 @@ abstract class S3Base extends TestCase
         // AWS S3 requires each part to be at least 5MB except for last part
         $chunkSize = 5 * 1024 * 1024;
 
-        $chunks = ceil($totalSize / $chunkSize);
+        $chunks = intval(ceil($totalSize / $chunkSize));
 
         $chunk = 1;
         $start = 0;

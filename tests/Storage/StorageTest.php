@@ -20,7 +20,7 @@ class StorageTest extends TestCase
     {
     }
 
-    public function testGetters()
+    public function testGetters(): void
     {
         $this->assertEquals(get_class(Storage::getDevice('disk-a')), 'Utopia\Storage\Device\Local');
         $this->assertEquals(get_class(Storage::getDevice('disk-b')), 'Utopia\Storage\Device\Local');
@@ -33,7 +33,7 @@ class StorageTest extends TestCase
         }
     }
 
-    public function testExists()
+    public function testExists(): void
     {
         $this->assertEquals(Storage::exists('disk-a'), true);
         $this->assertEquals(Storage::exists('disk-b'), true);

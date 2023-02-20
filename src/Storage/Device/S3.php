@@ -214,10 +214,9 @@ class S3 extends Device
      *
      * @param  string  $source
      * @param  string  $path
-     * @param int chunk
-     * @param int chunks
+     * @param  int  $chunk
+     * @param  int  $chunks
      * @param  array  $metadata
-     * @return int
      *
      * @throws \Exception
      */
@@ -347,10 +346,11 @@ class S3 extends Device
      * Read file or part of file by given path, offset and length.
      *
      * @param  string  $path
-     * @param int offset
-     * @param int length
+     * @param  int  $offset
+     * @param  int  $length
      * @return string
      *
+     * @throws \Exception
      * @throws \Exception
      */
     public function read(string $path, int $offset = 0, int $length = null): string
@@ -441,9 +441,12 @@ class S3 extends Device
     /**
      * Get list of objects in the given path.
      *
-     * @param  string  $path
+     * @param  string  $prefix
+     * @param  int  $maxKeys
+     * @param  string  $continuationToken
      * @return array
      *
+     * @throws \Exception
      * @throws \Exception
      */
     private function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
@@ -642,7 +645,7 @@ class S3 extends Device
      *
      * @param  string  $method
      * @param  string  $uri
-     * @param array parameters
+     * @param  array  $parameters
      * @return string
      */
     private function getSignatureV4(string $method, string $uri, array $parameters = []): string
@@ -769,7 +772,7 @@ class S3 extends Device
 
             return \strlen($data);
         });
-        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $header) use (&$response) {
+        \curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $header) use (&$response) {
             $len = strlen($header);
             $header = explode(':', $header, 2);
 
@@ -810,7 +813,9 @@ class S3 extends Device
         \curl_close($curl);
 
         // Parse body into XML
-        if ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml')) {
+        if (array_key_exists('content-type', $response->headers)
+            && ($response->headers['content-type'] == 'application/xml'
+                || (str_starts_with($response->body, '<?xml') && $response->headers['content-type'] == 'image/svg+xml'))) {
             $response->body = \simplexml_load_string($response->body);
             $response->body = json_decode(json_encode($response->body), true);
         }

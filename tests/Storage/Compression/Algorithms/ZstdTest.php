@@ -18,7 +18,7 @@ class ZstdTest extends TestCase
     {
     }
 
-    public function testName()
+    public function testName(): void
     {
         $this->assertEquals($this->object->getName(), 'zstd');
     }

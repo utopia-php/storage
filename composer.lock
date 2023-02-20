@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0e15ac0ae89a77c7420f825af10e33fc",
+    "content-hash": "1259284323e29983e5aa6073843ff4f4",
     "packages": [
         {
             "name": "utopia-php/framework",
@@ -1275,17 +1275,76 @@
             "time": "2023-02-07T18:11:17+00:00"
         },
         {
+            "name": "phpstan/phpstan",
+            "version": "1.9.x-dev",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/phpstan/phpstan.git",
+                "reference": "6c0217aa2b146c3e28474e8be3e87188fac55dac"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/6c0217aa2b146c3e28474e8be3e87188fac55dac",
+                "reference": "6c0217aa2b146c3e28474e8be3e87188fac55dac",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.2|^8.0"
+            },
+            "conflict": {
+                "phpstan/phpstan-shim": "*"
+            },
+            "bin": [
+                "phpstan",
+                "phpstan.phar"
+            ],
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "PHPStan - PHP Static Analysis Tool",
+            "keywords": [
+                "dev",
+                "static analysis"
+            ],
+            "support": {
+                "issues": "https://github.com/phpstan/phpstan/issues",
+                "source": "https://github.com/phpstan/phpstan/tree/1.9.x"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/ondrejmirtes",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/phpstan",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/phpstan/phpstan",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2023-02-18T15:01:46+00:00"
+        },
+        {
             "name": "phpunit/php-code-coverage",
             "version": "9.2.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "b5f3416da036fb951a557518e8304b3595ff966a"
+                "reference": "87b660f75adb677ea503dd0b999dc90a999ad720"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/b5f3416da036fb951a557518e8304b3595ff966a",
-                "reference": "b5f3416da036fb951a557518e8304b3595ff966a",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/87b660f75adb677ea503dd0b999dc90a999ad720",
+                "reference": "87b660f75adb677ea503dd0b999dc90a999ad720",
                 "shasum": ""
             },
             "require": {
@@ -1349,7 +1408,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-02-18T16:27:54+00:00"
+            "time": "2023-02-20T06:08:06+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -1598,12 +1657,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "c1bf2dd252dec994ee27d804c038a98fd0d1d940"
+                "reference": "ada16b71314bc852f7b199856bd2e12930951d24"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/c1bf2dd252dec994ee27d804c038a98fd0d1d940",
-                "reference": "c1bf2dd252dec994ee27d804c038a98fd0d1d940",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/ada16b71314bc852f7b199856bd2e12930951d24",
+                "reference": "ada16b71314bc852f7b199856bd2e12930951d24",
                 "shasum": ""
             },
             "require": {
@@ -1692,7 +1751,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-02-18T16:26:49+00:00"
+            "time": "2023-02-20T06:03:35+00:00"
         },
         {
             "name": "psr/container",
@@ -3912,7 +3971,9 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": [],
+    "stability-flags": {
+        "phpstan/phpstan": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

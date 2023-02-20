@@ -21,7 +21,7 @@ class FileExtTest extends TestCase
     {
     }
 
-    public function testValues()
+    public function testValues(): void
     {
         $this->assertEquals($this->object->isValid(''), false);
         $this->assertEquals($this->object->isValid(null), false);

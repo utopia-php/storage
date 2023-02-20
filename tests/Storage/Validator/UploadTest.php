@@ -21,7 +21,7 @@ class UploadTest extends TestCase
     {
     }
 
-    public function testValues()
+    public function testValues(): void
     {
         $this->assertEquals($this->object->isValid(__DIR__.'/../../resources/disk-a/kitten-1.jpg'), false);
         $this->assertEquals($this->object->isValid(__DIR__.'/../../resources/disk-a/kitten-2.jpg'), false);
