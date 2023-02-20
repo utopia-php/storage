@@ -169,10 +169,9 @@ class Local extends Device
     /**
      * Read file by given path.
      *
-     * @param string $path
-     * @param int $offset
-     * @param int $length
-     *
+     * @param  string  $path
+     * @param  int  $offset
+     * @param  int  $length
      * @return string
      *
      * @throws Exception

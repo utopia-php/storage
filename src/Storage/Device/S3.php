@@ -212,11 +212,11 @@ class S3 extends Device
      * Upload a file to desired destination in the selected disk.
      * return number of chunks uploaded or 0 if it fails.
      *
-     * @param string $source
-     * @param string $path
-     * @param int $chunk
-     * @param int $chunks
-     * @param array $metadata
+     * @param  string  $source
+     * @param  string  $path
+     * @param  int  $chunk
+     * @param  int  $chunks
+     * @param  array  $metadata
      *
      * @throws \Exception
      */
@@ -345,14 +345,12 @@ class S3 extends Device
     /**
      * Read file or part of file by given path, offset and length.
      *
-     * @param string $path
-     * @param int $offset
-     * @param int $length
-     * 
-     * @throws \Exception
-     *
+     * @param  string  $path
+     * @param  int  $offset
+     * @param  int  $length
      * @return string
      *
+     * @throws \Exception
      * @throws \Exception
      */
     public function read(string $path, int $offset = 0, int $length = null): string
@@ -443,14 +441,12 @@ class S3 extends Device
     /**
      * Get list of objects in the given path.
      *
-     * @param string $prefix
-     * @param int $maxKeys
-     * @param string $continuationToken
-     * 
-     * @throws \Exception
-     *
+     * @param  string  $prefix
+     * @param  int  $maxKeys
+     * @param  string  $continuationToken
      * @return array
      *
+     * @throws \Exception
      * @throws \Exception
      */
     private function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
@@ -646,10 +642,10 @@ class S3 extends Device
 
     /**
      * Generate the headers for AWS Signature V4
-     * @param string $method
-     * @param string $uri
-     * @param array $parameters
-     * 
+     *
+     * @param  string  $method
+     * @param  string  $uri
+     * @param  array  $parameters
      * @return string
      */
     private function getSignatureV4(string $method, string $uri, array $parameters = []): string
@@ -817,10 +813,9 @@ class S3 extends Device
         \curl_close($curl);
 
         // Parse body into XML
-        if (array_key_exists('content-type', $response->headers) 
+        if (array_key_exists('content-type', $response->headers)
             && ($response->headers['content-type'] == 'application/xml'
                 || (str_starts_with($response->body, '<?xml') && $response->headers['content-type'] == 'image/svg+xml'))) {
-
             $response->body = \simplexml_load_string($response->body);
             $response->body = json_decode(json_encode($response->body), true);
         }
