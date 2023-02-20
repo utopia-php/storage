@@ -1,9 +1,9 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage\Validator;
 
-use Utopia\Storage\Validator\Upload;
 use PHPUnit\Framework\TestCase;
+use Utopia\Storage\Validator\Upload;
 
 class UploadTest extends TestCase
 {
@@ -23,10 +23,10 @@ class UploadTest extends TestCase
 
     public function testValues(): void
     {
-        $this->assertEquals($this->object->isValid(__DIR__ . '/../../resources/disk-a/kitten-1.jpg'), false);
-        $this->assertEquals($this->object->isValid(__DIR__ . '/../../resources/disk-a/kitten-2.jpg'), false);
-        $this->assertEquals($this->object->isValid(__DIR__ . '/../../resources/disk-b/kitten-1.png'), false);
-        $this->assertEquals($this->object->isValid(__DIR__ . '/../../resources/disk-b/kitten-2.png'), false);
+        $this->assertEquals($this->object->isValid(__DIR__.'/../../resources/disk-a/kitten-1.jpg'), false);
+        $this->assertEquals($this->object->isValid(__DIR__.'/../../resources/disk-a/kitten-2.jpg'), false);
+        $this->assertEquals($this->object->isValid(__DIR__.'/../../resources/disk-b/kitten-1.png'), false);
+        $this->assertEquals($this->object->isValid(__DIR__.'/../../resources/disk-b/kitten-2.png'), false);
         $this->assertEquals($this->object->isValid(__FILE__), false);
     }
 }

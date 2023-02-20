@@ -1,9 +1,9 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage\Validator;
 
-use Utopia\Storage\Validator\FileSize;
 use PHPUnit\Framework\TestCase;
+use Utopia\Storage\Validator\FileSize;
 
 class FileSizeTest extends TestCase
 {

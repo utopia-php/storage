@@ -1,14 +1,14 @@
 <?php
 
-namespace Utopia\Tests;
+namespace Utopia\Tests\Storage;
 
 use Exception;
-use Utopia\Storage\Storage;
-use Utopia\Storage\Device\Local;
 use PHPUnit\Framework\TestCase;
+use Utopia\Storage\Device\Local;
+use Utopia\Storage\Storage;
 
-Storage::setDevice('disk-a', new Local(__DIR__ . '/../resources/disk-a'));
-Storage::setDevice('disk-b', new Local(__DIR__ . '/../resources/disk-b'));
+Storage::setDevice('disk-a', new Local(__DIR__.'/../resources/disk-a'));
+Storage::setDevice('disk-b', new Local(__DIR__.'/../resources/disk-b'));
 
 class StorageTest extends TestCase
 {
@@ -26,8 +26,8 @@ class StorageTest extends TestCase
         $this->assertEquals(get_class(Storage::getDevice('disk-b')), 'Utopia\Storage\Device\Local');
 
         try {
-            echo(get_class(Storage::getDevice('disk-c')));
-            $this->fail("Expected exception not thrown");
+            get_class(Storage::getDevice('disk-c'));
+            $this->fail('Expected exception not thrown');
         } catch (Exception $e) {
             $this->assertEquals('The device "disk-c" is not listed', $e->getMessage());
         }

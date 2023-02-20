@@ -3,24 +3,27 @@
 namespace Utopia\Tests\Storage\Compression\Algorithms;
 
 use PHPUnit\Framework\TestCase;
-use Utopia\Storage\Compression\Algorithms\Zstd;
+use Utopia\Storage\Compression\Algorithms\Snappy;
 
-class ZstdTest extends TestCase
+class SnappyTest extends TestCase
 {
-    protected Zstd $object;
+    /**
+     * @var Snappy
+     */
+    protected $object = null;
 
     public function setUp(): void
     {
-        $this->object = new Zstd();
+        $this->object = new Snappy();
     }
 
     public function tearDown(): void
     {
     }
 
-    public function testName(): void
+    public function testName()
     {
-        $this->assertEquals($this->object->getName(), 'zstd');
+        $this->assertEquals($this->object->getName(), 'snappy');
     }
 
     public function testCompressDecompressWithText()
@@ -29,31 +32,13 @@ class ZstdTest extends TestCase
         $demoSize = \mb_strlen($demo, '8bit');
 
         $data = $this->object->compress($demo);
+
         $dataSize = \mb_strlen($data, '8bit');
 
         $this->assertEquals(21, $demoSize);
-        $this->assertEquals(30, $dataSize);
+        $this->assertEquals(23, $dataSize);
 
-        $this->assertEquals($demo, $this->object->decompress($data));
-    }
-
-    public function testCompressDecompressWithLargeText()
-    {
-        $demo = \file_get_contents(__DIR__.'/../../../resources/disk-a/lorem.txt');
-        $demoSize = mb_strlen($demo, '8bit');
-
-        $data = $this->object->compress($demo);
-        $dataSize = mb_strlen($data, '8bit');
-
-        $this->assertEquals($demoSize, 386795);
-        $this->assertEquals($dataSize, 56324);
-
-        $this->assertGreaterThan($dataSize, $demoSize);
-
-        $data = $this->object->decompress($data);
-        $dataSize = mb_strlen($data, '8bit');
-
-        $this->assertEquals($dataSize, 386795);
+        $this->assertEquals($this->object->decompress($data), $demo);
     }
 
     public function testCompressDecompressWithJPGImage()
@@ -65,9 +50,9 @@ class ZstdTest extends TestCase
         $dataSize = \mb_strlen($data, '8bit');
 
         $this->assertEquals(599639, $demoSize);
-        $this->assertEquals(599663, $dataSize);
+        $this->assertEquals(599504, $dataSize);
 
-        $this->assertGreaterThan($demoSize, $dataSize);
+        $this->assertGreaterThan($dataSize, $demoSize);
 
         $data = $this->object->decompress($data);
         $dataSize = \mb_strlen($data, '8bit');
@@ -84,7 +69,7 @@ class ZstdTest extends TestCase
         $dataSize = \mb_strlen($data, '8bit');
 
         $this->assertEquals(3038056, $demoSize);
-        $this->assertEquals(3038138, $dataSize);
+        $this->assertEquals(3038200, $dataSize);
 
         $this->assertGreaterThan($demoSize, $dataSize);
 
