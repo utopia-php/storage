@@ -4,28 +4,31 @@
     "type": "library",
     "keywords": ["php","framework","upf","utopia","storage"],
     "license": "MIT",
-    "authors": [
-        {
-            "name": "Eldad Fux",
-            "email": "eldad@appwrite.io"
-        }
-    ],
+    "authors": [],
     "autoload": {
         "psr-4": {"Utopia\\Storage\\":"src/Storage"}
     },
     "autoload-dev": {
         "psr-4": {"Utopia\\Tests\\Storage\\":"tests/Storage"}
     },
+    "scripts": {
+        "lint": "./vendor/bin/pint --test",
+        "format": "./vendor/bin/pint"
+    },
     "require": {
         "ext-fileinfo": "*",
         "ext-zlib": "*",
         "ext-zstd": "*",
+        "ext-brotli": "*",
+        "ext-lz4": "*",
+        "ext-snappy": "*",
         "php": ">=8.0",
         "utopia-php/framework": "0.*.*"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.3",
-        "vimeo/psalm": "4.0.1"
+        "vimeo/psalm": "4.0.1",
+        "laravel/pint": "1.2.*"
     },
     "minimum-stability": "dev"
 }

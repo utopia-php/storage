@@ -4,20 +4,21 @@ namespace Utopia\Storage\Device;
 
 use Exception;
 use Utopia\Storage\Device;
+use Utopia\Storage\Storage;
 
 class Local extends Device
 {
     /**
      * @var string
      */
-    protected $root = 'temp';
+    protected string $root = 'temp';
 
     /**
      * Local constructor.
      *
-     * @param string $root
+     * @param  string  $root
      */
-    public function __construct($root = '')
+    public function __construct(string $root = '')
     {
         $this->root = $root;
     }
@@ -28,6 +29,14 @@ class Local extends Device
     public function getName(): string
     {
         return 'Local Storage';
+    }
+
+    /**
+     * @return string
+     */
+    public function getType(): string
+    {
+        return Storage::DEVICE_LOCAL;
     }
 
     /**
@@ -47,14 +56,13 @@ class Local extends Device
     }
 
     /**
-     * @param string $filename
-     * @param string $prefix
-     *
+     * @param  string  $filename
+     * @param  string|null  $prefix
      * @return string
      */
     public function getPath(string $filename, string $prefix = null): string
     {
-        return $this->getRoot()  . DIRECTORY_SEPARATOR . $filename;
+        return $this->getAbsolutePath($this->getRoot().DIRECTORY_SEPARATOR.$filename);
     }
 
     /**
@@ -63,28 +71,28 @@ class Local extends Device
      * Upload a file to desired destination in the selected disk.
      * return number of chunks uploaded or 0 if it fails.
      *
-     * @param string $source
-     * @param string $path
-     * @param int $chunk
-     * @param int $chunks
-     * @param array $metadata
+     * @param  string  $source
+     * @param  string  $path
+     * @param  int  $chunk
+     * @param  int  $chunks
+     * @param  array  $metadata
+     * @return int
      *
      * @throws \Exception
-     *
-     * @return int
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
         $this->createDirectoryToPath($path);
 
         //move_uploaded_file() verifies the file is not tampered with
-        if($chunks === 1) {
-            if (!\move_uploaded_file($source, $path)) {
-                throw new Exception('Can\'t upload file ' . $path);
+        if ($chunks === 1) {
+            if (! \move_uploaded_file($source, $path)) {
+                throw new Exception('Can\'t upload file '.$path);
             }
+
             return $chunks;
         }
-        $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . \basename($path) . DIRECTORY_SEPARATOR . \basename($path) . '_chunks.log';
+        $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path).DIRECTORY_SEPARATOR.\basename($path).'_chunks.log';
 
         $this->createDirectoryToPath($tmp);
         if(!file_put_contents($tmp, "$chunk\n", FILE_APPEND)) {
@@ -92,20 +100,21 @@ class Local extends Device
         }
 
         $chunkLogs = file($tmp);
-        if(!$chunkLogs) {
-            throw new Exception('Unable to read chunk log ' . $tmp);
+        if (! $chunkLogs) {
+            throw new Exception('Unable to read chunk log '.$tmp);
         }
 
         $chunksReceived = count(file($tmp));
 
-        if(!\rename($source, dirname($tmp) . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.' . $chunk)) {
-            throw new Exception('Failed to write chunk ' . $chunk);
+        if (! \rename($source, dirname($tmp).DIRECTORY_SEPARATOR.pathinfo($path, PATHINFO_FILENAME).'.part.'.$chunk)) {
+            throw new Exception('Failed to write chunk '.$chunk);
         }
-        
+
         if ($chunks === $chunksReceived) {
             $this->joinChunks($path, $chunks);
             return $chunksReceived;
         }
+
         return $chunksReceived;
     }
 
@@ -187,9 +196,9 @@ class Local extends Device
      * @throws Exception
      */
     private function createDirectoryToPath(string $path): void {
-        if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
-            if (!@\mkdir(\dirname($path), 0755, true)) {
-                throw new Exception('Can\'t create directory: ' . \dirname($path));
+        if (! \file_exists(\dirname($path))) { // Checks if directory path to file exists
+            if (! @\mkdir(\dirname($path), 0755, true)) {
+                throw new Exception('Can\'t create directory: '.\dirname($path));
             }
         }
     }
@@ -225,63 +234,63 @@ class Local extends Device
 
     /**
      * Abort Chunked Upload
-     * 
-     * @param string $path
-     * @param string $extra
-     * 
+     *
+     * @param  string  $path
+     * @param  string  $extra
      * @return bool
      */
     public function abort(string $path, string $extra = ''): bool
     {
-        if(file_exists($path)) {
+        if (file_exists($path)) {
             \unlink($path);
         }
 
-        $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . \basename($path) . DIRECTORY_SEPARATOR;
+        $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path).DIRECTORY_SEPARATOR;
 
-        if (!\file_exists(\dirname($tmp))) { // Checks if directory path to file exists
-            throw new Exception('File doesn\'t exist: ' . \dirname($path));
+        if (! \file_exists(\dirname($tmp))) { // Checks if directory path to file exists
+            throw new Exception('File doesn\'t exist: '.\dirname($path));
         }
-        $files = \glob($tmp . '*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
+        $files = \glob($tmp.'*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
 
         foreach ($files as $file) {
             $this->delete($file, true);
         }
 
-        return \rmdir ($tmp);
+        return \rmdir($tmp);
     }
 
     /**
      * Read file by given path.
      *
-     * @param string $path
+     * @param  string  $path
      * @param int offset
-     * @param int length
-     *
+     * @param  int|null  $length
      * @return string
+     *
+     * @throws Exception
      */
     public function read(string $path, int $offset = 0, int $length = null): string
     {
-        if(!$this->exists($path)) {
+        if (! $this->exists($path)) {
             throw new Exception('File Not Found');
         }
+
         return \file_get_contents($path, use_include_path: false, context: null, offset: $offset, length: $length);
     }
 
     /**
      * Write file by given path.
      *
-     * @param string $path
-     * @param string $data
-     * @param string $contentType
-     *
+     * @param  string  $path
+     * @param  string  $data
+     * @param  string  $contentType
      * @return bool
      */
     public function write(string $path, string $data, string $contentType = ''): bool
     {
-        if (!\file_exists(\dirname($path))) { // Checks if directory path to file exists
-            if (!@\mkdir(\dirname($path), 0755, true)) {
-                throw new Exception('Can\'t create directory ' . \dirname($path));
+        if (! \file_exists(\dirname($path))) { // Checks if directory path to file exists
+            if (! @\mkdir(\dirname($path), 0755, true)) {
+                throw new Exception('Can\'t create directory '.\dirname($path));
             }
         }
 
@@ -293,16 +302,15 @@ class Local extends Device
      *
      * @see http://php.net/manual/en/function.filesize.php
      *
-     * @param string $source
-     * @param string $target
-     *
+     * @param  string  $source
+     * @param  string  $target
      * @return bool
      */
     public function move(string $source, string $target): bool
     {
-        if (!\file_exists(\dirname($target))) { // Checks if directory path to file exists
-            if (!@\mkdir(\dirname($target), 0755, true)) {
-                throw new Exception('Can\'t create directory ' . \dirname($target));
+        if (! \file_exists(\dirname($target))) { // Checks if directory path to file exists
+            if (! @\mkdir(\dirname($target), 0755, true)) {
+                throw new Exception('Can\'t create directory '.\dirname($target));
             }
         }
 
@@ -318,15 +326,14 @@ class Local extends Device
      *
      * @see http://php.net/manual/en/function.filesize.php
      *
-     * @param string $path
-     * @param bool $recursive
-     *
+     * @param  string  $path
+     * @param  bool  $recursive
      * @return bool
      */
     public function delete(string $path, bool $recursive = false): bool
     {
         if (\is_dir($path) && $recursive) {
-            $files = \glob($path . '*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
+            $files = \glob($path.'*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
 
             foreach ($files as $file) {
                 $this->delete($file, true);
@@ -343,21 +350,22 @@ class Local extends Device
     /**
      * Delete files in given path, path must be a directory. Return true on success and false on failure.
      *
-     * @param string $path
-     *
+     * @param  string  $path
      * @return bool
      */
     public function deletePath(string $path): bool
     {
-        $path = $this->getRoot() . DIRECTORY_SEPARATOR . $path;
+        $path = realpath($this->getRoot().DIRECTORY_SEPARATOR.$path);
+
         if (\is_dir($path)) {
-            $files = \glob($path . '*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
+            $files = \glob($path.'*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
 
             foreach ($files as $file) {
                 $this->delete($file, true);
             }
 
             \rmdir($path);
+
             return true;
         }
 
@@ -367,8 +375,7 @@ class Local extends Device
     /**
      * Check if file exists
      *
-     * @param string $path
-     *
+     * @param  string  $path
      * @return bool
      */
     public function exists(string $path): bool
@@ -381,8 +388,7 @@ class Local extends Device
      *
      * @see http://php.net/manual/en/function.filesize.php
      *
-     * @param string $path
-     *
+     * @param  string  $path
      * @return int
      */
     public function getFileSize(string $path): int
@@ -395,8 +401,7 @@ class Local extends Device
      *
      * @see http://php.net/manual/en/function.mime-content-type.php
      *
-     * @param string $path
-     *
+     * @param  string  $path
      * @return string
      */
     public function getFileMimeType(string $path): string
@@ -409,13 +414,31 @@ class Local extends Device
      *
      * @see http://php.net/manual/en/function.md5-file.php
      *
-     * @param string $path
-     *
+     * @param  string  $path
      * @return string
      */
     public function getFileHash(string $path): string
     {
         return \md5_file($path);
+    }
+
+    /**
+     * Create a directory at the specified path.
+     *
+     * Returns true on success or if the directory already exists and false on error
+     *
+     * @param $path
+     * @return bool
+     */
+    public function createDirectory(string $path): bool
+    {
+        if (! \file_exists($path)) {
+            if (! @\mkdir($path, 0755, true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -425,8 +448,7 @@ class Local extends Device
      *
      * Based on http://www.jonasjohn.de/snippets/php/dir-size.htm
      *
-     * @param string $path
-     *
+     * @param  string  $path
      * @return int
      */
     public function getDirectorySize(string $path): int
@@ -435,7 +457,7 @@ class Local extends Device
 
         $directory = \opendir($path);
 
-        if (!$directory) {
+        if (! $directory) {
             return -1;
         }
 
@@ -446,10 +468,10 @@ class Local extends Device
             }
 
             // Go recursive down, or add the file size
-            if (\is_dir($path . $file)) {
-                $size += $this->getDirectorySize($path . $file . DIRECTORY_SEPARATOR);
+            if (\is_dir($path.$file)) {
+                $size += $this->getDirectorySize($path.$file.DIRECTORY_SEPARATOR);
             } else {
-                $size += \filesize($path . $file);
+                $size += \filesize($path.$file);
             }
         }
 

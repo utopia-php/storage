@@ -2,19 +2,20 @@
 
 namespace Utopia\Tests\Storage\Compression\Algorithms;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
-use Utopia\Storage\Compression\Algorithms\GZIP;
+use Utopia\Storage\Compression\Algorithms\Brotli;
 
-class GZIPTest extends TestCase
+class BrotliTest extends TestCase
 {
     /**
-     * @var GZIP
+     * @var Brotli
      */
     protected $object = null;
 
     public function setUp(): void
     {
-        $this->object = new GZIP();
+        $this->object = new Brotli();
     }
 
     public function tearDown(): void
@@ -23,7 +24,13 @@ class GZIPTest extends TestCase
 
     public function testName()
     {
-        $this->assertEquals($this->object->getName(), 'gzip');
+        $this->assertEquals($this->object->getName(), 'brotli');
+    }
+
+    public function testErrorsWhenSettingLevel()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->object->setLevel(-1);
     }
 
     public function testCompressDecompressWithText()
@@ -35,7 +42,7 @@ class GZIPTest extends TestCase
         $dataSize = mb_strlen($data, '8bit');
 
         $this->assertEquals($demoSize, 21);
-        $this->assertEquals($dataSize, 39);
+        $this->assertEquals($dataSize, 25);
 
         $this->assertEquals($this->object->decompress($data), $demo);
     }
@@ -45,11 +52,12 @@ class GZIPTest extends TestCase
         $demo = \file_get_contents(__DIR__.'/../../../resources/disk-a/lorem.txt');
         $demoSize = mb_strlen($demo, '8bit');
 
+        $this->object->setLevel(8);
         $data = $this->object->compress($demo);
         $dataSize = mb_strlen($data, '8bit');
 
         $this->assertEquals($demoSize, 386795);
-        $this->assertEquals($dataSize, 44444);
+        $this->assertEquals($dataSize, 33128);
 
         $this->assertGreaterThan($dataSize, $demoSize);
 
@@ -57,6 +65,7 @@ class GZIPTest extends TestCase
         $dataSize = mb_strlen($data, '8bit');
 
         $this->assertEquals($dataSize, 386795);
+        $this->assertEquals($data, $demo);
     }
 
     public function testCompressDecompressWithJPGImage()
@@ -64,13 +73,13 @@ class GZIPTest extends TestCase
         $demo = \file_get_contents(__DIR__.'/../../../resources/disk-a/kitten-1.jpg');
         $demoSize = mb_strlen($demo, '8bit');
 
+        $this->object->setLevel(8);
         $data = $this->object->compress($demo);
         $dataSize = mb_strlen($data, '8bit');
 
         $this->assertEquals($demoSize, 599639);
-        $this->assertEquals($dataSize, 599107);
-
-        $this->assertGreaterThan($dataSize, $demoSize);
+        // brotli is not the best for images
+        $this->assertEquals($dataSize, 599644);
 
         $data = $this->object->decompress($data);
         $dataSize = mb_strlen($data, '8bit');
@@ -83,13 +92,13 @@ class GZIPTest extends TestCase
         $demo = \file_get_contents(__DIR__.'/../../../resources/disk-b/kitten-1.png');
         $demoSize = mb_strlen($demo, '8bit');
 
+        $this->object->setLevel(8);
         $data = $this->object->compress($demo);
         $dataSize = mb_strlen($data, '8bit');
 
         $this->assertEquals($demoSize, 3038056);
-        $this->assertEquals($dataSize, 3029202);
-
-        $this->assertGreaterThan($dataSize, $demoSize);
+        // brotli is not the best for images
+        $this->assertEquals($dataSize, 3038068);
 
         $data = $this->object->decompress($data);
         $dataSize = mb_strlen($data, '8bit');
