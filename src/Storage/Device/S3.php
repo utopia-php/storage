@@ -275,7 +275,12 @@ class S3 extends Device
      */
     public function transfer(string $path, string $destination, Device $device): bool
     {
-        $response = $this->getInfo($path);
+        $response = [];
+        try {
+            $response = $this->getInfo($path);
+        } catch (\Throwable $e) {
+            throw new Exception('File not found');
+        }
         $size = (int) ($response['content-length'] ?? 0);
         $contentType = $response['content-type'] ?? '';
 

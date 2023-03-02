@@ -219,6 +219,9 @@ class Local extends Device
      */
     public function transfer(string $path, string $destination, Device $device): bool
     {
+        if (! $this->exists($path)) {
+            throw new Exception('File Not Found');
+        }
         $size = $this->getFileSize($path);
         $contentType = $this->getFileMimeType($path);
 
