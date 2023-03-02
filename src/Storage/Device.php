@@ -4,7 +4,6 @@ namespace Utopia\Storage;
 
 abstract class Device
 {
-
     /**
      * Max chunk size while transfering file from one device to another
      */
@@ -12,20 +11,22 @@ abstract class Device
 
     /**
      * Set Transfer Chunk Size
-     * 
-     * @param int $chunkSize
+     *
+     * @param  int  $chunkSize
      * @return void
      */
-    public function setTransferChunkSize(int $chunkSize): void {
+    public function setTransferChunkSize(int $chunkSize): void
+    {
         $this->transferChunkSize = $chunkSize;
     }
 
     /**
      * Get Transfer Chunk Size
-     * 
+     *
      * @return int
      */
-    public function getTransferChunkSize(): int {
+    public function getTransferChunkSize(): int
+    {
         return $this->transferChunkSize;
     }
 
@@ -99,16 +100,15 @@ abstract class Device
      * Upload file contents to desired destination in the selected disk.
      * return number of chunks uploaded or 0 if it fails.
      *
-     * @param string $data
-     * @param string $path
-     * @param string $contentType
+     * @param  string  $data
+     * @param  string  $path
+     * @param  string  $contentType
      * @param int chunk
      * @param int chunks
-     * @param array $metadata
+     * @param  array  $metadata
+     * @return int
      *
      * @throws \Exception
-     *
-     * @return int
      */
     abstract public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
 
@@ -134,10 +134,9 @@ abstract class Device
     /**
      * Transfer
      *
-     * @param string $path
-     * @param string $destination
-     * @param Device $device
-     *
+     * @param  string  $path
+     * @param  string  $destination
+     * @param  Device  $device
      * @return string
      */
     abstract public function transfer(string $path, string $destination, Device $device): bool;
@@ -162,9 +161,10 @@ abstract class Device
      */
     public function move(string $source, string $target): bool
     {
-        if($this->transfer($source, $target, $this)) {
+        if ($this->transfer($source, $target, $this)) {
             return $this->delete($source);
         }
+
         return false;
     }
 

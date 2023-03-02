@@ -259,29 +259,28 @@ abstract class S3Base extends TestCase
     /**
      * @depends testPartUpload
      */
-    public function testTransferLarge($path) {
-        
+    public function testTransferLarge($path)
+    {
         // chunked file
         $this->object->setTransferChunkSize(10000000); //10 mb
 
-        $device = new Local(__DIR__ . '/../resources/disk-a');
+        $device = new Local(__DIR__.'/../resources/disk-a');
         $destination = $device->getPath('largefile.mp4');
 
-        $this->assertTrue($this->object->transfer($path, $destination, $device ));
+        $this->assertTrue($this->object->transfer($path, $destination, $device));
         $this->assertTrue($device->exists($destination));
         $this->assertEquals($device->getFileMimeType($destination), 'video/mp4');
 
         $device->delete($destination);
         $this->object->delete($path);
-
     }
 
-    public function testTransferSmall() {
-        
+    public function testTransferSmall()
+    {
         $this->object->setTransferChunkSize(10000000); //10 mb
 
-        $device = new Local(__DIR__ . '/../resources/disk-a');
-        
+        $device = new Local(__DIR__.'/../resources/disk-a');
+
         $path = $this->object->getPath('text-for-read.txt');
         $this->object->write($path, 'Hello World', 'text/plain');
 

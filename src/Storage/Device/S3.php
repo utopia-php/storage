@@ -232,24 +232,23 @@ class S3 extends Device
      * Upload file contents to desired destination in the selected disk.
      * return number of chunks uploaded or 0 if it fails.
      *
-     * @param string $source
-     * @param string $path
-     * @param string $contentType
+     * @param  string  $source
+     * @param  string  $path
+     * @param  string  $contentType
      * @param int chunk
      * @param int chunks
-     * @param array $metadata
+     * @param  array  $metadata
+     * @return int
      *
      * @throws \Exception
-     *
-     * @return int
      */
     public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        if($chunk == 1 && $chunks == 1) {
+        if ($chunk == 1 && $chunks == 1) {
             return $this->write($path, $data, $contentType);
         }
         $uploadId = $metadata['uploadId'] ?? null;
-        if(empty($uploadId)) {
+        if (empty($uploadId)) {
             $uploadId = $this->createMultipartUpload($path, $contentType);
             $metadata['uploadId'] = $uploadId;
         }
@@ -269,31 +268,33 @@ class S3 extends Device
     /**
      * Transfer
      *
-     * @param string $path
-     * @param string $destination
-     * @param Device $device
-     *
+     * @param  string  $path
+     * @param  string  $destination
+     * @param  Device  $device
      * @return string
      */
-    public function transfer(string $path, string $destination, Device $device): bool {
+    public function transfer(string $path, string $destination, Device $device): bool
+    {
         $response = $this->getInfo($path);
-        $size = (int)($response['content-length'] ?? 0);
+        $size = (int) ($response['content-length'] ?? 0);
         $contentType = $response['content-type'] ?? '';
 
-        if($size <= $this->transferChunkSize) {
+        if ($size <= $this->transferChunkSize) {
             $source = $this->read($path);
+
             return $device->write($destination, $source, $contentType);
         }
 
         $totalChunks = \ceil($size / $this->transferChunkSize);
         $counter = 0;
         $metadata = ['content_type' => $contentType];
-        for($counter; $counter < $totalChunks; $counter++) {
+        for ($counter; $counter < $totalChunks; $counter++) {
             $start = $counter * $this->transferChunkSize;
             $data = $this->read($path, $start, $this->transferChunkSize);
-            $device->uploadData($data, $destination, $contentType, $counter+1, $totalChunks, $metadata);
+            $device->uploadData($data, $destination, $contentType, $counter + 1, $totalChunks, $metadata);
         }
-        return true;   
+
+        return true;
     }
 
     /**
@@ -331,10 +332,10 @@ class S3 extends Device
      *
      * @throws \Exception
      */
-    protected function uploadPart(string $data, string $path, string $contentType, int $chunk, string $uploadId) : string
+    protected function uploadPart(string $data, string $path, string $contentType, int $chunk, string $uploadId): string
     {
         $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
-        
+
         $this->headers['content-type'] = $contentType;
         $this->headers['content-md5'] = \base64_encode(md5($data, true));
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);

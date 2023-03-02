@@ -3,8 +3,8 @@
 namespace Utopia\Tests\Storage\Device;
 
 use PHPUnit\Framework\TestCase;
-use Utopia\Storage\Device\S3;
 use Utopia\Storage\Device\Local;
+use Utopia\Storage\Device\S3;
 
 class LocalTest extends TestCase
 {
@@ -250,11 +250,11 @@ class LocalTest extends TestCase
     /**
      * @depends testPartUpload
      */
-    public function testTransferLarge($path) {
-        
+    public function testTransferLarge($path)
+    {
         // chunked file
         $this->object->setTransferChunkSize(10000000); //10 mb
-        
+
         $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['S3_SECRET'] ?? '';
         $bucket = 'appwrite-test-bucket';
@@ -262,25 +262,24 @@ class LocalTest extends TestCase
         $device = new S3('/root', $key, $secret, $bucket, S3::EU_WEST_1, S3::ACL_PRIVATE);
         $destination = $device->getPath('largefile.mp4');
 
-        $this->assertTrue($this->object->transfer($path, $destination, $device ));
+        $this->assertTrue($this->object->transfer($path, $destination, $device));
         $this->assertTrue($device->exists($destination));
         $this->assertEquals($device->getFileMimeType($destination), 'video/mp4');
 
         $device->delete($destination);
         $this->object->delete($path);
-
     }
 
-    public function testTransferSmall() {
-        
+    public function testTransferSmall()
+    {
         $this->object->setTransferChunkSize(10000000); //10 mb
-        
+
         $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['S3_SECRET'] ?? '';
         $bucket = 'appwrite-test-bucket';
 
         $device = new S3('/root', $key, $secret, $bucket, S3::EU_WEST_1, S3::ACL_PRIVATE);
-        
+
         $path = $this->object->getPath('text-for-read.txt');
         $this->object->write($path, 'Hello World');
 
