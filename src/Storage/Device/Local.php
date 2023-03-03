@@ -82,7 +82,7 @@ class Local extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        $this->createDirectoryToPath($path);
+        $this->createDirectory($path);
 
         //move_uploaded_file() verifies the file is not tampered with
         if ($chunks === 1) {
@@ -94,7 +94,7 @@ class Local extends Device
         }
         $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path).DIRECTORY_SEPARATOR.\basename($path).'_chunks.log';
 
-        $this->createDirectoryToPath($tmp);
+        $this->createDirectory($tmp);
         if (! file_put_contents($tmp, "$chunk\n", FILE_APPEND)) {
             throw new Exception('Can\'t write chunk log '.$tmp);
         }
@@ -137,7 +137,7 @@ class Local extends Device
      */
     public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        $this->createDirectoryToPath($path);
+        $this->createDirectory($path);
 
         if ($chunks === 1) {
             if (! \file_put_contents($path, $data)) {
@@ -148,7 +148,7 @@ class Local extends Device
         }
         $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path).DIRECTORY_SEPARATOR.\basename($path).'_chunks.log';
 
-        $this->createDirectoryToPath($tmp);
+        $this->createDirectory($tmp);
         if (! file_put_contents($tmp, "$chunk\n", FILE_APPEND)) {
             throw new Exception('Can\'t write chunk log '.$tmp);
         }
@@ -189,24 +189,6 @@ class Local extends Device
             \unlink($part);
         }
         \unlink($tmp);
-    }
-
-    /**
-     * Create Directory to Path
-     *
-     * Create's missing directory of the path, returns true on success and false on failure
-     *
-     * @param string path
-     *
-     * @throws Exception
-     */
-    private function createDirectoryToPath(string $path): void
-    {
-        if (! \file_exists(\dirname($path))) { // Checks if directory path to file exists
-            if (! @\mkdir(\dirname($path), 0755, true)) {
-                throw new Exception('Can\'t create directory: '.\dirname($path));
-            }
-        }
     }
 
     /**

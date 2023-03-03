@@ -137,7 +137,7 @@ abstract class Device
      * @param  string  $path
      * @param  string  $destination
      * @param  Device  $device
-     * @return string
+     * @return bool
      */
     abstract public function transfer(string $path, string $destination, Device $device): bool;
 
