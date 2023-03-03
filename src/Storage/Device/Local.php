@@ -82,7 +82,7 @@ class Local extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        $this->createDirectory($path);
+        $this->createDirectory(\dirname($path));
 
         //move_uploaded_file() verifies the file is not tampered with
         if ($chunks === 1) {
@@ -94,7 +94,7 @@ class Local extends Device
         }
         $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path).DIRECTORY_SEPARATOR.\basename($path).'_chunks.log';
 
-        $this->createDirectory($tmp);
+        $this->createDirectory(\dirname($tmp));
         if (! file_put_contents($tmp, "$chunk\n", FILE_APPEND)) {
             throw new Exception('Can\'t write chunk log '.$tmp);
         }
@@ -137,7 +137,7 @@ class Local extends Device
      */
     public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        $this->createDirectory($path);
+        $this->createDirectory(\dirname($path));
 
         if ($chunks === 1) {
             if (! \file_put_contents($path, $data)) {
@@ -148,7 +148,7 @@ class Local extends Device
         }
         $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path).DIRECTORY_SEPARATOR.\basename($path).'_chunks.log';
 
-        $this->createDirectory($tmp);
+        $this->createDirectory(\dirname($tmp));
         if (! file_put_contents($tmp, "$chunk\n", FILE_APPEND)) {
             throw new Exception('Can\'t write chunk log '.$tmp);
         }
