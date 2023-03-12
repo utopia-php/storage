@@ -720,7 +720,7 @@ class S3 extends Device
      * @param  string  $uri
      * @param  string  $data
      * @param  array  $parameters
-     * @param bool $decode
+     * @param  bool  $decode
      * @return  object
      *
      * @throws \Exception
