@@ -364,7 +364,7 @@ class S3 extends Device
             $end = $offset + $length - 1;
             $this->headers['range'] = "bytes=$offset-$end";
         }
-        $response = $this->call(self::METHOD_GET, $uri);
+        $response = $this->call(self::METHOD_GET, $uri, '', [], false);
 
         return $response->body;
     }
@@ -720,11 +720,12 @@ class S3 extends Device
      * @param  string  $uri
      * @param  string  $data
      * @param  array  $parameters
+     * @param bool $decode
      * @return  object
      *
      * @throws \Exception
      */
-    private function call(string $method, string $uri, string $data = '', array $parameters = [])
+    private function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
     {
         $uri = $this->getAbsolutePath($uri);
         $url = 'https://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
@@ -810,7 +811,7 @@ class S3 extends Device
         \curl_close($curl);
 
         // Parse body into XML
-        if ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml')) {
+        if ($decode && (isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml')) {
             $response->body = \simplexml_load_string($response->body);
             $response->body = json_decode(json_encode($response->body), true);
         }
