@@ -137,6 +137,11 @@ class S3 extends Device
     protected array $amzHeaders;
 
     /**
+     * @var string
+     */
+    protected string $protocol = 'https';
+
+    /**
      * S3 Constructor
      *
      * @param  string  $root
@@ -724,10 +729,10 @@ class S3 extends Device
      *
      * @throws \Exception
      */
-    protected function call(string $method, string $uri, string $data = '', array $parameters=[])
+    protected function call(string $method, string $uri, string $data = '', array $parameters = [])
     {
         $uri = $this->getAbsolutePath($uri);
-        $url = 'https://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
+        $url = $this->protocol.'://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
         $response->body = '';
         $response->headers = [];

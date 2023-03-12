@@ -3,7 +3,7 @@
 namespace Utopia\Tests;
 
 use Utopia\Storage\Device\MinIO;
-use Utopia\Tests\S3Base;
+use Utopia\Tests\Storage\S3Base;
 
 class MinIOTest extends S3Base
 {
@@ -14,15 +14,20 @@ class MinIOTest extends S3Base
         $secret = $_SERVER['MINIO_SECRET'] ?? '';
         $protocol = $_SERVER['MINIO_PROTOCOL'] ?? '';
         $host = $_SERVER['MINIO_HOST'] ?? '';
+        $region = $_SERVER['MINIO_REGION'] ?? '';
         $bucket = 'minio-test-bucket';
 
-        $this->object = new MinIO($this->root, $key, $secret, $protocol, $host, $bucket, MinIO::EU_CENTRAL_1);
-
+        $this->object = new MinIO($this->root, $key, $secret, $protocol, $host, $bucket, $region);
     }
 
     protected function getAdapterName(): string
     {
         return 'MinIO Object Storage';
+    }
+
+    protected function getAdapterType(): string
+    {
+        return $this->object->getType();
     }
 
     protected function getAdapterDescription(): string

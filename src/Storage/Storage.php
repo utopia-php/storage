@@ -21,7 +21,7 @@ class Storage
 
     const DEVICE_LINODE = 'linode';
 
-    const DEVICE_MINIO= 'minio';
+    const DEVICE_MINIO = 'minio';
 
     /**
      * Devices.
