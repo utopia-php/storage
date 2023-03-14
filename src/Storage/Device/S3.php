@@ -364,7 +364,7 @@ class S3 extends Device
             $end = $offset + $length - 1;
             $this->headers['range'] = "bytes=$offset-$end";
         }
-        $response = $this->call(self::METHOD_GET, $uri, '', [], false);
+        $response = $this->call(self::METHOD_GET, $uri, decode: false);
 
         return $response->body;
     }
