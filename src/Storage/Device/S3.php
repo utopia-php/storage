@@ -6,6 +6,8 @@ use Exception;
 use Utopia\Storage\Device;
 use Utopia\Storage\Storage;
 
+use function ltrim;
+
 class S3 extends Device
 {
     const METHOD_GET = 'GET';
@@ -137,6 +139,11 @@ class S3 extends Device
     protected array $amzHeaders;
 
     /**
+     * @var bool
+     */
+    protected bool $vhost;
+
+    /**
      * S3 Constructor
      *
      * @param  string  $root
@@ -155,6 +162,7 @@ class S3 extends Device
         $this->root = $root;
         $this->acl = $acl;
         $this->amzHeaders = [];
+        $this->vhost = true;
 
         $host = match ($region) {
             self::CN_NORTH_1, self::CN_NORTH_4, self::CN_NORTHWEST_1 => $bucket.'.s3.'.$region.'.amazonaws.cn',
@@ -194,6 +202,14 @@ class S3 extends Device
     public function getRoot(): string
     {
         return $this->root;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBucket(): string
+    {
+        return $this->bucket;
     }
 
     /**
@@ -438,6 +454,17 @@ class S3 extends Device
         return true;
     }
 
+    private function makeUri(): string
+    {
+        $base = '/';
+
+        if(!$this->vhost) {
+            return $base . $this->getBucket();
+        } else {
+            return $base;
+        }
+    }
+
     /**
      * Get list of objects in the given path.
      *
@@ -448,16 +475,19 @@ class S3 extends Device
      */
     private function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
     {
-        $uri = '/';
-        $prefix = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */
+        $uri = $this->makeUri();
         $this->headers['content-type'] = 'text/plain';
         $this->headers['content-md5'] = \base64_encode(md5('', true));
 
         $parameters = [
             'list-type' => 2,
-            'prefix' => $prefix,
             'max-keys' => $maxKeys,
         ];
+
+        if($this->vhost) {
+            $parameters['prefix'] = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */
+        }
+
         if (! empty($continuationToken)) {
             $parameters['continuation-token'] = $continuationToken;
         }
@@ -477,8 +507,8 @@ class S3 extends Device
     public function deletePath(string $path): bool
     {
         $path = $this->getRoot().'/'.$path;
+        $uri = $this->makeUri();
 
-        $uri = '/';
         $continuationToken = '';
         do {
             $objects = $this->listObjects($path, continuationToken: $continuationToken);
