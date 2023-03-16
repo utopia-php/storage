@@ -457,10 +457,10 @@ class S3 extends Device
     {
         $base = '/';
 
-        if (! $this->vhost) {
-            return $base.$this->getBucket();
-        } else {
+        if ($this->vhost) {
             return $base;
+        } else {
+            return $base.$this->getBucket();
         }
     }
 
