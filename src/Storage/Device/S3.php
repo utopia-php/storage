@@ -3,10 +3,9 @@
 namespace Utopia\Storage\Device;
 
 use Exception;
+use function ltrim;
 use Utopia\Storage\Device;
 use Utopia\Storage\Storage;
-
-use function ltrim;
 
 class S3 extends Device
 {
@@ -458,8 +457,8 @@ class S3 extends Device
     {
         $base = '/';
 
-        if(!$this->vhost) {
-            return $base . $this->getBucket();
+        if (! $this->vhost) {
+            return $base.$this->getBucket();
         } else {
             return $base;
         }
@@ -484,7 +483,7 @@ class S3 extends Device
             'max-keys' => $maxKeys,
         ];
 
-        if($this->vhost) {
+        if ($this->vhost) {
             $parameters['prefix'] = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */
         }
 
