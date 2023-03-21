@@ -246,4 +246,38 @@ class LocalTest extends TestCase
     {
         $this->assertGreaterThan(0, $this->object->getPartitionTotalSpace());
     }
+
+    public function testDeletePath()
+    {
+        // Test Single Object
+        /*
+        $path = $this->object->getPath('text-for-delete-path.txt');
+        $path = str_ireplace($this->object->getRoot(), $this->object->getRoot().DIRECTORY_SEPARATOR.'bucket', $path);
+        $this->assertEquals(true, $this->object->write($path, 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->exists($path));
+        $this->assertEquals(true, $this->object->deletePath('bucket'));
+        $this->assertEquals(false, $this->object->exists($path));
+        */
+
+        // Test Multiple Objects
+        $path = $this->object->getPath('text-for-delete-path1.txt');
+        $path = str_ireplace($this->object->getRoot(), $this->object->getRoot().DIRECTORY_SEPARATOR.'bucket', $path);
+        $this->assertEquals(true, $this->object->write($path, 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->exists($path));
+
+        $path2 = $this->object->getPath('text-for-delete-path2.txt');
+        $path2 = str_ireplace($this->object->getRoot(), $this->object->getRoot().DIRECTORY_SEPARATOR.'bucket', $path2);
+        $this->assertEquals(true, $this->object->write($path2, 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->exists($path2));
+
+        $path3 = $this->object->getPath('.hidden.txt');
+        $path3 = str_ireplace($this->object->getRoot(), $this->object->getRoot().DIRECTORY_SEPARATOR.'bucket', $path3);
+        $this->assertEquals(true, $this->object->write($path3, 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->exists($path3));
+
+        $this->assertEquals(true, $this->object->deletePath('bucket/'));
+        $this->assertEquals(false, $this->object->exists($path));
+        $this->assertEquals(false, $this->object->exists($path2));
+        $this->assertEquals(false, $this->object->exists($path3));
+    }
 }
