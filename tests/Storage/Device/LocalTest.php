@@ -250,14 +250,12 @@ class LocalTest extends TestCase
     public function testDeletePath()
     {
         // Test Single Object
-        /*
         $path = $this->object->getPath('text-for-delete-path.txt');
         $path = str_ireplace($this->object->getRoot(), $this->object->getRoot().DIRECTORY_SEPARATOR.'bucket', $path);
         $this->assertEquals(true, $this->object->write($path, 'Hello World', 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path));
         $this->assertEquals(true, $this->object->deletePath('bucket'));
         $this->assertEquals(false, $this->object->exists($path));
-        */
 
         // Test Multiple Objects
         $path = $this->object->getPath('text-for-delete-path1.txt');
