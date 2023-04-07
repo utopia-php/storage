@@ -17,20 +17,19 @@ class Upload extends Validator
     /**
      * Check if a file is a valid upload file
      *
-     * @param mixed $value
-     *
+     * @param  mixed  $value
      * @return bool
      */
     public function isValid(mixed $value): bool
     {
-        if (!\is_string($value)) {
+        if (! \is_string($value)) {
             return false;
         }
-        
+
         if (\is_uploaded_file($value)) {
             return true;
         }
-        
+
         return false;
     }
 

@@ -429,9 +429,11 @@ class S3 extends Device
     {
         $uri = ($path !== '') ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
 
-        unset($this->headers['content-type']);
-        unset($this->amzHeaders['x-amz-acl']);
-        unset($this->amzHeaders['x-amz-content-sha256']);
+        unset(
+            $this->headers['content-type'],
+            $this->amzHeaders['x-amz-acl'],
+            $this->amzHeaders['x-amz-content-sha256']
+        );
         $this->headers['content-md5'] = \base64_encode(md5('', true));
         $this->call(self::METHOD_DELETE, $uri);
 
@@ -441,12 +443,12 @@ class S3 extends Device
     /**
      * Get list of objects in the given path.
      *
-     * @param  string  $path
+     * @param  string  $prefix
+     * @param  int  $maxKeys
+     * @param  string  $continuationToken
      * @return array
-     *
-     * @throws \Exception
      */
-    private function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
+    private function listObjects(string $prefix = '', int $maxKeys = 1000, string $continuationToken = '')
     {
         $uri = '/';
         $prefix = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */

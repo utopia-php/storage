@@ -10,8 +10,8 @@ class StorageTest extends TestCase
 {
     public static function setUpBeforeClass(): void
     {
-        Storage::setDevice('disk-a', new Local(__DIR__ . '/../resources/disk-a'));
-        Storage::setDevice('disk-b', new Local(__DIR__ . '/../resources/disk-b'));
+        Storage::setDevice('disk-a', new Local(__DIR__.'/../resources/disk-a'));
+        Storage::setDevice('disk-b', new Local(__DIR__.'/../resources/disk-b'));
     }
 
     public function testGetDevice(): void

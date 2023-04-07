@@ -40,8 +40,7 @@ class FileExt extends Validator
     /**
      * Check if file extension is allowed
      *
-     * @param mixed $value
-     *
+     * @param  mixed  $value
      * @return bool
      */
     public function isValid(mixed $value): bool

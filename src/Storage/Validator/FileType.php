@@ -66,13 +66,12 @@ class FileType extends Validator
      *
      * @see http://stackoverflow.com/a/3313196
      *
-     * @param mixed $value
-     *
+     * @param  mixed  $value
      * @return bool
      */
     public function isValid(mixed $value): bool
     {
-        if (!\is_readable($value)) {
+        if (! \is_readable($value)) {
             return false;
         }
 

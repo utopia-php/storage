@@ -170,7 +170,7 @@ class Local extends Device
      * Read file by given path.
      *
      * @param  string  $path
-     * @param int offset
+     * @param  int  $offset
      * @param  int|null  $length
      * @return string
      *
@@ -179,10 +179,10 @@ class Local extends Device
     public function read(string $path, int $offset = 0, int $length = null): string
     {
         if (! $this->exists($path)) {
-            throw new Exception('File Not Found');
+            throw new \Exception('File Not Found');
         }
 
-        return \file_get_contents($path, use_include_path: false, context: null, offset: $offset, length: $length);
+        return \file_get_contents($path, context: null, offset: $offset, length: $length ?? 0);
     }
 
     /**
@@ -192,6 +192,8 @@ class Local extends Device
      * @param  string  $data
      * @param  string  $contentType
      * @return bool
+     *
+     * @throws Exception
      */
     public function write(string $path, string $data, string $contentType = ''): bool
     {
@@ -334,7 +336,7 @@ class Local extends Device
      *
      * Returns true on success or if the directory already exists and false on error
      *
-     * @param $path
+     * @param  string  $path
      * @return bool
      */
     public function createDirectory(string $path): bool

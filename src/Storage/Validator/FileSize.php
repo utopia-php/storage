@@ -37,7 +37,7 @@ class FileSize extends Validator
      */
     public function isValid(mixed $value): bool
     {
-        if (!is_int($value)) {
+        if (! is_int($value)) {
             return false;
         }
 

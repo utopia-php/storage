@@ -19,7 +19,7 @@ class Storage
 
     const DEVICE_LINODE = 'linode';
 
-    const DEVICE_SCALITY= 'scality';
+    const DEVICE_SCALITY = 'scality';
 
     /**
      * Devices.
@@ -34,9 +34,6 @@ class Storage
      * Set Device.
      *
      * Add device by name
-     *
-     * @param string $name
-     * @param Device $device
      *
      * @param  string  $name
      * @param  Device  $device
@@ -61,7 +58,7 @@ class Storage
      */
     public static function getDevice(string $name): Device
     {
-        if (!isset(self::$devices[$name])) {
+        if (! isset(self::$devices[$name])) {
             throw new \Exception('The device "'.$name.'" is not listed');
         }
 

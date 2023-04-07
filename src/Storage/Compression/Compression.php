@@ -12,13 +12,13 @@ abstract class Compression
     abstract public function getName(): string;
 
     /**
-     * @param $data
+     * @param  string  $data
      * @return string
      */
     abstract public function compress(string $data);
 
     /**
-     * @param $data
+     * @param  string  $data
      * @return string
      */
     abstract public function decompress(string $data);
