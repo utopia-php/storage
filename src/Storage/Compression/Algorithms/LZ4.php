@@ -4,17 +4,17 @@ namespace Utopia\Storage\Compression\Algorithms;
 
 use Utopia\Storage\Compression\Compression;
 
-class Zstd extends Compression
+class LZ4 extends Compression
 {
     /**
-     * Compression level from 1 up to a current max of 22.
-     * Levels >= 20 should be used with caution, as they require more memory.
+     * Compression level from 0 up to a current max of 12.
+     * Recommended values are between 4 and 9.
      *
-     * Default value is 3.
+     * Default value is 0, Not high compression mode.
      */
-    protected int $level = 3;
+    protected int $level = 0;
 
-    public function __construct(int $level = 3)
+    public function __construct(int $level = 0)
     {
         $this->level = $level;
     }
@@ -32,15 +32,15 @@ class Zstd extends Compression
     /**
      * Set the compression level.
      *
-     * Allow values from 1 up to a current max of 22.
+     * Allow values from 0 up to a current max of 12.
      *
      * @param  int  $level
      * @return void
      */
     public function setLevel(int $level): void
     {
-        if ($level < 1 || $level > 22) {
-            throw new \InvalidArgumentException('Level must be between 1 and 22');
+        if ($level < 0 || $level > 12) {
+            throw new \InvalidArgumentException('Level must be between 0 and 12');
         }
         $this->level = $level;
     }
@@ -52,7 +52,7 @@ class Zstd extends Compression
      */
     public function getName(): string
     {
-        return 'zstd';
+        return 'lz4';
     }
 
     /**
@@ -63,7 +63,7 @@ class Zstd extends Compression
      */
     public function compress(string $data): string
     {
-        return \zstd_compress($data, $this->level);
+        return \lz4_compress($data, $this->level);
     }
 
     /**
@@ -74,6 +74,6 @@ class Zstd extends Compression
      */
     public function decompress(string $data): string
     {
-        return \zstd_uncompress($data);
+        return \lz4_uncompress($data);
     }
 }

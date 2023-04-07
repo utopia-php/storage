@@ -11,8 +11,11 @@ class FileType extends Validator
      * File Types Constants.
      */
     const FILE_TYPE_JPEG = 'jpeg';
+
     const FILE_TYPE_GIF = 'gif';
+
     const FILE_TYPE_PNG = 'png';
+
     const FILE_TYPE_GZIP = 'gz';
 
     /**
@@ -20,12 +23,12 @@ class FileType extends Validator
      *
      * @var array
      */
-    protected $types = array(
+    protected $types = [
         self::FILE_TYPE_JPEG => "\xFF\xD8\xFF",
         self::FILE_TYPE_GIF => 'GIF',
         self::FILE_TYPE_PNG => "\x89\x50\x4e\x47\x0d\x0a",
-        self::FILE_TYPE_GZIP => "application/x-gzip",
-    );
+        self::FILE_TYPE_GZIP => 'application/x-gzip',
+    ];
 
     /**
      * @var array
@@ -33,14 +36,14 @@ class FileType extends Validator
     protected $allowed;
 
     /**
-     * @param array $allowed
+     * @param  array  $allowed
      *
      * @throws Exception
      */
     public function __construct(array $allowed)
     {
         foreach ($allowed as $key) {
-            if (!isset($this->types[$key])) {
+            if (! isset($this->types[$key])) {
                 throw new Exception('Unknown file mime type');
             }
         }

@@ -7,7 +7,6 @@ use Utopia\Tests\Storage\S3Base;
 
 class S3Test extends S3Base
 {
-
     protected function init(): void
     {
         $this->root = '/root';
@@ -21,7 +20,7 @@ class S3Test extends S3Base
     /**
      * @return string
      */
-    protected function getAdapterName() : string
+    protected function getAdapterName(): string
     {
         return 'S3 Storage';
     }
@@ -32,7 +31,7 @@ class S3Test extends S3Base
     }
 
     protected function getAdapterDescription(): string
-    {   
+    {
         return 'S3 Bucket Storage drive for AWS or on premise solution';
     }
 }

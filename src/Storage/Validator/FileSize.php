@@ -13,8 +13,8 @@ class FileSize extends Validator
 
     /**
      * Max size in bytes
-     * 
-     * @param int $max
+     *
+     * @param  int  $max
      */
     public function __construct($max)
     {
@@ -32,8 +32,7 @@ class FileSize extends Validator
     /**
      * Finds whether a file size is smaller than required limit.
      *
-     * @param mixed $value
-     *
+     * @param  mixed  $fileSize
      * @return bool
      */
     public function isValid(mixed $value): bool

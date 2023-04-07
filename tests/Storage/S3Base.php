@@ -7,7 +7,6 @@ use Utopia\Storage\Device\S3;
 
 abstract class S3Base extends TestCase
 {
-
     abstract protected function init(): void;
 
     /**
@@ -20,9 +19,15 @@ abstract class S3Base extends TestCase
      */
     abstract protected function getAdapterDescription(): string;
 
-    protected ?S3 $object = null;
+    /**
+     * @var S3
+     */
+    protected $object = null;
 
-    protected string $root = '/root';
+    /**
+     * @var string
+     */
+    protected $root = '/root';
 
     public function setUp(): void
     {
@@ -32,10 +37,10 @@ abstract class S3Base extends TestCase
 
     private function uploadTestFiles()
     {
-        $this->object->upload(__DIR__ . '/../resources/disk-a/kitten-1.jpg', $this->object->getPath('testing/kitten-1.jpg'));
-        $this->object->upload(__DIR__ . '/../resources/disk-a/kitten-2.jpg', $this->object->getPath('testing/kitten-2.jpg'));
-        $this->object->upload(__DIR__ . '/../resources/disk-b/kitten-1.png', $this->object->getPath('testing/kitten-1.png'));
-        $this->object->upload(__DIR__ . '/../resources/disk-b/kitten-2.png', $this->object->getPath('testing/kitten-2.png'));
+        $this->object->upload(__DIR__.'/../resources/disk-a/kitten-1.jpg', $this->object->getPath('testing/kitten-1.jpg'));
+        $this->object->upload(__DIR__.'/../resources/disk-a/kitten-2.jpg', $this->object->getPath('testing/kitten-2.jpg'));
+        $this->object->upload(__DIR__.'/../resources/disk-b/kitten-1.png', $this->object->getPath('testing/kitten-1.png'));
+        $this->object->upload(__DIR__.'/../resources/disk-b/kitten-2.png', $this->object->getPath('testing/kitten-2.png'));
     }
 
     private function removeTestFiles()
@@ -73,7 +78,7 @@ abstract class S3Base extends TestCase
 
     public function testPath()
     {
-        $this->assertEquals($this->root . '/image.png', $this->object->getPath('image.png'));
+        $this->assertEquals($this->root.'/image.png', $this->object->getPath('image.png'));
     }
 
     public function testWrite()
@@ -117,17 +122,25 @@ abstract class S3Base extends TestCase
 
     public function testSVGUpload()
     {
-        $this->assertEquals(true, $this->object->upload(__DIR__ . '/../resources/disk-b/appwrite.svg', $this->object->getPath('testing/appwrite.svg')));
-        $this->assertEquals(file_get_contents(__DIR__ . '/../resources/disk-b/appwrite.svg'), $this->object->read($this->object->getPath('testing/appwrite.svg')));
+        $this->assertEquals(true, $this->object->upload(__DIR__.'/../resources/disk-b/appwrite.svg', $this->object->getPath('testing/appwrite.svg')));
+        $this->assertEquals(file_get_contents(__DIR__.'/../resources/disk-b/appwrite.svg'), $this->object->read($this->object->getPath('testing/appwrite.svg')));
         $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/appwrite.svg')));
         $this->assertEquals(true, $this->object->delete($this->object->getPath('testing/appwrite.svg')));
+    }
+
+    public function testXMLUpload()
+    {
+        $this->assertEquals(true, $this->object->upload(__DIR__.'/../resources/disk-a/config.xml', $this->object->getPath('testing/config.xml')));
+        $this->assertEquals(file_get_contents(__DIR__.'/../resources/disk-a/config.xml'), $this->object->read($this->object->getPath('testing/config.xml')));
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/config.xml')));
+        $this->assertEquals(true, $this->object->delete($this->object->getPath('testing/config.xml')));
     }
 
     public function testDeletePath()
     {
         // Test Single Object
         $path = $this->object->getPath('text-for-delete-path.txt');
-        $path = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path);
+        $path = str_ireplace($this->object->getRoot(), $this->object->getRoot().DIRECTORY_SEPARATOR.'bucket', $path);
         $this->assertEquals(true, $this->object->write($path, 'Hello World', 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path));
         $this->assertEquals(true, $this->object->deletePath('bucket'));
@@ -135,12 +148,12 @@ abstract class S3Base extends TestCase
 
         // Test Multiple Objects
         $path = $this->object->getPath('text-for-delete-path1.txt');
-        $path = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path);
+        $path = str_ireplace($this->object->getRoot(), $this->object->getRoot().DIRECTORY_SEPARATOR.'bucket', $path);
         $this->assertEquals(true, $this->object->write($path, 'Hello World', 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path));
 
         $path2 = $this->object->getPath('text-for-delete-path2.txt');
-        $path2 = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path2);
+        $path2 = str_ireplace($this->object->getRoot(), $this->object->getRoot().DIRECTORY_SEPARATOR.'bucket', $path2);
         $this->assertEquals(true, $this->object->write($path2, 'Hello World', 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path2));
 
@@ -191,9 +204,9 @@ abstract class S3Base extends TestCase
         $this->assertEquals(-1, $this->object->getPartitionTotalSpace());
     }
 
-    public function testPartUpload(): string
+    public function testPartUpload()
     {
-        $source = __DIR__ . '/../resources/disk-a/large_file.mp4';
+        $source = __DIR__.'/../resources/disk-a/large_file.mp4';
         $dest = $this->object->getPath('uploaded.mp4');
         $totalSize = \filesize($source);
         // AWS S3 requires each part to be at least 5MB except for last part
@@ -211,10 +224,10 @@ abstract class S3Base extends TestCase
             'content_type' => \mime_content_type($source),
         ];
         $handle = @fopen($source, 'rb');
-        $op = __DIR__ . '/chunk.part';
+        $op = __DIR__.'/chunk.part';
         while ($start < $totalSize) {
             $contents = fread($handle, $chunkSize);
-            $op = __DIR__ . '/chunk.part';
+            $op = __DIR__.'/chunk.part';
             $cc = fopen($op, 'wb');
             fwrite($cc, $contents);
             fclose($cc);
@@ -242,9 +255,9 @@ abstract class S3Base extends TestCase
     /**
      * @depends testPartUpload
      */
-    public function testPartRead(string $path): void
+    public function testPartRead($path)
     {
-        $source = __DIR__ . '/../resources/disk-a/large_file.mp4';
+        $source = __DIR__.'/../resources/disk-a/large_file.mp4';
         $chunk = file_get_contents($source, false, null, 0, 500);
         $readChunk = $this->object->read($path, 0, 500);
         $this->assertEquals($chunk, $readChunk);
