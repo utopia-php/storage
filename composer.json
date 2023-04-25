@@ -23,6 +23,7 @@
         "ext-brotli": "*",
         "ext-lz4": "*",
         "ext-snappy": "*",
+        "ext-zopfli": "*",
         "php": ">=8.0",
         "utopia-php/framework": "0.*.*"
     },
