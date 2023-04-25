@@ -121,7 +121,7 @@ COPY --from=brotli /usr/local/lib/php/extensions/no-debug-non-zts-20200930/brotl
 COPY --from=lz4 /usr/local/lib/php/extensions/no-debug-non-zts-20200930/lz4.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
 COPY --from=snappy /usr/local/lib/php/extensions/no-debug-non-zts-20200930/snappy.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
 COPY --from=xz /usr/local/lib/php/extensions/no-debug-non-zts-20200930/xz.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
-COPY --from=zopfli /usr/local/lib/php/extensions/no-debug-non-zts-20200930/zopfli.so/usr/local/lib/php/extensions/no-debug-non-zts-20200930/
+COPY --from=zopfli /usr/local/lib/php/extensions/no-debug-non-zts-20200930/zopfli.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
 
 # Add Source Code
 COPY . /usr/src/code
