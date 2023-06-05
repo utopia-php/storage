@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Utopia\Tests\Storage\Device;
 
 use Utopia\Storage\Device\S3Compatible;

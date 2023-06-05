@@ -1,10 +1,7 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Utopia\Storage\Device;
 
-use function preg_replace;
 use Utopia\Storage\Storage;
 
 /**
@@ -54,7 +51,7 @@ class S3Compatible extends S3
          * <scheme>://<clientid.endpoint.url>/<bucket>
          * <scheme>://<bucketvhost.endpoint.url>
          */
-        $endpoint = preg_replace('/^https?:\/\//i', '', $endpoint);
+        $endpoint = \preg_replace('/^https?:\/\//i', '', $endpoint);
         $this->headers['host'] = $endpoint;
     }
 
