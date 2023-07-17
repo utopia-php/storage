@@ -1,4 +1,3 @@
-<!-- NEW -->
 <?php
 
 namespace Utopia\Tests\Storage\Device;

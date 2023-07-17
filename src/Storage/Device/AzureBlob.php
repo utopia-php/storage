@@ -1,12 +1,13 @@
-<!-- NEW -->
-<?php
+<?php 
 
 namespace Utopia\Storage\Device;
 
-use Utopia\Storage\Device;
+use Utopia\Storage\Storage;
 
-class AzureBlob extends Device
+class AzureBlob extends Device   //Should it extend S3 or Device?
 {
+    //Should have some constants here. But where can we find them?
+    
     /**
      * Azure Blob Constructor
      *
@@ -15,7 +16,7 @@ class AzureBlob extends Device
      * 
      */
     
-    public function __construct()
+    public function __construct()   //Needs constructor variables
     {
    
     }
