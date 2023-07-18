@@ -134,7 +134,7 @@ abstract class Device
     /**
      * Transfer
      * Transfer a file from current device to destination device.
-     * 
+     *
      * @param  string  $path
      * @param  string  $destination
      * @param  Device  $device

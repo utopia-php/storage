@@ -291,7 +291,7 @@ class LocalTest extends TestCase
         $this->object->delete($path);
         $device->delete($destination);
     }
-  
+
     public function testDeletePath()
     {
         // Test Single Object
