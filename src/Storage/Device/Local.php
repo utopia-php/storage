@@ -243,7 +243,7 @@ class Local extends Device
         if (! \file_exists(\dirname($tmp))) { // Checks if directory path to file exists
             throw new Exception('File doesn\'t exist: '.\dirname($path));
         }
-        $files = \glob($tmp.'*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
+        $files = $this->getFiles($tmp);
 
         foreach ($files as $file) {
             $this->delete($file, true);
@@ -326,7 +326,7 @@ class Local extends Device
     public function delete(string $path, bool $recursive = false): bool
     {
         if (\is_dir($path) && $recursive) {
-            $files = \glob($path.'*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
+            $files = $this->getFiles($path);
 
             foreach ($files as $file) {
                 $this->delete($file, true);
@@ -351,7 +351,7 @@ class Local extends Device
         $path = realpath($this->getRoot().DIRECTORY_SEPARATOR.$path);
 
         if (\is_dir($path)) {
-            $files = \glob($path.'*', GLOB_MARK); // GLOB_MARK adds a slash to directories returned
+            $files = $this->getFiles($path);
 
             foreach ($files as $file) {
                 $this->delete($file, true);
@@ -495,5 +495,30 @@ class Local extends Device
     public function getPartitionTotalSpace(): float
     {
         return \disk_total_space($this->getRoot());
+    }
+
+    /**
+     * Get all files inside a directory.
+     *
+     * @param  string  $dir Directory to scan
+     * @return string[]
+     */
+    private function getFiles(string $dir): array
+    {
+        if (! (\str_ends_with($dir, DIRECTORY_SEPARATOR))) {
+            $dir .= DIRECTORY_SEPARATOR;
+        }
+
+        $files = [];
+
+        foreach (\scandir($dir) as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+
+            $files[] = $dir.$file;
+        }
+
+        return $files;
     }
 }

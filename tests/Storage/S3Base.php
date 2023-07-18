@@ -129,6 +129,14 @@ abstract class S3Base extends TestCase
         $this->assertEquals(true, $this->object->delete($this->object->getPath('testing/appwrite.svg')));
     }
 
+    public function testXMLUpload()
+    {
+        $this->assertEquals(true, $this->object->upload(__DIR__.'/../resources/disk-a/config.xml', $this->object->getPath('testing/config.xml')));
+        $this->assertEquals(file_get_contents(__DIR__.'/../resources/disk-a/config.xml'), $this->object->read($this->object->getPath('testing/config.xml')));
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/config.xml')));
+        $this->assertEquals(true, $this->object->delete($this->object->getPath('testing/config.xml')));
+    }
+
     public function testDeletePath()
     {
         // Test Single Object

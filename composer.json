@@ -19,6 +19,7 @@
         "ext-fileinfo": "*",
         "ext-zlib": "*",
         "ext-zstd": "*",
+        "ext-xz": "*",
         "ext-brotli": "*",
         "ext-lz4": "*",
         "ext-snappy": "*",
