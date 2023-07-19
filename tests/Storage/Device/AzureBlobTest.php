@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 namespace Utopia\Tests\Storage\Device;
 
@@ -31,5 +31,5 @@ class AzureBlobTest extends S3Base
     {
         return 'Azure Blob Storage';
     }
-}
+} 
 
