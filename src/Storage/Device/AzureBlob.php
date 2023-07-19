@@ -2,11 +2,9 @@
 
 namespace Utopia\Storage\Device;
 
-use Exception;  //check if this is needed
 use Utopia\Storage\Storage;
-use Utopia\Storage\Device;
 
-class AzureBlob extends Device   //Should it extend S3 or Device?
+class AzureBlob extends S3
 {
     //Should have some constants here. But where can we find them?
     
