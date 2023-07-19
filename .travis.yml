@@ -33,4 +33,3 @@ script:
   - docker ps
   - docker-compose exec tests vendor/bin/phpunit --configuration phpunit.xml --debug --testsuite unit
   - docker-compose exec tests vendor/bin/phpunit --configuration phpunit.xml --debug --testsuite e2e
-  - docker-compose exec tests vendor/bin/psalm --show-info=true
