@@ -91,8 +91,8 @@ RUN git clone https://github.com/codemasher/php-ext-xz.git --branch ${PHP_EXT_XZ
   
 ## Zopfli Extension
 FROM compile AS zopfli
-RUN git clone --recursive --depth=1 https://github.com/kjdev/php-ext-brotli.git \
-&& cd php-ext-brotli \
+RUN git clone --recursive --depth=1 https://github.com/kjdev/php-ext-zopfli.git \
+&& git submodule update --init \
 && phpize \
 && ./configure \
 && make \
