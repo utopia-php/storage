@@ -1282,16 +1282,16 @@
         },
         {
             "name": "phpstan/phpdoc-parser",
-            "version": "1.22.x-dev",
+            "version": "1.23.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpdoc-parser.git",
-                "reference": "2108d702baa4883362a8824def66b96733b8cf82"
+                "reference": "a113f0c31267a68dcae2a82f60a5b86ab4c96204"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/2108d702baa4883362a8824def66b96733b8cf82",
-                "reference": "2108d702baa4883362a8824def66b96733b8cf82",
+                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/a113f0c31267a68dcae2a82f60a5b86ab4c96204",
+                "reference": "a113f0c31267a68dcae2a82f60a5b86ab4c96204",
                 "shasum": ""
             },
             "require": {
@@ -1324,9 +1324,9 @@
             "description": "PHPDoc parser with support for nullable, intersection and generic types",
             "support": {
                 "issues": "https://github.com/phpstan/phpdoc-parser/issues",
-                "source": "https://github.com/phpstan/phpdoc-parser/tree/1.22.x"
+                "source": "https://github.com/phpstan/phpdoc-parser/tree/1.23.x"
             },
-            "time": "2023-07-17T07:08:06+00:00"
+            "time": "2023-07-20T15:18:24+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
@@ -1653,12 +1653,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "19cadf73b15656502e34bc4fc00e197fcc94802c"
+                "reference": "19c72d49bfdecc2dac983f3cd4b5b1aff30df7a1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/19cadf73b15656502e34bc4fc00e197fcc94802c",
-                "reference": "19cadf73b15656502e34bc4fc00e197fcc94802c",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/19c72d49bfdecc2dac983f3cd4b5b1aff30df7a1",
+                "reference": "19c72d49bfdecc2dac983f3cd4b5b1aff30df7a1",
                 "shasum": ""
             },
             "require": {
@@ -1748,7 +1748,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-07-17T05:01:41+00:00"
+            "time": "2023-07-18T12:32:17+00:00"
         },
         {
             "name": "psr/container",
@@ -2824,12 +2824,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/console.git",
-                "reference": "560fc3ed7a43e6d30ea94a07d77f9a60b8ed0fb8"
+                "reference": "b504a3d266ad2bb632f196c0936ef2af5ff6e273"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/console/zipball/560fc3ed7a43e6d30ea94a07d77f9a60b8ed0fb8",
-                "reference": "560fc3ed7a43e6d30ea94a07d77f9a60b8ed0fb8",
+                "url": "https://api.github.com/repos/symfony/console/zipball/b504a3d266ad2bb632f196c0936ef2af5ff6e273",
+                "reference": "b504a3d266ad2bb632f196c0936ef2af5ff6e273",
                 "shasum": ""
             },
             "require": {
@@ -2915,7 +2915,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-05-26T05:13:16+00:00"
+            "time": "2023-07-19T20:11:33+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -3979,5 +3979,5 @@
         "php": ">=8.0"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.3.0"
+    "plugin-api-version": "2.2.0"
 }

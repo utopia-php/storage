@@ -224,7 +224,7 @@ class S3 extends Device
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
         $handle = fopen($source, 'rb');
-        if (!$handle) {
+        if (! $handle) {
             throw new \Exception('Failed to open the source file.');
         }
 
