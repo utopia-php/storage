@@ -223,7 +223,19 @@ class S3 extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        return $this->uploadData(\file_get_contents($source), $path, \mime_content_type($source), $chunk, $chunks, $metadata);
+        $handle = fopen($source, 'rb');
+        if (!$handle) {
+            throw new \Exception('Failed to open the source file.');
+        }
+
+        $contentType = mime_content_type($source);
+        $fileSize = filesize($source);
+        $chunkSize = ceil($fileSize / $chunks);
+        fseek($handle, ($chunk - 1) * $chunkSize);
+        $data = fread($handle, $chunkSize);
+        fclose($handle);
+
+        return $this->uploadData($data, $path, $contentType, $chunk, $chunks, $metadata);
     }
 
     /**
