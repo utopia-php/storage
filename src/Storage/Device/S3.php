@@ -280,14 +280,14 @@ class S3 extends Device
     /**
      * Transfer
      *
-     * @param  string  $path
-     * @param  string  $destination
-     * @param  Device  $device
-     * @return string
+     * @param string $path
+     * @param string $destination
+     * @param Device $device
+     * @return bool
+     * @throws Exception
      */
     public function transfer(string $path, string $destination, Device $device): bool
     {
-        $response = [];
         try {
             $response = $this->getInfo($path);
         } catch (\Throwable $e) {
