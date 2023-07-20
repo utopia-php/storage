@@ -94,7 +94,6 @@ FROM compile AS zopfli
 RUN git clone --recursive https://github.com/kjdev/php-ext-zopfli.git \
   && cd php-ext-zopfli \
   && git reset --hard $PHP_ZOPFLI_VERSION \
-  && apt-get update && apt-get install -y zlib1g-dev \
   && phpize \
   && ./configure \
   && make && make install
