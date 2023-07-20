@@ -91,12 +91,12 @@ RUN git clone https://github.com/codemasher/php-ext-xz.git --branch ${PHP_EXT_XZ
   
 ## Zopfli Extension
 FROM compile AS zopfli
-RUN git clone --recursive https://github.com/kjdev/php-ext-zopfli.git \
-  && cd php-ext-zopfli \
-  && git reset --hard $PHP_ZOPFLI_VERSION \
-  && phpize \
-  && ./configure \
-  && make && make install
+RUN git clone --recursive --depth=1 https://github.com/kjdev/php-ext-brotli.git \
+&& cd php-ext-brotli \
+&& phpize \
+&& ./configure \
+&& make \
+&& make install
 
 FROM compile as final
 
