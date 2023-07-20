@@ -92,7 +92,6 @@ RUN git clone https://github.com/codemasher/php-ext-xz.git --branch ${PHP_EXT_XZ
 ## Zopfli Extension
 FROM compile AS zopfli
 RUN git clone https://github.com/artfulhacker/php_zopfli.git \
-&& cd php-ext-zopfli \
 && phpize \
 && ./configure \
 && make \
