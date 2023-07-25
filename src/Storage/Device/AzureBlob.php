@@ -6,6 +6,10 @@ use Utopia\Storage\Storage;
 
 class AzureBlob extends Device
 {
+    /**
+     * DONE
+     * HTTP method constants
+     */
     const METHOD_GET = 'GET';
 
     const METHOD_POST = 'POST';
@@ -25,7 +29,8 @@ class AzureBlob extends Device
     const METHOD_TRACE = 'TRACE';
 
     /**
-     * AWS Regions constants
+     * (WE ARE IN THE PROCESS OF CHECKING IF THESE ARE COMPATIBLE WITH AZURE OR NOT)
+     * Microsoft Azure regions constants (taken from AWS Regions in S3 file)
      */
     const US_EAST_1 = 'us-east-1';
 
@@ -80,7 +85,8 @@ class AzureBlob extends Device
     const US_GOV_WEST_1 = 'us-gov-west-1';
 
     /**
-     * AWS ACL Flag constants
+     * (WE ARE IN THE PROCESS OF CHECKING IF THESE ARE COMPATIBLE WITH AZURE OR NOT)
+     * Microsoft Azure ACL flag constants (taken from AWS ACL Flag in S3 file)
      */
     const ACL_PRIVATE = 'private';
 
@@ -91,26 +97,31 @@ class AzureBlob extends Device
     const ACL_AUTHENTICATED_READ = 'authenticated-read';
 
     /**
+     * DONE
      * @var string
      */
     protected string $sharedKey;
 
     /**
+     * DONE
      * @var string
      */
     protected string $bucket;
 
     /**
+     * DONE
      * @var string
      */
     protected string $acl = self::ACL_PRIVATE;
 
     /**
+     * DONE
      * @var string
      */
     protected string $root = 'temp';
 
     /**
+     * Taken from S3 file. Need to verify if fully compatible.
      * @var array
      */
     protected array $headers = [
@@ -120,6 +131,7 @@ class AzureBlob extends Device
     ];
 
     /**
+     * IN PROGRESS...
      * Azure Blob Constructor
      * @param string $root
      * @param string $sharedKey
@@ -138,6 +150,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * DONE
      * @return string
      */
     public function getName(): string
@@ -146,6 +159,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * DONE
      * @return string
      */
     public function getDescription(): string
@@ -154,6 +168,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * DONE
      * @return string
      */
     public function getType(): string
@@ -162,6 +177,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * DONE
      * @return string
      */
     public function getRoot(): string
@@ -170,6 +186,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * Need to verify if this works.
      * @param  string  $filename
      * @param  string|null  $prefix
      * @return string
@@ -180,6 +197,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Upload.
      *
      * Upload a file to desired destination in the selected disk.
@@ -218,6 +236,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Start Multipart Upload
      *
      * Initiate a multipart upload and return an upload ID.
@@ -242,6 +261,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Upload Part
      *
      * @param  string  $source
@@ -271,6 +291,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Complete Multipart Upload
      *
      * @param  string  $path
@@ -298,6 +319,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Abort Chunked Upload
      *
      * @param  string  $path
@@ -317,6 +339,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Read file or part of file by given path, offset and length.
      *
      * @param  string  $path
@@ -343,6 +366,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Write file by given path.
      *
      * @param  string  $path
@@ -366,6 +390,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Move file from given source to given path, Return true on success and false on failure.
      *
      * @see http://php.net/manual/en/function.filesize.php
@@ -389,6 +414,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Delete file in given path, Return true on success and false on failure.
      *
      * @see http://php.net/manual/en/function.filesize.php
@@ -412,6 +438,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Get list of objects in the given path.
      *
      * @param  string  $path
@@ -440,6 +467,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Delete files in given path, path must be a directory. Return true on success and false on failure.
      *
      * @param  string  $path
@@ -479,6 +507,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Check if file exists
      *
      * @param  string  $path
@@ -496,6 +525,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Returns given file path its size.
      *
      * @see http://php.net/manual/en/function.filesize.php
@@ -511,6 +541,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Returns given file path its mime type.
      *
      * @see http://php.net/manual/en/function.mime-content-type.php
@@ -526,6 +557,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Returns given file path its MD5 hash value.
      *
      * @see http://php.net/manual/en/function.md5-file.php
@@ -541,6 +573,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Create a directory at the specified path.
      *
      * Returns true on success or if the directory already exists and false on error
@@ -555,6 +588,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Get directory size in bytes.
      *
      * Return -1 on error
@@ -570,6 +604,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Get Partition Free Space.
      *
      * disk_free_space — Returns available space on filesystem or disk partition
@@ -582,6 +617,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Get Partition Total Space.
      *
      * disk_total_space — Returns the total size of a filesystem or disk partition
@@ -594,6 +630,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO VERIFY IF THIS WORKS.
      * Get file info
      *
      * @return array
@@ -611,6 +648,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * (WE ARE IN THE PROCESS OF CHECKING IF THESE ARE COMPATIBLE WITH AZURE OR NOT)
      * Generate the headers for AWS Signature V4
      *
      * @param  string  $method
@@ -687,6 +725,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * (WE ARE IN THE PROCESS OF CHECKING IF THESE ARE COMPATIBLE WITH AZURE OR NOT)
      * Get the S3 response
      *
      * @param  string  $method
@@ -793,6 +832,7 @@ class AzureBlob extends Device
     }
 
     /**
+     * NEED TO SEE IF THIS WORKS.
      * Sort compare for meta headers
      *
      * @internal Used to sort x-amz meta headers
