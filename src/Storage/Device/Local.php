@@ -189,6 +189,7 @@ class Local extends Device
             \unlink($part);
         }
         \unlink($tmp);
+        \unlink(dirname($tmp));
     }
 
     /**
