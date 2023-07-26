@@ -737,70 +737,164 @@ class AzureBlob extends Device
      *
      * @throws \Exception
      */
+    // private function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
+    // {
+    //     $uri = $this->getAbsolutePath($uri);
+    //     $url = 'https://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
+    //     $response = new \stdClass;
+    //     $response->body = '';
+    //     $response->headers = [];
+
+    //     // Basic setup
+    //     $curl = \curl_init();
+    //     \curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
+    //     \curl_setopt($curl, CURLOPT_URL, $url);
+
+    //     // Headers
+    //     $httpHeaders = [];
+    //     $this->amzHeaders['x-amz-date'] = \gmdate('Ymd\THis\Z');
+
+    //     if (! isset($this->amzHeaders['x-amz-content-sha256'])) {
+    //         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
+    //     }
+
+    //     foreach ($this->amzHeaders as $header => $value) {
+    //         if (\strlen($value) > 0) {
+    //             $httpHeaders[] = $header.': '.$value;
+    //         }
+    //     }
+
+    //     $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
+
+    //     foreach ($this->headers as $header => $value) {
+    //         if (\strlen($value) > 0) {
+    //             $httpHeaders[] = $header.': '.$value;
+    //         }
+    //     }
+
+    //     $httpHeaders[] = 'Authorization: '.$this->getSignatureV4($method, $uri, $parameters);
+
+    //     \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
+    //     \curl_setopt($curl, CURLOPT_HEADER, false);
+    //     \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
+    //     \curl_setopt($curl, CURLOPT_WRITEFUNCTION, function ($curl, string $data) use ($response) {
+    //         $response->body .= $data;
+
+    //         return \strlen($data);
+    //     });
+    //     curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $header) use (&$response) {
+    //         $len = strlen($header);
+    //         $header = explode(':', $header, 2);
+
+    //         if (count($header) < 2) { // ignore invalid headers
+    //             return $len;
+    //         }
+
+    //         $response->headers[strtolower(trim($header[0]))] = trim($header[1]);
+
+    //         return $len;
+    //     });
+    //     \curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+    //     \curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
+
+    //     // Request types
+    //     switch ($method) {
+    //         case self::METHOD_PUT:
+    //         case self::METHOD_POST: // POST only used for CloudFront
+    //             \curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+    //             break;
+    //         case self::METHOD_HEAD:
+    //         case self::METHOD_DELETE:
+    //             \curl_setopt($curl, CURLOPT_NOBODY, true);
+    //             break;
+    //     }
+
+    //     $result = \curl_exec($curl);
+
+    //     if (! $result) {
+    //         throw new Exception(\curl_error($curl));
+    //     }
+
+    //     $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    //     if ($response->code >= 400) {
+    //         throw new Exception($response->body, $response->code);
+    //     }
+
+    //     \curl_close($curl);
+
+    //     // Parse body into XML
+    //     if ($decode && ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml'))) {
+    //         $response->body = \simplexml_load_string($response->body);
+    //         $response->body = json_decode(json_encode($response->body), true);
+    //     }
+
+    //     return $response;
+    // }
+
     private function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
     {
-        $uri = $this->getAbsolutePath($uri);
-        $url = 'https://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
+        // initialization of endpoint url and response object
+        $url = $this->headers['host'];
         $response = new \stdClass;
         $response->body = '';
         $response->headers = [];
 
-        // Basic setup
+        // setup of curl session and properties
         $curl = \curl_init();
         \curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
         \curl_setopt($curl, CURLOPT_URL, $url);
 
-        // Headers
-        $httpHeaders = [];
-        $this->amzHeaders['x-amz-date'] = \gmdate('Ymd\THis\Z');
+        // initialization of curl headers (authorization and parameters)
+        // $httpHeaders = [];
+        // $this->amzHeaders['x-amz-date'] = \gmdate('Ymd\THis\Z');
 
-        if (! isset($this->amzHeaders['x-amz-content-sha256'])) {
-            $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
-        }
+        // if (! isset($this->amzHeaders['x-amz-content-sha256'])) {
+        //     $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
+        // }
 
-        foreach ($this->amzHeaders as $header => $value) {
-            if (\strlen($value) > 0) {
-                $httpHeaders[] = $header.': '.$value;
-            }
-        }
+        // foreach ($this->amzHeaders as $header => $value) {
+        //     if (\strlen($value) > 0) {
+        //         $httpHeaders[] = $header.': '.$value;
+        //     }
+        // }
 
-        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
+        // $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
 
-        foreach ($this->headers as $header => $value) {
-            if (\strlen($value) > 0) {
-                $httpHeaders[] = $header.': '.$value;
-            }
-        }
+        // foreach ($this->headers as $header => $value) {
+        //     if (\strlen($value) > 0) {
+        //         $httpHeaders[] = $header.': '.$value;
+        //     }
+        // }
 
-        $httpHeaders[] = 'Authorization: '.$this->getSignatureV4($method, $uri, $parameters);
+        // $httpHeaders[] = 'Authorization: '.$this->getSignatureV4($method, $uri, $parameters);
 
-        \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
-        \curl_setopt($curl, CURLOPT_HEADER, false);
-        \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
-        \curl_setopt($curl, CURLOPT_WRITEFUNCTION, function ($curl, string $data) use ($response) {
-            $response->body .= $data;
+        // \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
+        // \curl_setopt($curl, CURLOPT_HEADER, false);
+        // \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
+        // \curl_setopt($curl, CURLOPT_WRITEFUNCTION, function ($curl, string $data) use ($response) {
+        //     $response->body .= $data;
 
-            return \strlen($data);
-        });
-        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $header) use (&$response) {
-            $len = strlen($header);
-            $header = explode(':', $header, 2);
+        //     return \strlen($data);
+        // });
+        // curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $header) use (&$response) {
+        //     $len = strlen($header);
+        //     $header = explode(':', $header, 2);
 
-            if (count($header) < 2) { // ignore invalid headers
-                return $len;
-            }
+        //     if (count($header) < 2) { // ignore invalid headers
+        //         return $len;
+        //     }
 
-            $response->headers[strtolower(trim($header[0]))] = trim($header[1]);
+        //     $response->headers[strtolower(trim($header[0]))] = trim($header[1]);
 
-            return $len;
-        });
-        \curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-        \curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
+        //     return $len;
+        // });
+        // \curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+        // \curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
 
-        // Request types
+        // HTTP request types
         switch ($method) {
             case self::METHOD_PUT:
-            case self::METHOD_POST: // POST only used for CloudFront
+            case self::METHOD_POST:
                 \curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
                 break;
             case self::METHOD_HEAD:
@@ -809,8 +903,10 @@ class AzureBlob extends Device
                 break;
         }
 
+        //executing curl command
         $result = \curl_exec($curl);
 
+        //error handling, evaluating response
         if (! $result) {
             throw new Exception(\curl_error($curl));
         }
@@ -820,13 +916,14 @@ class AzureBlob extends Device
             throw new Exception($response->body, $response->code);
         }
 
+        // closing curl session
         \curl_close($curl);
 
-        // Parse body into XML
-        if ($decode && ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml'))) {
-            $response->body = \simplexml_load_string($response->body);
-            $response->body = json_decode(json_encode($response->body), true);
-        }
+        // Parse body into XML (may not be needed for Azure)
+        // if ($decode && ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml'))) {
+        //     $response->body = \simplexml_load_string($response->body);
+        //     $response->body = json_decode(json_encode($response->body), true);
+        // }
 
         return $response;
     }
