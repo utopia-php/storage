@@ -2,6 +2,8 @@
 
 namespace Utopia\Storage\Device;
 
+use Exception;
+use Utopia\Storage\Device;
 use Utopia\Storage\Storage;
 
 class AzureBlob extends Device
@@ -100,7 +102,7 @@ class AzureBlob extends Device
      * DONE
      * @var string
      */
-    protected string $sharedKey;
+    protected string $accessKey;
 
     /**
      * DONE
@@ -124,10 +126,26 @@ class AzureBlob extends Device
      * Taken from S3 file. Need to verify if fully compatible.
      * @var array
      */
+    // protected array $headers = [
+    //     'host' => '', 'date' => '',
+    //     'content-md5' => '',
+    //     'content-type' => '',
+    // ];
+
+    // New $headers, probably more compatible with AzureBlob
     protected array $headers = [
-        'host' => '', 'date' => '',
+        'host' => '', //Note sure if this host header is necessary for AzureBlob
+        'content-encoding' => '',
+        'content-language' => '',
+        'content-length' => '',
         'content-md5' => '',
         'content-type' => '',
+        'date' => '',
+        'if-modified-since' => '',
+        'if-match' => '',
+        'if-none-match' => '',
+        'if-unmodified-since' => '',
+        'range' => '',
     ];
 
     /**
@@ -139,9 +157,9 @@ class AzureBlob extends Device
      * @param string $acl
      */
     
-    public function __construct(string $root, string $sharedKey, string $bucket, string $acl = self::ACL_PRIVATE)
+    public function __construct(string $root, string $accessKey, string $bucket, string $acl = self::ACL_PRIVATE)
     {
-        $this->accessKey = $sharedKey;
+        $this->$accessKey = $accessKey;
         $this->bucket = $bucket;
         $this->root = $root;
         $this->acl = $acl;
@@ -724,6 +742,212 @@ class AzureBlob extends Device
         ]);
     }
 
+    /* AUTHENTICATION FUNCTIONS FOR AZURE (added by Tam)
+        Source: https://github.com/Azure/azure-storage-php/blob/master/azure-storage-common/src/Common/Internal/Authentication/SharedKeyAuthScheme.php */
+        
+        // Tam's note: check whether to implement this as static or non-static function  
+        public static function tryGetValue($array, $key, $default = null)
+        {
+            return (!is_null($array)) && is_array($array) && array_key_exists($key, $array)
+                ? $array[$key]
+                : $default;
+        }
+        
+        // Tam's note: check whether to implement this as static or non-static function
+        public static function tryGetValueInsensitive($key, $haystack, $default = null)
+        {
+            $array = array_change_key_case($haystack);
+            return AzureBlob::tryGetValue($array, strtolower($key), $default);
+        }
+    
+        /**
+     * Computes the authorization signature for blob and queue shared key.
+     *
+     * @param array  $headers     request headers.
+     * @param string $url         reuqest url.
+     * @param array  $queryParams query variables.
+     * @param string $httpMethod  request http method.
+     *
+     * @see Blob and Queue Services (Shared Key Authentication) at
+     *      http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx
+     *
+     * @return string
+     */
+    private function computeSignature(
+        array $httpHeaders,
+        $url,
+        array $queryParams,
+        $httpMethod
+    ) {
+        $canonicalizedHeaders = $this->computeCanonicalizedHeaders($httpHeaders);
+
+        $canonicalizedResource = $this->computeCanonicalizedResource(
+            $url,
+            $queryParams
+        );
+
+        $stringToSign   = array();
+        $stringToSign[] = \strtoupper($httpMethod);
+
+        foreach ($this->headers as $header) {
+            $stringToSign[] = AzureBlob::tryGetValueInsensitive($header, $httpHeaders);
+        }
+
+        if (count($canonicalizedHeaders) > 0) {
+            $stringToSign[] = \implode("\n", $canonicalizedHeaders);
+        }
+
+        $stringToSign[] = $canonicalizedResource;
+        $stringToSign   = \implode("\n", $stringToSign);
+
+        return $stringToSign;
+    }
+
+
+    /**
+     * Returns authorization header to be included in the request.
+     *
+     * @param array  $headers     request headers.
+     * @param string $url         reuqest url.
+     * @param array  $queryParams query variables.
+     * @param string $httpMethod  request http method.
+     *
+     * @see Specifying the Authorization Header section at
+     *      http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx
+     *
+     * @return string
+     */
+
+     /* Tam's note: Can we combine this and the computeSignature into a single function? 
+        It depends on whether we will use the getAuthorizationHeader or computeSignature more often */
+     
+    private function getAuthorizationHeader(
+        array $headers,
+        $url,
+        array $queryParams,
+        $httpMethod
+    ) {
+        $signature = $this->computeSignature(
+            $headers,
+            $url,
+            $queryParams,
+            $httpMethod
+        );
+
+        return 'SharedKey ' . $this->bucket . ':' . \base64_encode(
+            \hash_hmac('sha256', $signature, \base64_decode($this->accessKey), true)
+        );
+    }
+
+    // Helper function for computeCanonicalizedHeaders, consider chnging to private non-static
+    public static function startsWith($string, $prefix, $ignoreCase = false)
+    {
+        if ($ignoreCase) {
+            $string = \strtolower($string);
+            $prefix = \strtolower($prefix);
+        }
+        return ($prefix == substr($string, 0, \strlen($prefix)));
+    }
+
+    /**
+     * Computes canonicalized headers for headers array.
+     *
+     * @param array $headers request headers.
+     *
+     * @see Constructing the Canonicalized Headers String section at
+     *      http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx
+     *
+     * @return array
+     */
+    private function computeCanonicalizedHeaders($headers)
+    {
+        $canonicalizedHeaders = array();
+        $normalizedHeaders    = array();
+        $validPrefix          = 'x-ms-';
+
+        if (is_null($normalizedHeaders)) {
+            return $canonicalizedHeaders;
+        }
+
+        foreach ($headers as $header => $value) {
+            // Convert header to lower case.
+            $header = \strtolower($header);
+
+            // Retrieve all headers for the resource that begin with x-ms-,
+            // including the x-ms-date header.
+            if (AzureBlob::startsWith($header, $validPrefix)) {
+                // Unfold the string by replacing any breaking white space
+                // (meaning what splits the headers, which is \r\n) with a single
+                // space.
+                $value = \str_replace("\r\n", ' ', $value);
+
+                // Trim any white space around the colon in the header.
+                $value  = \ltrim($value);
+                $header = \rtrim($header);
+
+                $normalizedHeaders[$header] = $value;
+            }
+        }
+
+        // Sort the headers lexicographically by header name, in ascending order.
+        // Note that each header may appear only once in the string.
+        ksort($normalizedHeaders);
+
+        foreach ($normalizedHeaders as $key => $value) {
+            $canonicalizedHeaders[] = $key . ':' . $value;
+        }
+
+        return $canonicalizedHeaders;
+    }
+
+    /**
+     * Computes canonicalized resources from URL.
+     *
+     * @param string $url         request url.
+     * @param array  $queryParams request query variables.
+     *
+     * @see Constructing the Canonicalized Resource String section at
+     *      http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx
+     *
+     * @return string
+     */
+    protected function computeCanonicalizedResource($url, $queryParams)
+    {
+        $queryParams = \array_change_key_case($queryParams);
+
+        // 1. Beginning with an empty string (""), append a forward slash (/),
+        //    followed by the name of the account that owns the accessed resource.
+        $canonicalizedResource = '/' . $this->bucket;
+
+        // 2. Append the resource's encoded URI path, without any query parameters.
+        $canonicalizedResource .= \parse_url($url, PHP_URL_PATH);
+
+        // 3. Retrieve all query parameters on the resource URI, including the comp
+        //    parameter if it exists.
+        // 4. Sort the query parameters lexicographically by parameter name, in
+        //    ascending order.
+        if (\count($queryParams) > 0) {
+            \ksort($queryParams);
+        }
+
+        // 5. Convert all parameter names to lowercase.
+        // 6. URL-decode each query parameter name and value.
+        // 7. Append each query parameter name and value to the string in the
+        //    following format:
+        //      parameter-name:parameter-value
+        // 9. Group query parameters
+        // 10. Append a new line character (\n) after each name-value pair.
+        foreach ($queryParams as $key => $value) {
+            // $value must already be ordered lexicographically
+            // See: ServiceRestProxy::groupQueryValues
+            $canonicalizedResource .= "\n" . $key . ':' . $value;
+        }
+
+        return $canonicalizedResource;
+    }
+    
+    // END OF NEWLY ADDED FUNCTIONS
+
     /**
      * (WE ARE IN THE PROCESS OF CHECKING IF THESE ARE COMPATIBLE WITH AZURE OR NOT)
      * Get the S3 response
@@ -844,9 +1068,10 @@ class AzureBlob extends Device
         \curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
         \curl_setopt($curl, CURLOPT_URL, $url);
 
-        // initialization of curl headers (authorization and parameters)
-        // $httpHeaders = [];
-        // $this->amzHeaders['x-amz-date'] = \gmdate('Ymd\THis\Z');
+        // Headers
+        $httpHeaders = [];
+        //Tam's note: fix this to be compatible with Azure format (ie 'x-ms-date')
+        $this->amzHeaders['x-amz-date'] = \gmdate('Ymd\THis\Z');
 
         // if (! isset($this->amzHeaders['x-amz-content-sha256'])) {
         //     $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
@@ -866,7 +1091,8 @@ class AzureBlob extends Device
         //     }
         // }
 
-        // $httpHeaders[] = 'Authorization: '.$this->getSignatureV4($method, $uri, $parameters);
+        //Tam's note: call getAuthorizationHeader (new Azure function) instead
+        $httpHeaders[] = 'Authorization: '.$this->getSignatureV4($method, $uri, $parameters);
 
         // \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
         // \curl_setopt($curl, CURLOPT_HEADER, false);
@@ -938,6 +1164,9 @@ class AzureBlob extends Device
      * @param  string  $b String B
      * @return int
      */
+
+     /* Tam's note: This function helps with getSignatureV4. Since we use a different function to generate 
+        Azure signature, we can get rid of this */ 
     private function sortMetaHeadersCmp($a, $b)
     {
         $lenA = \strlen($a);
