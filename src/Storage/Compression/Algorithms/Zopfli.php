@@ -1,4 +1,3 @@
-@@ -0,0 +1,40 @@
 <?php
 
 namespace Utopia\Storage\Compression\Algorithms;
