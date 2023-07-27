@@ -93,8 +93,6 @@ RUN git clone https://github.com/codemasher/php-ext-xz.git --branch ${PHP_EXT_XZ
 FROM compile AS zopfli
 RUN git clone --recursive https://github.com/kjdev/php-ext-zopfli.git \
   && cd php-ext-zopfli \
-  &&sudo apt-get update \
-  &&sudo apt-get install zlib1g-dev \
   && git reset --hard $PHP_ZOPFLI_VERSION \
   && phpize \
   && ./configure \
