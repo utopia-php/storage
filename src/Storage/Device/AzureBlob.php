@@ -149,6 +149,12 @@ class AzureBlob extends Device
     ];
 
     /**
+     * Taken from S3 file. Need to verify if fully compatible.
+     * @var array
+     */
+    protected array $azureHeaders;
+
+    /**
      * IN PROGRESS...
      * Azure Blob Constructor
      * @param string $root
@@ -165,6 +171,7 @@ class AzureBlob extends Device
         $this->acl = $acl;
 
         $this->headers['host'] = $bucket.'.blob.core.windows.net';
+        $this->azureHeaders = [];
     }
 
     /**
@@ -760,7 +767,7 @@ class AzureBlob extends Device
             return AzureBlob::tryGetValue($array, strtolower($key), $default);
         }
     
-        /**
+    /**
      * Computes the authorization signature for blob and queue shared key.
      *
      * @param array  $headers     request headers.
