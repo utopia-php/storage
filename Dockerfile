@@ -33,7 +33,7 @@ RUN apk add --no-cache \
   zstd-dev \
   brotli-dev \
   lz4-dev \
-  zopfli-dev
+  zlib-dev
 
 ## Zstandard Extension
 FROM compile AS zstd
