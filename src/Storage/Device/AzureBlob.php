@@ -90,13 +90,21 @@ class AzureBlob extends Device
      * (WE ARE IN THE PROCESS OF CHECKING IF THESE ARE COMPATIBLE WITH AZURE OR NOT)
      * Microsoft Azure ACL flag constants (taken from AWS ACL Flag in S3 file)
      */
-    const ACL_PRIVATE = 'private';
+    /* Tam's note: For Azure, there are only 3 access levels: private, full public read access, and 
+        public read access for blobs only. However, the way we set the access level is very different
+        from S3. Overall, it's not necessary to have the acl variable/constants. */
+    // const ACL_PRIVATE = 'private';
 
-    const ACL_PUBLIC_READ = 'public-read';
+    // const ACL_PUBLIC_READ = 'public-read';
 
-    const ACL_PUBLIC_READ_WRITE = 'public-read-write';
+    // const ACL_PUBLIC_READ_WRITE = 'public-read-write';
 
-    const ACL_AUTHENTICATED_READ = 'authenticated-read';
+    // const ACL_AUTHENTICATED_READ = 'authenticated-read';
+
+    /** 
+     * Other constants
+    */
+    const X_MS_VERSION = '2023-01-03';
 
     /**
      * DONE
@@ -108,13 +116,19 @@ class AzureBlob extends Device
      * DONE
      * @var string
      */
-    protected string $bucket;
+    protected string $storageAccount;
 
     /**
      * DONE
      * @var string
      */
-    protected string $acl = self::ACL_PRIVATE;
+    protected string $container;
+
+    // /**
+    //  * DONE
+    //  * @var string
+    //  */
+    // protected string $acl = self::ACL_PRIVATE;
 
     /**
      * DONE
@@ -134,7 +148,7 @@ class AzureBlob extends Device
 
     // New $headers, probably more compatible with AzureBlob
     protected array $headers = [
-        'host' => '', //Note sure if this host header is necessary for AzureBlob
+        'host' => '', //Note sure if this host header is necessary for AzureBlob. Consider making a separate host variable
         'content-encoding' => '',
         'content-language' => '',
         'content-length' => '',
@@ -159,18 +173,17 @@ class AzureBlob extends Device
      * Azure Blob Constructor
      * @param string $root
      * @param string $sharedKey
-     * @param string $bucket
+     * @param string $storageAccount
      * @param string $acl
      */
     
-    public function __construct(string $root, string $accessKey, string $bucket, string $acl = self::ACL_PRIVATE)
+    public function __construct(string $root, string $accessKey, string $storageAccount, string $container)
     {
         $this->$accessKey = $accessKey;
-        $this->bucket = $bucket;
+        $this->container = $container;
+        $this->storageAccount = $storageAccount;
         $this->root = $root;
-        $this->acl = $acl;
-
-        $this->headers['host'] = $bucket.'.blob.core.windows.net';
+        $this->headers['host'] = $storageAccount.'.blob.core.windows.net';
         $this->azureHeaders = [];
     }
 
@@ -391,7 +404,8 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * NEED TO VERIFY IF THIS WORKS. 
+     * Tam's note: I modified it recently, believe this will work.
      * Write file by given path.
      *
      * @param  string  $path
@@ -406,8 +420,8 @@ class AzureBlob extends Device
 
         $this->headers['content-type'] = $contentType;
         $this->headers['content-md5'] = \base64_encode(md5($data, true)); //TODO whould this work well with big file? can we skip it?
-        $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
-        $this->amzHeaders['x-amz-acl'] = $this->acl;
+        // $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
+        // $this->amzHeaders['x-amz-acl'] = $this->acl;
 
         $this->call(self::METHOD_PUT, $uri, $data);
 
@@ -764,7 +778,7 @@ class AzureBlob extends Device
         public static function tryGetValueInsensitive($key, $haystack, $default = null)
         {
             $array = array_change_key_case($haystack);
-            return AzureBlob::tryGetValue($array, strtolower($key), $default);
+            return self::tryGetValue($array, strtolower($key), $default);
         }
     
     /**
@@ -781,12 +795,12 @@ class AzureBlob extends Device
      * @return string
      */
     private function computeSignature(
-        array $httpHeaders,
+        array $requestHeaders,
         $url,
         array $queryParams,
         $httpMethod
     ) {
-        $canonicalizedHeaders = $this->computeCanonicalizedHeaders($httpHeaders);
+        $canonicalizedHeaders = $this->computeCanonicalizedHeaders($requestHeaders);
 
         $canonicalizedResource = $this->computeCanonicalizedResource(
             $url,
@@ -797,7 +811,7 @@ class AzureBlob extends Device
         $stringToSign[] = \strtoupper($httpMethod);
 
         foreach ($this->headers as $header) {
-            $stringToSign[] = AzureBlob::tryGetValueInsensitive($header, $httpHeaders);
+            $stringToSign[] = AzureBlob::tryGetValueInsensitive($header, $requestHeaders);
         }
 
         if (count($canonicalizedHeaders) > 0) {
@@ -841,7 +855,7 @@ class AzureBlob extends Device
             $httpMethod
         );
 
-        return 'SharedKey ' . $this->bucket . ':' . \base64_encode(
+        return 'SharedKey ' . $this->storageAccount . ':' . \base64_encode(
             \hash_hmac('sha256', $signature, \base64_decode($this->accessKey), true)
         );
     }
@@ -882,7 +896,7 @@ class AzureBlob extends Device
 
             // Retrieve all headers for the resource that begin with x-ms-,
             // including the x-ms-date header.
-            if (AzureBlob::startsWith($header, $validPrefix)) {
+            if (self::startsWith($header, $validPrefix)) {
                 // Unfold the string by replacing any breaking white space
                 // (meaning what splits the headers, which is \r\n) with a single
                 // space.
@@ -924,7 +938,7 @@ class AzureBlob extends Device
 
         // 1. Beginning with an empty string (""), append a forward slash (/),
         //    followed by the name of the account that owns the accessed resource.
-        $canonicalizedResource = '/' . $this->bucket;
+        $canonicalizedResource = '/' . $this->storageAccount;
 
         // 2. Append the resource's encoded URI path, without any query parameters.
         $canonicalizedResource .= \parse_url($url, PHP_URL_PATH);
@@ -1065,12 +1079,15 @@ class AzureBlob extends Device
     private function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
     {
         // initialization of endpoint url and response object
-        $url = $this->headers['host'];
+        // Tam's note: OK
+        $uri = $this->getAbsolutePath($uri);
+        $url = 'https://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
         $response->body = '';
         $response->headers = [];
 
         // setup of curl session and properties
+        // Tam's note: OK
         $curl = \curl_init();
         \curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
         \curl_setopt($curl, CURLOPT_URL, $url);
@@ -1078,52 +1095,66 @@ class AzureBlob extends Device
         // Headers
         $httpHeaders = [];
         //Tam's note: fix this to be compatible with Azure format (ie 'x-ms-date')
-        $this->amzHeaders['x-amz-date'] = \gmdate('Ymd\THis\Z');
+        // $this->amzHeaders['x-amz-date'] = \gmdate('Ymd\THis\Z');
+        $this->azureHeaders['x-ms-date'] = \gmdate('D, d M Y H:i:s T');
 
+        //Tam's note: Azure requires a x-ms-version header
+        $this->azureHeaders['x-ms-version'] = self::X_MS_VERSION;
+
+        // Tam's note: this header is not needed for Azure Blob
         // if (! isset($this->amzHeaders['x-amz-content-sha256'])) {
         //     $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
         // }
 
-        // foreach ($this->amzHeaders as $header => $value) {
-        //     if (\strlen($value) > 0) {
-        //         $httpHeaders[] = $header.': '.$value;
-        //     }
-        // }
+        // Tam's note: OK
+        foreach ($this->azureHeaders as $header => $value) {
+            if (\strlen($value) > 0) {
+                $httpHeaders[] = $header.': '.$value;
+            }
+        }
 
-        // $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
+        /* Tam's note: this header is optional since x-ms-header has been set.
+           Source: https://learn.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key#constructing-the-canonicalized-headers-string */
+        
+        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
 
-        // foreach ($this->headers as $header => $value) {
-        //     if (\strlen($value) > 0) {
-        //         $httpHeaders[] = $header.': '.$value;
-        //     }
-        // }
+        // Tam's note: OK
+        foreach ($this->headers as $header => $value) {
+            if (\strlen($value) > 0) {
+                $httpHeaders[] = $header.': '.$value;
+            }
+        }
 
-        //Tam's note: call getAuthorizationHeader (new Azure function) instead
-        $httpHeaders[] = 'Authorization: '.$this->getSignatureV4($method, $uri, $parameters);
+        /* Tam's note: call getAuthorizationHeader (new Azure function) instead.
+            Arguments for the getAuthorizationHeader might be wrong */ 
+        // $httpHeaders[] = 'Authorization: '.$this->getSignatureV4($method, $uri, $parameters);
+        $httpHeaders[] = 'Authorization: '.$this->getAuthorizationHeader($this->azureHeaders, $uri, $parameters, $method);
 
-        // \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
-        // \curl_setopt($curl, CURLOPT_HEADER, false);
-        // \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
-        // \curl_setopt($curl, CURLOPT_WRITEFUNCTION, function ($curl, string $data) use ($response) {
-        //     $response->body .= $data;
+        /* Tam's note: seems OK */
+        \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
+        \curl_setopt($curl, CURLOPT_HEADER, false);
+        \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
+        \curl_setopt($curl, CURLOPT_WRITEFUNCTION, function ($curl, string $data) use ($response) {
+            $response->body .= $data;
 
-        //     return \strlen($data);
-        // });
-        // curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $header) use (&$response) {
-        //     $len = strlen($header);
-        //     $header = explode(':', $header, 2);
+            return \strlen($data);
+        });
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $header) use (&$response) {
+            $len = strlen($header);
+            $header = explode(':', $header, 2);
 
-        //     if (count($header) < 2) { // ignore invalid headers
-        //         return $len;
-        //     }
+            if (count($header) < 2) { // ignore invalid headers
+                return $len;
+            }
 
-        //     $response->headers[strtolower(trim($header[0]))] = trim($header[1]);
+            $response->headers[strtolower(trim($header[0]))] = trim($header[1]);
 
-        //     return $len;
-        // });
-        // \curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-        // \curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
+            return $len;
+        });
+        \curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+        \curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
 
+        /* Tam's note: seems OK */
         // HTTP request types
         switch ($method) {
             case self::METHOD_PUT:
@@ -1136,6 +1167,7 @@ class AzureBlob extends Device
                 break;
         }
 
+        /* Tam's note: seems OK */
         //executing curl command
         $result = \curl_exec($curl);
 
@@ -1152,11 +1184,13 @@ class AzureBlob extends Device
         // closing curl session
         \curl_close($curl);
 
+        /* Tam's note: Azure responses usually don't have 'content-type' or XMLheaders, but
+            it's fine to keep the code, as if conditional will skip it anyways. */
         // Parse body into XML (may not be needed for Azure)
-        // if ($decode && ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml'))) {
-        //     $response->body = \simplexml_load_string($response->body);
-        //     $response->body = json_decode(json_encode($response->body), true);
-        // }
+        if ($decode && ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml'))) {
+            $response->body = \simplexml_load_string($response->body);
+            $response->body = json_decode(json_encode($response->body), true);
+        }
 
         return $response;
     }
