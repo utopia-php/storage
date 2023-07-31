@@ -414,7 +414,8 @@ class AzureBlob extends Device
 
     /**
      * NEED TO VERIFY IF THIS WORKS.
-     * Abort Chunked Upload
+     * James: Finished editing.
+     * Abort "Copy Blob" operation
      *
      * @param  string  $path
      * @param  string  $extra
@@ -425,9 +426,14 @@ class AzureBlob extends Device
     public function abort(string $path, string $extra = ''): bool
     {
         $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
-        unset($this->headers['content-type']);
-        $this->headers['content-md5'] = \base64_encode(md5('', true));
-        $this->call(self::METHOD_DELETE, $uri, '', ['uploadId' => $extra]);
+        
+        $this->azureHeaders['x-ms-copy-action: abort'];
+
+        $this->call(self::METHOD_DELETE, $uri, ''); 
+
+        // leftover s3 code
+        // unset($this->headers['content-type']);
+        // $this->headers['content-md5'] = \base64_encode(md5('', true)); // content enconding
 
         return true;
     }
