@@ -754,7 +754,8 @@ class AzureBlob extends Device
     }
 
     /**
-     * (WE ARE IN THE PROCESS OF CHECKING IF THESE ARE COMPATIBLE WITH AZURE OR NOT)
+     * NOTE - getSignatureV4 is an authentication method exclusive to S3, and not Azure
+     *        This will not be in use moving forward with Azure.
      * Generate the headers for AWS Signature V4
      *
      * @param  string  $method
@@ -762,73 +763,73 @@ class AzureBlob extends Device
      * @param array parameters
      * @return string
      */
-    private function getSignatureV4(string $method, string $uri, array $parameters = []): string
-    {
-        $service = 's3';
-        $region = $this->region;
+    // private function getSignatureV4(string $method, string $uri, array $parameters = []): string
+    // {
+    //     $service = 's3';
+    //     $region = $this->region;
 
-        $algorithm = 'AWS4-HMAC-SHA256';
-        $combinedHeaders = [];
+    //     $algorithm = 'AWS4-HMAC-SHA256';
+    //     $combinedHeaders = [];
 
-        $amzDateStamp = \substr($this->amzHeaders['x-amz-date'], 0, 8);
+    //     $amzDateStamp = \substr($this->amzHeaders['x-amz-date'], 0, 8);
 
-        // CanonicalHeaders
-        foreach ($this->headers as $k => $v) {
-            $combinedHeaders[\strtolower($k)] = \trim($v);
-        }
+    //     // CanonicalHeaders
+    //     foreach ($this->headers as $k => $v) {
+    //         $combinedHeaders[\strtolower($k)] = \trim($v);
+    //     }
 
-        foreach ($this->amzHeaders as $k => $v) {
-            $combinedHeaders[\strtolower($k)] = \trim($v);
-        }
+    //     foreach ($this->amzHeaders as $k => $v) {
+    //         $combinedHeaders[\strtolower($k)] = \trim($v);
+    //     }
 
-        uksort($combinedHeaders, [&$this, 'sortMetaHeadersCmp']);
+    //     uksort($combinedHeaders, [&$this, 'sortMetaHeadersCmp']);
 
-        // Convert null query string parameters to strings and sort
-        uksort($parameters, [&$this, 'sortMetaHeadersCmp']);
-        $queryString = \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
+    //     // Convert null query string parameters to strings and sort
+    //     uksort($parameters, [&$this, 'sortMetaHeadersCmp']);
+    //     $queryString = \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 
-        // Payload
-        $amzPayload = [$method];
+    //     // Payload
+    //     $amzPayload = [$method];
 
-        $qsPos = \strpos($uri, '?');
-        $amzPayload[] = ($qsPos === false ? $uri : \substr($uri, 0, $qsPos));
+    //     $qsPos = \strpos($uri, '?');
+    //     $amzPayload[] = ($qsPos === false ? $uri : \substr($uri, 0, $qsPos));
 
-        $amzPayload[] = $queryString;
+    //     $amzPayload[] = $queryString;
 
-        foreach ($combinedHeaders as $k => $v) { // add header as string to requests
-            $amzPayload[] = $k.':'.$v;
-        }
+    //     foreach ($combinedHeaders as $k => $v) { // add header as string to requests
+    //         $amzPayload[] = $k.':'.$v;
+    //     }
 
-        $amzPayload[] = ''; // add a blank entry so we end up with an extra line break
-        $amzPayload[] = \implode(';', \array_keys($combinedHeaders)); // SignedHeaders
-        $amzPayload[] = $this->amzHeaders['x-amz-content-sha256']; // payload hash
+    //     $amzPayload[] = ''; // add a blank entry so we end up with an extra line break
+    //     $amzPayload[] = \implode(';', \array_keys($combinedHeaders)); // SignedHeaders
+    //     $amzPayload[] = $this->amzHeaders['x-amz-content-sha256']; // payload hash
 
-        $amzPayloadStr = \implode("\n", $amzPayload); // request as string
+    //     $amzPayloadStr = \implode("\n", $amzPayload); // request as string
 
-        // CredentialScope
-        $credentialScope = [$amzDateStamp, $region, $service, 'aws4_request'];
+    //     // CredentialScope
+    //     $credentialScope = [$amzDateStamp, $region, $service, 'aws4_request'];
 
-        // stringToSign
-        $stringToSignStr = \implode("\n", [
-            $algorithm, $this->amzHeaders['x-amz-date'],
-            \implode('/', $credentialScope), \hash('sha256', $amzPayloadStr),
-        ]);
+    //     // stringToSign
+    //     $stringToSignStr = \implode("\n", [
+    //         $algorithm, $this->amzHeaders['x-amz-date'],
+    //         \implode('/', $credentialScope), \hash('sha256', $amzPayloadStr),
+    //     ]);
 
-        // Make Signature
-        $kSecret = 'AWS4'.$this->secretKey;
-        $kDate = \hash_hmac('sha256', $amzDateStamp, $kSecret, true);
-        $kRegion = \hash_hmac('sha256', $region, $kDate, true);
-        $kService = \hash_hmac('sha256', $service, $kRegion, true);
-        $kSigning = \hash_hmac('sha256', 'aws4_request', $kService, true);
+    //     // Make Signature
+    //     $kSecret = 'AWS4'.$this->secretKey;
+    //     $kDate = \hash_hmac('sha256', $amzDateStamp, $kSecret, true);
+    //     $kRegion = \hash_hmac('sha256', $region, $kDate, true);
+    //     $kService = \hash_hmac('sha256', $service, $kRegion, true);
+    //     $kSigning = \hash_hmac('sha256', 'aws4_request', $kService, true);
 
-        $signature = \hash_hmac('sha256', \utf8_encode($stringToSignStr), $kSigning);
+    //     $signature = \hash_hmac('sha256', \utf8_encode($stringToSignStr), $kSigning);
 
-        return $algorithm.' '.\implode(',', [
-            'Credential='.$this->accessKey.'/'.\implode('/', $credentialScope),
-            'SignedHeaders='.\implode(';', \array_keys($combinedHeaders)),
-            'Signature='.$signature,
-        ]);
-    }
+    //     return $algorithm.' '.\implode(',', [
+    //         'Credential='.$this->accessKey.'/'.\implode('/', $credentialScope),
+    //         'SignedHeaders='.\implode(';', \array_keys($combinedHeaders)),
+    //         'Signature='.$signature,
+    //     ]);
+    // }
 
     /* AUTHENTICATION FUNCTIONS FOR AZURE (added by Tam)
         Source: https://github.com/Azure/azure-storage-php/blob/master/azure-storage-common/src/Common/Internal/Authentication/SharedKeyAuthScheme.php */
