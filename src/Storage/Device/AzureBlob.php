@@ -105,6 +105,9 @@ class AzureBlob extends Device
      * Other constants
     */
     const X_MS_VERSION = '2023-01-03';
+    const BLOCK_BLOB = 'BlockBlob';
+    const PAGE_BLOB = 'PageBlob';
+    const APPEND_BLOB = 'AppendBlob';
 
     /**
      * DONE
@@ -148,7 +151,7 @@ class AzureBlob extends Device
 
     // New $headers, probably more compatible with AzureBlob
     protected array $headers = [
-        'host' => '', //Note sure if this host header is necessary for AzureBlob. Consider making a separate host variable
+        //'host' => '', //Note sure if this host header is necessary for AzureBlob. Consider making a separate host variable
         'content-encoding' => '',
         'content-language' => '',
         'content-length' => '',
@@ -161,6 +164,14 @@ class AzureBlob extends Device
         'if-unmodified-since' => '',
         'range' => '',
     ];
+
+    /**
+     * Tam's note: remove the 'host' header as it is not a part of Azure standard headers.
+     * Make a host variable to save the API endpoint 
+     * 
+     * @var array
+     */
+    protected string $host;
 
     /**
      * Taken from S3 file. Need to verify if fully compatible.
@@ -183,7 +194,7 @@ class AzureBlob extends Device
         $this->container = $container;
         $this->storageAccount = $storageAccount;
         $this->root = $root;
-        $this->headers['host'] = $storageAccount.'.blob.core.windows.net';
+        $host = $storageAccount.'.blob.core.windows.net/'.$container;
         $this->azureHeaders = [];
     }
 
@@ -252,27 +263,70 @@ class AzureBlob extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
+        //Tam's note: lines 266 - 269 DONE. This is the case for small blob
         if ($chunk == 1 && $chunks == 1) {
             return $this->write($path, \file_get_contents($source), \mime_content_type($source));
         }
-        $uploadId = $metadata['uploadId'] ?? null;
-        if (empty($uploadId)) {
-            $uploadId = $this->createMultipartUpload($path, $metadata['content_type']);
-            $metadata['uploadId'] = $uploadId;
-        }
 
-        $etag = $this->uploadPart($source, $path, $chunk, $uploadId);
-        $metadata['parts'] ??= [];
-        $metadata['parts'][] = ['partNumber' => $chunk, 'etag' => $etag];
+        // $uploadId = $metadata['uploadId'] ?? null;
+        // if (empty($uploadId)) {
+        //     $uploadId = $this->createMultipartUpload($path, $metadata['content_type']);
+        //     $metadata['uploadId'] = $uploadId;
+        // }
+
+        //Tam's note: The rest is the case for big blob that can be broken into small blocks
+        //1. Create an empty blob. Similar to createMultipartUpload. 
+        // Also create an array that holds all block IDs
+        $this->write($path, '');
+        $blockList = [];
+
+        // $etag = $this->uploadPart($source, $path, $chunk, $uploadId);
+        // $metadata['parts'] ??= [];
+        // $metadata['parts'][] = ['partNumber' => $chunk, 'etag' => $etag];
+        // $metadata['chunks'] ??= 0;
+        // $metadata['chunks']++;
+
+        //2. Upload the first block. Similar to uploadPart
+        $blockId = \base64_encode(\random_bytes(16).'and'.$chunk);   //generate a unique blockId
+        $blockId = \urlencode($blockId);
+        $this->putBlock($source, $blockId); //write a seperate helper function
         $metadata['chunks'] ??= 0;
         $metadata['chunks']++;
+        $blockList[] = $blockId;
+
+        //3. If all parts (ie. blocks) are uploaded, commit all blocks
         if ($metadata['chunks'] == $chunks) {
-            $this->completeMultipartUpload($path, $uploadId, $metadata['parts']);
+            // $this->completeMultipartUpload($path, $uploadId, $metadata['parts']);
+            $this->commitBlocks($blockList); //write a seperate helper function
         }
 
         return $metadata['chunks'];
     }
 
+    /* Tam's helper functions for upload */
+    private function putBlock(string $blockId, string $content): void
+    {
+        $this->headers['content-length'] = \strlen($content);
+        $params = [
+            'comps' => 'block',
+            'blockid' => $blockId,
+        ];
+        $this->call(self::METHOD_PUT, '', $content, $params);
+    }
+
+
+    private function commitBlocks(array $blockList): void
+    {
+        $params = [ 'comps' => 'blocklist' ];
+        $body = '....'; //will need to build this as an XML file, appending several block ID's
+        $this->headers['content-length'] = \strlen($body);
+        $this->call(self::METHOD_PUT, '', $body, $params);
+    }
+    // End of helper functions
+
+    /*  Tam's note: the set of functions: createMultipartUpload, uploadPart, and completeMultipartUpload
+        are helper functions that are specific for S3. We cannot use them for Azure. We will create a set 
+        of Azure functions to help the upload function. */     
     /**
      * NEED TO VERIFY IF THIS WORKS.
      * Start Multipart Upload
@@ -285,76 +339,78 @@ class AzureBlob extends Device
      *
      * @throws \Exception
      */
-    protected function createMultipartUpload(string $path, string $contentType): string
-    {
-        $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+    // protected function createMultipartUpload(string $path, string $contentType): string
+    // {
+    //     $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
 
-        $this->headers['content-md5'] = \base64_encode(md5('', true));
-        unset($this->amzHeaders['x-amz-content-sha256']);
-        $this->headers['content-type'] = $contentType;
-        $this->amzHeaders['x-amz-acl'] = $this->acl;
-        $response = $this->call(self::METHOD_POST, $uri, '', ['uploads' => '']);
+    //     $this->headers['content-md5'] = \base64_encode(md5('', true));
+    //     unset($this->amzHeaders['x-amz-content-sha256']);
+    //     $this->headers['content-type'] = $contentType;
+    //     $this->amzHeaders['x-amz-acl'] = $this->acl;
+    //     $response = $this->call(self::METHOD_POST, $uri, '', ['uploads' => '']);
 
-        return $response->body['UploadId'];
-    }
+    //     return $response->body['UploadId'];
+    // }
 
-    /**
-     * NEED TO VERIFY IF THIS WORKS.
-     * Upload Part
-     *
-     * @param  string  $source
-     * @param  string  $path
-     * @param  int  $chunk
-     * @param  string  $uploadId
-     * @return string
-     *
-     * @throws \Exception
-     */
-    protected function uploadPart(string $source, string $path, int $chunk, string $uploadId): string
-    {
-        $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+    // /**
+    //  * NEED TO VERIFY IF THIS WORKS.
+    //  * Upload Part
+    //  *
+    //  * @param  string  $source
+    //  * @param  string  $path
+    //  * @param  int  $chunk
+    //  * @param  string  $uploadId
+    //  * @return string
+    //  *
+    //  * @throws \Exception
+    //  */
+    // protected function uploadPart(string $source, string $path, int $chunk, string $uploadId): string
+    // {
+    //     $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
 
-        $data = \file_get_contents($source);
-        $this->headers['content-type'] = \mime_content_type($source);
-        $this->headers['content-md5'] = \base64_encode(md5($data, true));
-        $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
-        unset($this->amzHeaders['x-amz-acl']); // ACL header is not allowed in parts, only createMultipartUpload accepts this header.
+    //     $data = \file_get_contents($source);
+    //     $this->headers['content-type'] = \mime_content_type($source);
+    //     $this->headers['content-md5'] = \base64_encode(md5($data, true));
+    //     $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
+    //     unset($this->amzHeaders['x-amz-acl']); // ACL header is not allowed in parts, only createMultipartUpload accepts this header.
 
-        $response = $this->call(self::METHOD_PUT, $uri, $data, [
-            'partNumber' => $chunk,
-            'uploadId' => $uploadId,
-        ]);
+    //     $response = $this->call(self::METHOD_PUT, $uri, $data, [
+    //         'partNumber' => $chunk,
+    //         'uploadId' => $uploadId,
+    //     ]);
 
-        return $response->headers['etag'];
-    }
+    //     return $response->headers['etag'];
+    // }
 
-    /**
-     * NEED TO VERIFY IF THIS WORKS.
-     * Complete Multipart Upload
-     *
-     * @param  string  $path
-     * @param  string  $uploadId
-     * @param  array  $parts
-     * @return bool
-     *
-     * @throws \Exception
-     */
-    protected function completeMultipartUpload(string $path, string $uploadId, array $parts): bool
-    {
-        $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+    // /**
+    //  * NEED TO VERIFY IF THIS WORKS.
+    //  * Complete Multipart Upload
+    //  *
+    //  * @param  string  $path
+    //  * @param  string  $uploadId
+    //  * @param  array  $parts
+    //  * @return bool
+    //  *
+    //  * @throws \Exception
+    //  */
+    // protected function completeMultipartUpload(string $path, string $uploadId, array $parts): bool
+    // {
+    //     $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
 
-        $body = '<CompleteMultipartUpload>';
-        foreach ($parts as $part) {
-            $body .= "<Part><ETag>{$part['etag']}</ETag><PartNumber>{$part['partNumber']}</PartNumber></Part>";
-        }
-        $body .= '</CompleteMultipartUpload>';
+    //     $body = '<CompleteMultipartUpload>';
+    //     foreach ($parts as $part) {
+    //         $body .= "<Part><ETag>{$part['etag']}</ETag><PartNumber>{$part['partNumber']}</PartNumber></Part>";
+    //     }
+    //     $body .= '</CompleteMultipartUpload>';
 
-        $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
-        $this->headers['content-md5'] = \base64_encode(md5($body, true));
-        $this->call(self::METHOD_POST, $uri, $body, ['uploadId' => $uploadId]);
+    //     $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
+    //     $this->headers['content-md5'] = \base64_encode(md5($body, true));
+    //     $this->call(self::METHOD_POST, $uri, $body, ['uploadId' => $uploadId]);
 
-        return true;
-    }
+    //     return true;
+    // }
+    
+
 
     /**
      * NEED TO VERIFY IF THIS WORKS.
@@ -420,6 +476,9 @@ class AzureBlob extends Device
 
         $this->headers['content-type'] = $contentType;
         $this->headers['content-md5'] = \base64_encode(md5($data, true)); //TODO whould this work well with big file? can we skip it?
+        $this->headers['content-length'] = \strlen($data);
+        $this->azureHeaders['x-ms-blob-type'] = self::BLOCK_BLOB;
+
         // $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
         // $this->amzHeaders['x-amz-acl'] = $this->acl;
 
@@ -1081,7 +1140,7 @@ class AzureBlob extends Device
         // initialization of endpoint url and response object
         // Tam's note: OK
         $uri = $this->getAbsolutePath($uri);
-        $url = 'https://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
+        $url = 'https://'.$this->host.$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
         $response->body = '';
         $response->headers = [];
