@@ -451,15 +451,19 @@ class AzureBlob extends Device
      */
     public function read(string $path, int $offset = 0, int $length = null): string
     {
-        unset($this->amzHeaders['x-amz-acl']);
-        unset($this->amzHeaders['x-amz-content-sha256']);
-        unset($this->headers['content-type']);
+        // Remove or unset headers that are not needed or conflicting for Azure Blob storage
+        unset($headers['content-type']); // Azure Blob storage sets content type automatically
+        unset($headers['content-encoding']);
+        unset($headers['content-language']);
+
         $this->headers['content-md5'] = \base64_encode(md5('', true));
         $uri = ($path !== '') ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
+
         if ($length !== null) {
             $end = $offset + $length - 1;
             $this->headers['range'] = "bytes=$offset-$end";
         }
+        
         $response = $this->call(self::METHOD_GET, $uri, decode: false);
 
         return $response->body;
