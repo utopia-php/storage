@@ -519,24 +519,26 @@ class AzureBlob extends Device
 
     /**
      * NEED TO VERIFY IF THIS WORKS.
-     * Delete file in given path, Return true on success and false on failure.
-     *
-     * @see http://php.net/manual/en/function.filesize.php
+     * James: Function edited. 
+     * Delete blob in given path, Return true on success and false on failure.
      *
      * @param  string  $path
      * @return bool
      *
      * @throws \Exception
      */
-    public function delete(string $path, bool $recursive = false): bool
+    public function delete(string $path): bool
     {
         $uri = ($path !== '') ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
 
-        unset($this->headers['content-type']);
-        unset($this->amzHeaders['x-amz-acl']);
-        unset($this->amzHeaders['x-amz-content-sha256']);
-        $this->headers['content-md5'] = \base64_encode(md5('', true));
-        $this->call(self::METHOD_DELETE, $uri);
+        $this->azureHeaders['x-ms-delete-snapshots: include'];
+        $this->call(self::METHOD_DELETE, $uri, '');
+
+        // leftover S3 code
+        // unset($this->headers['content-type']);
+        // unset($this->amzHeaders['x-amz-acl']);
+        // unset($this->amzHeaders['x-amz-content-sha256']);
+        // $this->headers['content-md5'] = \base64_encode(md5('', true));  // content encoding
 
         return true;
     }
