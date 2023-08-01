@@ -562,27 +562,31 @@ class AzureBlob extends Device
 
     /**
      * NEED TO VERIFY IF THIS WORKS.
+     * Fairly DONE by Tam
      * Get list of objects in the given path.
+     * Tam: API operation name is "List Blobs"
      *
      * @param  string  $path
      * @return array
      *
      * @throws \Exception
      */
-    private function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
+    private function listBlobs($prefix = '', $maxresults = 5000, $marker = '') //Note: marker = continuationToken
     {
-        $uri = '/';
-        $prefix = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */
-        $this->headers['content-type'] = 'text/plain';
-        $this->headers['content-md5'] = \base64_encode(md5('', true));
+        $uri = '';
+        // $prefix = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */
+        // $this->headers['content-type'] = 'text/plain';
+        // $this->headers['content-md5'] = \base64_encode(md5('', true));
 
         $parameters = [
-            'list-type' => 2,
+            'restype' => 'container',
+            'comp' => 'list',
             'prefix' => $prefix,
-            'max-keys' => $maxKeys,
+            'maxresults' => $maxresults
         ];
-        if (! empty($continuationToken)) {
-            $parameters['continuation-token'] = $continuationToken;
+
+        if (! empty($marker)) {
+            $parameters['marker'] = $marker;
         }
         $response = $this->call(self::METHOD_GET, $uri, '', $parameters);
 
@@ -620,7 +624,7 @@ class AzureBlob extends Device
         // repeat until all is deleted
 
         // return True when deletePath operation is completed
-        return true
+        return true;
     }
 
     // /**
