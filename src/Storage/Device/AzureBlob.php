@@ -429,7 +429,7 @@ class AzureBlob extends Device
         
         $this->azureHeaders['x-ms-copy-action: abort'];
 
-        $this->call(self::METHOD_DELETE, $uri, ''); 
+        $this->call(self::METHOD_PUT, $uri, ''); 
 
         // leftover s3 code
         // unset($this->headers['content-type']);
@@ -599,7 +599,36 @@ class AzureBlob extends Device
                 foreach ($objects['Contents'] as $object) {
                     $body .= "<Object><Key>{$object['Key']}</Key></Object>";
                 }
-            } else {
+            } else {public function deletePath(string $path): bool
+                {
+                    $path = $this->getRoot().'/'.$path;
+            
+                    $uri = '/';
+                    $continuationToken = '';
+                    do {
+                        $objects = $this->listObjects($path, continuationToken: $continuationToken);
+                        $count = (int) ($objects['KeyCount'] ?? 1);
+                        if ($count < 1) {
+                            break;
+                        }
+                        $continuationToken = $objects['NextContinuationToken'] ?? '';
+                        $body = '<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">';
+                        if ($count > 1) {
+                            foreach ($objects['Contents'] as $object) {
+                                $body .= "<Object><Key>{$object['Key']}</Key></Object>";
+                            }
+                        } else {
+                            $body .= "<Object><Key>{$objects['Contents']['Key']}</Key></Object>";
+                        }
+                        $body .= '<Quiet>true</Quiet>';
+                        $body .= '</Delete>';
+                        $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
+                        $this->headers['content-md5'] = \base64_encode(md5($body, true));
+                        $this->call(self::METHOD_POST, $uri, $body, ['delete' => '']);
+                    } while (! empty($continuationToken));
+            
+                    return true;
+                }
                 $body .= "<Object><Key>{$objects['Contents']['Key']}</Key></Object>";
             }
             $body .= '<Quiet>true</Quiet>';
