@@ -247,6 +247,7 @@ class AzureBlob extends Device
 
     /**
      * NEED TO VERIFY IF THIS WORKS.
+     * DONE by Tam
      * Upload.
      *
      * Upload a file to desired destination in the selected disk.
@@ -277,7 +278,6 @@ class AzureBlob extends Device
         //Tam's note: The rest is the case for big blob that can be broken into small blocks
         //1. Create an empty blob. Similar to createMultipartUpload. 
         // Also create an array that holds all block IDs
-        $this->write($path, '');
         $blockList = [];
 
         // $etag = $this->uploadPart($source, $path, $chunk, $uploadId);
@@ -453,6 +453,7 @@ class AzureBlob extends Device
     /**
      * NEED TO VERIFY IF THIS WORKS.
      * Read file or part of file by given path, offset and length.
+     * DONE by Jaime.
      *
      * @param  string  $path
      * @param int offset
@@ -483,7 +484,7 @@ class AzureBlob extends Device
 
     /**
      * NEED TO VERIFY IF THIS WORKS. 
-     * Tam's note: I modified it recently, believe this will work.
+     * DONE by Tam
      * Write file by given path.
      *
      * @param  string  $path
@@ -510,7 +511,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Move file from given source to given path, Return true on success and false on failure.
      *
      * @see http://php.net/manual/en/function.filesize.php
@@ -758,7 +759,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Create a directory at the specified path.
      *
      * Returns true on success or if the directory already exists and false on error
@@ -768,12 +769,13 @@ class AzureBlob extends Device
      */
     public function createDirectory(string $path): bool
     {
-        /* S3 is an object store and does not have the concept of directories */
+        /* Azure Blob Storage is an object store (flat storage system) and
+             does not have the concept of directories */
         return true;
     }
 
     /**
-     * DONE.
+     * NEED TO VERIFY IF THIS WORKS.
      * Get directory size in bytes.
      *
      * Return -1 on error
@@ -815,7 +817,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * DONE.
+     * DONE by Tam.
      * Get file info
      *
      * @return array
