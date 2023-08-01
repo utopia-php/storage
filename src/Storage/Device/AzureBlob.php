@@ -599,63 +599,97 @@ class AzureBlob extends Device
      */
     public function deletePath(string $path): bool
     {
-        $path = $this->getRoot().'/'.$path;
+        // create variable that holds the path of objects to be deleted
 
-        $uri = '/';
-        $continuationToken = '';
-        do {
-            $objects = $this->listObjects($path, continuationToken: $continuationToken);
-            $count = (int) ($objects['KeyCount'] ?? 1);
-            if ($count < 1) {
-                break;
-            }
-            $continuationToken = $objects['NextContinuationToken'] ?? '';
-            $body = '<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">';
-            if ($count > 1) {
-                foreach ($objects['Contents'] as $object) {
-                    $body .= "<Object><Key>{$object['Key']}</Key></Object>";
-                }
-            } else {public function deletePath(string $path): bool
-                {
-                    $path = $this->getRoot().'/'.$path;
-            
-                    $uri = '/';
-                    $continuationToken = '';
-                    do {
-                        $objects = $this->listObjects($path, continuationToken: $continuationToken);
-                        $count = (int) ($objects['KeyCount'] ?? 1);
-                        if ($count < 1) {
-                            break;
-                        }
-                        $continuationToken = $objects['NextContinuationToken'] ?? '';
-                        $body = '<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">';
-                        if ($count > 1) {
-                            foreach ($objects['Contents'] as $object) {
-                                $body .= "<Object><Key>{$object['Key']}</Key></Object>";
-                            }
-                        } else {
-                            $body .= "<Object><Key>{$objects['Contents']['Key']}</Key></Object>";
-                        }
-                        $body .= '<Quiet>true</Quiet>';
-                        $body .= '</Delete>';
-                        $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
-                        $this->headers['content-md5'] = \base64_encode(md5($body, true));
-                        $this->call(self::METHOD_POST, $uri, $body, ['delete' => '']);
-                    } while (! empty($continuationToken));
-            
-                    return true;
-                }
-                $body .= "<Object><Key>{$objects['Contents']['Key']}</Key></Object>";
-            }
-            $body .= '<Quiet>true</Quiet>';
-            $body .= '</Delete>';
-            $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
-            $this->headers['content-md5'] = \base64_encode(md5($body, true));
-            $this->call(self::METHOD_POST, $uri, $body, ['delete' => '']);
-        } while (! empty($continuationToken));
+        // implement pagination to delete objects in batches
 
-        return true;
+        // implement a do while loop (keeps deleting blobs as long as there are blobs to delete)
+
+        // call 'listObjects' method to get list of objects in path
+        // use a 'continuation token' to get a list of objects that match the path
+        // if # of blobs retrieved is less than 1, break loop
+
+        // if there are blobs to delete...
+            // construct a request body for deleting objects
+                // create an XML document containing the blob names of the blobs to be deleted
+                    // can utilize the <Quiet> element so that no error responses are returned for failed deletions
+            // initialize headers
+            // execute HTTP request/cURL command
+
+        // repeat until all is deleted
+
+        // return True when deletePath operation is completed
+        return true
     }
+
+    // /**
+    //  * NEED TO VERIFY IF THIS WORKS.
+    //  * Delete files in given path, path must be a directory. Return true on success and false on failure.
+    //  *
+    //  * @param  string  $path
+    //  * @return bool
+    //  *
+    //  * @throws \Exception
+    //  */
+    // public function deletePath(string $path): bool
+    // {
+    //     $path = $this->getRoot().'/'.$path;
+
+    //     $uri = '/';
+    //     $continuationToken = '';
+    //     do {
+    //         $objects = $this->listObjects($path, continuationToken: $continuationToken);
+    //         $count = (int) ($objects['KeyCount'] ?? 1);
+    //         if ($count < 1) {
+    //             break;
+    //         }
+    //         $continuationToken = $objects['NextContinuationToken'] ?? '';
+    //         $body = '<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">';
+    //         if ($count > 1) {
+    //             foreach ($objects['Contents'] as $object) {
+    //                 $body .= "<Object><Key>{$object['Key']}</Key></Object>";
+    //             }
+    //         } else {public function deletePath(string $path): bool
+    //             {
+    //                 $path = $this->getRoot().'/'.$path;
+            
+    //                 $uri = '/';
+    //                 $continuationToken = '';
+    //                 do {
+    //                     $objects = $this->listObjects($path, continuationToken: $continuationToken);
+    //                     $count = (int) ($objects['KeyCount'] ?? 1);
+    //                     if ($count < 1) {
+    //                         break;
+    //                     }
+    //                     $continuationToken = $objects['NextContinuationToken'] ?? '';
+    //                     $body = '<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">';
+    //                     if ($count > 1) {
+    //                         foreach ($objects['Contents'] as $object) {
+    //                             $body .= "<Object><Key>{$object['Key']}</Key></Object>";
+    //                         }
+    //                     } else {
+    //                         $body .= "<Object><Key>{$objects['Contents']['Key']}</Key></Object>";
+    //                     }
+    //                     $body .= '<Quiet>true</Quiet>';
+    //                     $body .= '</Delete>';
+    //                     $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
+    //                     $this->headers['content-md5'] = \base64_encode(md5($body, true));
+    //                     $this->call(self::METHOD_POST, $uri, $body, ['delete' => '']);
+    //                 } while (! empty($continuationToken));
+            
+    //                 return true;
+    //             }
+    //             $body .= "<Object><Key>{$objects['Contents']['Key']}</Key></Object>";
+    //         }
+    //         $body .= '<Quiet>true</Quiet>';
+    //         $body .= '</Delete>';
+    //         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
+    //         $this->headers['content-md5'] = \base64_encode(md5($body, true));
+    //         $this->call(self::METHOD_POST, $uri, $body, ['delete' => '']);
+    //     } while (! empty($continuationToken));
+
+    //     return true;
+    // }
 
     /**
      * DONE.
