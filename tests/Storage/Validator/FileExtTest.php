@@ -35,5 +35,6 @@ class FileExtTest extends TestCase
         $this->assertEquals($this->object->isValid('file.tar.g'), false);
         $this->assertEquals($this->object->isValid('file.tar.gz'), true);
         $this->assertEquals($this->object->isValid('file.gz'), true);
+        $this->assertEquals($this->object->isValid('file.GIF'), true);
     }
 }
