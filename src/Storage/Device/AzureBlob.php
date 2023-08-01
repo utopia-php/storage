@@ -289,7 +289,7 @@ class AzureBlob extends Device
         //2. Upload the first block. Similar to uploadPart
         $blockId = \base64_encode(\random_bytes(16).'and'.$chunk);   //generate a unique blockId
         $blockId = \urlencode($blockId);
-        $this->putBlock($source, $blockId); //write a seperate helper function
+        $this->putBlock($source, $path, $blockId); //write a seperate helper function
         $metadata['chunks'] ??= 0;
         $metadata['chunks']++;
         $blockList[] = $blockId;
@@ -297,31 +297,43 @@ class AzureBlob extends Device
         //3. If all parts (ie. blocks) are uploaded, commit all blocks
         if ($metadata['chunks'] == $chunks) {
             // $this->completeMultipartUpload($path, $uploadId, $metadata['parts']);
-            $this->commitBlocks($blockList); //write a seperate helper function
+            $this->commitBlocks($path, $blockList); //write a seperate helper function
         }
 
         return $metadata['chunks'];
     }
 
     /* Tam's helper functions for upload */
-    private function putBlock(string $blockId, string $content): void
+    private function putBlock(string $content, string $path, string $blockId): void
     {
         $this->headers['content-length'] = \strlen($content);
         $params = [
             'comps' => 'block',
             'blockid' => $blockId,
         ];
-        $this->call(self::METHOD_PUT, '', $content, $params);
+        $this->call(self::METHOD_PUT, $path, $content, $params);
     }
 
 
-    private function commitBlocks(array $blockList): void
+    private function commitBlocks(string $path, array $blockList): void
     {
         $params = [ 'comps' => 'blocklist' ];
-        $body = '....'; //will need to build this as an XML file, appending several block ID's
+        $body = $this->buildBlockListBody($blockList); //will need to build this as an XML file, appending several block ID's
         $this->headers['content-length'] = \strlen($body);
-        $this->call(self::METHOD_PUT, '', $body, $params);
+        $this->call(self::METHOD_PUT, $path, $body, $params);
     }
+
+    private function buildBlockListBody(array $blockList): string
+    {
+        $result = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
+        $result .= "<BlockList>\n";
+        foreach ($blockList as $block)
+        {
+            $result = $result."<Latest>".$block."</Latest>\n";
+        }
+        $result .= "</BlockList>";
+        return $result;
+    } 
     // End of helper functions
 
     /*  Tam's note: the set of functions: createMultipartUpload, uploadPart, and completeMultipartUpload
@@ -451,15 +463,19 @@ class AzureBlob extends Device
      */
     public function read(string $path, int $offset = 0, int $length = null): string
     {
-        unset($this->amzHeaders['x-amz-acl']);
-        unset($this->amzHeaders['x-amz-content-sha256']);
-        unset($this->headers['content-type']);
+        // Remove or unset headers that are not needed or conflicting for Azure Blob storage
+        unset($headers['content-type']); // Azure Blob storage sets content type automatically
+        unset($headers['content-encoding']);
+        unset($headers['content-language']);
+
         $this->headers['content-md5'] = \base64_encode(md5('', true));
         $uri = ($path !== '') ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
+
         if ($length !== null) {
             $end = $offset + $length - 1;
             $this->headers['range'] = "bytes=$offset-$end";
         }
+        
         $response = $this->call(self::METHOD_GET, $uri, decode: false);
 
         return $response->body;
@@ -642,7 +658,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Check if file exists
      *
      * @param  string  $path
@@ -660,7 +676,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Returns given file path its size.
      *
      * @see http://php.net/manual/en/function.filesize.php
@@ -676,7 +692,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Returns given file path its mime type.
      *
      * @see http://php.net/manual/en/function.mime-content-type.php
@@ -692,7 +708,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Returns given file path its MD5 hash value.
      *
      * @see http://php.net/manual/en/function.md5-file.php
@@ -723,7 +739,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Get directory size in bytes.
      *
      * Return -1 on error
@@ -739,7 +755,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Get Partition Free Space.
      *
      * disk_free_space — Returns available space on filesystem or disk partition
@@ -752,7 +768,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Get Partition Total Space.
      *
      * disk_total_space — Returns the total size of a filesystem or disk partition
@@ -765,19 +781,20 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Get file info
      *
      * @return array
      */
     private function getInfo(string $path): array
     {
-        unset($this->headers['content-type']);
-        unset($this->amzHeaders['x-amz-acl']);
-        unset($this->amzHeaders['x-amz-content-sha256']);
-        $this->headers['content-md5'] = \base64_encode(md5('', true));
+        // unset($this->headers['content-type']);
+        // unset($this->amzHeaders['x-amz-acl']);
+        // unset($this->amzHeaders['x-amz-content-sha256']);
+        // $this->headers['content-md5'] = \base64_encode(md5('', true));
+
         $uri = $path !== '' ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
-        $response = $this->call(self::METHOD_HEAD, $uri);
+        $response = $this->call(self::METHOD_GET, $uri);
 
         return $response->headers;
     }
