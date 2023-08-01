@@ -629,7 +629,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Check if file exists
      *
      * @param  string  $path
@@ -647,7 +647,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Returns given file path its size.
      *
      * @see http://php.net/manual/en/function.filesize.php
@@ -663,7 +663,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Returns given file path its mime type.
      *
      * @see http://php.net/manual/en/function.mime-content-type.php
@@ -679,7 +679,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Returns given file path its MD5 hash value.
      *
      * @see http://php.net/manual/en/function.md5-file.php
@@ -710,7 +710,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Get directory size in bytes.
      *
      * Return -1 on error
@@ -726,7 +726,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Get Partition Free Space.
      *
      * disk_free_space — Returns available space on filesystem or disk partition
@@ -739,7 +739,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Get Partition Total Space.
      *
      * disk_total_space — Returns the total size of a filesystem or disk partition
@@ -752,19 +752,20 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
+     * DONE.
      * Get file info
      *
      * @return array
      */
     private function getInfo(string $path): array
     {
-        unset($this->headers['content-type']);
-        unset($this->amzHeaders['x-amz-acl']);
-        unset($this->amzHeaders['x-amz-content-sha256']);
-        $this->headers['content-md5'] = \base64_encode(md5('', true));
+        // unset($this->headers['content-type']);
+        // unset($this->amzHeaders['x-amz-acl']);
+        // unset($this->amzHeaders['x-amz-content-sha256']);
+        // $this->headers['content-md5'] = \base64_encode(md5('', true));
+
         $uri = $path !== '' ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
-        $response = $this->call(self::METHOD_HEAD, $uri);
+        $response = $this->call(self::METHOD_GET, $uri);
 
         return $response->headers;
     }
