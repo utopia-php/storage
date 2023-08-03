@@ -608,15 +608,23 @@ class AzureBlob extends Device
         $path = $this->getRoot().'/'.$path;
 
         $uri = '/';
-        $continuationToken = '';    // can a continuationToken be used?
+        $marker = '';
 
         // call 'listObjects' method to get list of objects in path
-        $objects = $this->listObjects($path);    // check that call is correct, returns XML object
+        // NOTE - have to find a way to utilize markers below, since listBlobs returns 5000 items at a time
+        $matchedBlobs = $this->listBlobs($path);    // check that call is correct, returns XML object 
+        $blobsXML = new simplexml_load_file($matchedBlobs);
 
-        // 1. parse through XML object
-            // a. implement a do while loop (keeps deleting blobs as long as there are blobs to delete)
-                // i. prepare request
-                // ii. execute curl command
+        // parsing through XML object, storing values for request
+        $blobNamesArr = array();
+        foreach ($blobsXML->Blob as $blob) {    // NOTE: 
+            array_push($blobNamesArr, (string)$blob->Name);
+        }
+
+        // delete all currently stored blobs
+        foreach ($blobNamesArr as $blobName) {
+            this->delete("/$blobName");
+        }
 
         // return True when deletePath operation is completed
         return true;
