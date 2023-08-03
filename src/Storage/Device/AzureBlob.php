@@ -190,11 +190,11 @@ class AzureBlob extends Device
     
     public function __construct(string $root, string $accessKey, string $storageAccount, string $container)
     {
-        $this->$accessKey = $accessKey;
+        $this->accessKey = $accessKey;
         $this->container = $container;
         $this->storageAccount = $storageAccount;
         $this->root = $root;
-        $host = $storageAccount.'.blob.core.windows.net/'.$container;
+        $this->host = $storageAccount.'.blob.core.windows.net/'.$container;
         $this->azureHeaders = [];
     }
 
@@ -544,7 +544,7 @@ class AzureBlob extends Device
      *
      * @throws \Exception
      */
-    public function delete(string $path): bool
+    public function delete(string $path, bool $recursive = false): bool
     {
         $uri = ($path !== '') ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
 
