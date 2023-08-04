@@ -18,21 +18,23 @@ class AzureBlob extends Device
 
     const METHOD_PUT = 'PUT';
 
-    const METHOD_PATCH = 'PATCH';
+    const METHOD_PATCH = 'PATCH';   //Never use
 
     const METHOD_DELETE = 'DELETE';
 
     const METHOD_HEAD = 'HEAD';
 
-    const METHOD_OPTIONS = 'OPTIONS';
+    const METHOD_OPTIONS = 'OPTIONS'; //Never use
 
-    const METHOD_CONNECT = 'CONNECT';
+    const METHOD_CONNECT = 'CONNECT'; //Never use
 
-    const METHOD_TRACE = 'TRACE';
+    const METHOD_TRACE = 'TRACE';   //Nevre use
 
     /**
      * (WE ARE IN THE PROCESS OF CHECKING IF THESE ARE COMPATIBLE WITH AZURE OR NOT)
      * Microsoft Azure regions constants (taken from AWS Regions in S3 file)
+     * 
+     * Tam: seems like we never need to use the region throughout our AzureBlob file
      */
     const US_EAST_1 = 'us-east-1';
 
@@ -93,14 +95,6 @@ class AzureBlob extends Device
     /* Tam's note: For Azure, there are only 3 access levels: private, full public read access, and 
         public read access for blobs only. However, the way we set the access level is very different
         from S3. Overall, it's not necessary to have the acl variable/constants. */
-    // const ACL_PRIVATE = 'private';
-
-    // const ACL_PUBLIC_READ = 'public-read';
-
-    // const ACL_PUBLIC_READ_WRITE = 'public-read-write';
-
-    // const ACL_AUTHENTICATED_READ = 'authenticated-read';
-
     /** 
      * Other constants
     */
@@ -127,31 +121,15 @@ class AzureBlob extends Device
      */
     protected string $container;
 
-    // /**
-    //  * DONE
-    //  * @var string
-    //  */
-    // protected string $acl = self::ACL_PRIVATE;
-
     /**
      * DONE
      * @var string
      */
     protected string $root = 'temp';
 
-    /**
-     * Taken from S3 file. Need to verify if fully compatible.
-     * @var array
-     */
-    // protected array $headers = [
-    //     'host' => '', 'date' => '',
-    //     'content-md5' => '',
-    //     'content-type' => '',
-    // ];
-
     // New $headers, probably more compatible with AzureBlob
+    //Tam: should headers be in properly case (e.g. Content-Length instead of content-length)
     protected array $headers = [
-        //'host' => '', //Note sure if this host header is necessary for AzureBlob. Consider making a separate host variable
         'content-encoding' => '',
         'content-language' => '',
         'content-length' => '',
@@ -174,13 +152,13 @@ class AzureBlob extends Device
     protected string $host;
 
     /**
-     * Taken from S3 file. Need to verify if fully compatible.
+     * Newly created for Azure. Need to verify if fully compatible.
      * @var array
      */
     protected array $azureHeaders;
 
     /**
-     * IN PROGRESS...
+     * DONE
      * Azure Blob Constructor
      * @param string $root
      * @param string $sharedKey
@@ -264,40 +242,28 @@ class AzureBlob extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        //Tam's note: lines 266 - 269 DONE. This is the case for small blob
+        //This is the case for small blob 
         if ($chunk == 1 && $chunks == 1) {
             return $this->write($path, \file_get_contents($source), \mime_content_type($source));
         }
-
-        // $uploadId = $metadata['uploadId'] ?? null;
-        // if (empty($uploadId)) {
-        //     $uploadId = $this->createMultipartUpload($path, $metadata['content_type']);
-        //     $metadata['uploadId'] = $uploadId;
-        // }
 
         //Tam's note: The rest is the case for big blob that can be broken into small blocks
         //1. Create an empty blob. Similar to createMultipartUpload. 
         // Also create an array that holds all block IDs
         $blockList = [];
 
-        // $etag = $this->uploadPart($source, $path, $chunk, $uploadId);
-        // $metadata['parts'] ??= [];
-        // $metadata['parts'][] = ['partNumber' => $chunk, 'etag' => $etag];
-        // $metadata['chunks'] ??= 0;
-        // $metadata['chunks']++;
-
         //2. Upload the first block. Similar to uploadPart
-        $blockId = \base64_encode(\random_bytes(16).'and'.$chunk);   //generate a unique blockId
+        //generate a unique blockId, make sure they are of the same size
+        $blockId = \base64_encode(\random_bytes(32).(\time() % 1000000));   
         $blockId = \urlencode($blockId);
-        $this->putBlock($source, $path, $blockId); //write a seperate helper function
+        $this->putBlock($source, $path, $blockId); 
         $metadata['chunks'] ??= 0;
         $metadata['chunks']++;
         $blockList[] = $blockId;
 
-        //3. If all parts (ie. blocks) are uploaded, commit all blocks
+        //3. If all parts (ie. blocks) are uploaded, commit all blocks, similar to completeMultipartUpload
         if ($metadata['chunks'] == $chunks) {
-            // $this->completeMultipartUpload($path, $uploadId, $metadata['parts']);
-            $this->commitBlocks($path, $blockList); //write a seperate helper function
+            $this->commitBlocks($path, $blockList);
         }
 
         return $metadata['chunks'];
@@ -308,7 +274,7 @@ class AzureBlob extends Device
     {
         $this->headers['content-length'] = \strlen($content);
         $params = [
-            'comps' => 'block',
+            'comp' => 'block',
             'blockid' => $blockId,
         ];
         $this->call(self::METHOD_PUT, $path, $content, $params);
@@ -317,118 +283,34 @@ class AzureBlob extends Device
 
     private function commitBlocks(string $path, array $blockList): void
     {
-        $params = [ 'comps' => 'blocklist' ];
-        $body = $this->buildBlockListBody($blockList); //will need to build this as an XML file, appending several block ID's
+        $params = [ 'comp' => 'blocklist' ];
+        $body = $this->buildBlockListBody($blockList); //will need to build this as an XML file, appending several block IDs
         $this->headers['content-length'] = \strlen($body);
         $this->call(self::METHOD_PUT, $path, $body, $params);
     }
 
     private function buildBlockListBody(array $blockList): string
     {
-        $result = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
-        $result .= "<BlockList>\n";
+        $result = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+        $result .= "<BlockList>";
         foreach ($blockList as $block)
         {
-            $result = $result."<Latest>".$block."</Latest>\n";
+            $result = $result."<Latest>".$block."</Latest>";
         }
         $result .= "</BlockList>";
         return $result;
     } 
     // End of helper functions
 
-    /*  Tam's note: the set of functions: createMultipartUpload, uploadPart, and completeMultipartUpload
-        are helper functions that are specific for S3. We cannot use them for Azure. We will create a set 
-        of Azure functions to help the upload function. */     
     /**
      * NEED TO VERIFY IF THIS WORKS.
-     * Start Multipart Upload
-     *
-     * Initiate a multipart upload and return an upload ID.
-     *
-     * @param  string  $path
-     * @param  string  $contentType
-     * @return string
-     *
-     * @throws \Exception
-     */
-    // protected function createMultipartUpload(string $path, string $contentType): string
-    // {
-    //     $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
-
-    //     $this->headers['content-md5'] = \base64_encode(md5('', true));
-    //     unset($this->amzHeaders['x-amz-content-sha256']);
-    //     $this->headers['content-type'] = $contentType;
-    //     $this->amzHeaders['x-amz-acl'] = $this->acl;
-    //     $response = $this->call(self::METHOD_POST, $uri, '', ['uploads' => '']);
-
-    //     return $response->body['UploadId'];
-    // }
-
-    // /**
-    //  * NEED TO VERIFY IF THIS WORKS.
-    //  * Upload Part
-    //  *
-    //  * @param  string  $source
-    //  * @param  string  $path
-    //  * @param  int  $chunk
-    //  * @param  string  $uploadId
-    //  * @return string
-    //  *
-    //  * @throws \Exception
-    //  */
-    // protected function uploadPart(string $source, string $path, int $chunk, string $uploadId): string
-    // {
-    //     $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
-
-    //     $data = \file_get_contents($source);
-    //     $this->headers['content-type'] = \mime_content_type($source);
-    //     $this->headers['content-md5'] = \base64_encode(md5($data, true));
-    //     $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
-    //     unset($this->amzHeaders['x-amz-acl']); // ACL header is not allowed in parts, only createMultipartUpload accepts this header.
-
-    //     $response = $this->call(self::METHOD_PUT, $uri, $data, [
-    //         'partNumber' => $chunk,
-    //         'uploadId' => $uploadId,
-    //     ]);
-
-    //     return $response->headers['etag'];
-    // }
-
-    // /**
-    //  * NEED TO VERIFY IF THIS WORKS.
-    //  * Complete Multipart Upload
-    //  *
-    //  * @param  string  $path
-    //  * @param  string  $uploadId
-    //  * @param  array  $parts
-    //  * @return bool
-    //  *
-    //  * @throws \Exception
-    //  */
-    // protected function completeMultipartUpload(string $path, string $uploadId, array $parts): bool
-    // {
-    //     $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
-
-    //     $body = '<CompleteMultipartUpload>';
-    //     foreach ($parts as $part) {
-    //         $body .= "<Part><ETag>{$part['etag']}</ETag><PartNumber>{$part['partNumber']}</PartNumber></Part>";
-    //     }
-    //     $body .= '</CompleteMultipartUpload>';
-
-    //     $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
-    //     $this->headers['content-md5'] = \base64_encode(md5($body, true));
-    //     $this->call(self::METHOD_POST, $uri, $body, ['uploadId' => $uploadId]);
-
-    //     return true;
-    // }
-    
-
-
-    /**
-     * NEED TO VERIFY IF THIS WORKS.
-     * James: Finished editing.
+     * DONE by Jaime
      * Abort "Copy Blob" operation
-     *
+     * Tam: This is quite tricky. The purpose of this function in S3 is to cancel/abort a multipatUplaod
+     *      operation. However, Azure does not have multipartUpload. We simple abort an upload by not
+     *      commiting the blocks. The uncommitted blocks will be garabage collected automatically.
+     *      The Abort Copy Blob operation isn't for this purpose. My suggestion is to simply
+     *      return False for this function.
      * @param  string  $path
      * @param  string  $extra
      * @return bool
@@ -440,12 +322,12 @@ class AzureBlob extends Device
         $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
         
         $this->azureHeaders['x-ms-copy-action: abort'];
+        $params = [
+            'comp' => 'copy',
+            'copyid' => ''
+        ];
 
-        $this->call(self::METHOD_PUT, $uri, ''); 
-
-        // leftover s3 code
-        // unset($this->headers['content-type']);
-        // $this->headers['content-md5'] = \base64_encode(md5('', true)); // content enconding
+        $this->call(self::METHOD_PUT, $uri, '', $params); 
 
         return true;
     }
@@ -465,16 +347,19 @@ class AzureBlob extends Device
     public function read(string $path, int $offset = 0, int $length = null): string
     {
         // Remove or unset headers that are not needed or conflicting for Azure Blob storage
-        unset($headers['content-type']); // Azure Blob storage sets content type automatically
-        unset($headers['content-encoding']);
-        unset($headers['content-language']);
+        // Tam: these headers are needed for the signature, even if their values are empty
+        // unset($headers['content-type']); 
+        // unset($headers['content-encoding']);
+        // unset($headers['content-language']);
 
-        $this->headers['content-md5'] = \base64_encode(md5('', true));
+        // $this->headers['content-md5'] = \base64_encode(md5('', true));  //No need according to documentation
+
         $uri = ($path !== '') ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
 
         if ($length !== null) {
             $end = $offset + $length - 1;
-            $this->headers['range'] = "bytes=$offset-$end";
+            $this->headers['range'] = "bytes=$offset-$end";  //Can have either, or both, of the headers
+            $this->azureHeaders['x-ms-range'] = "bytes=$offset-$end";
         }
         
         $response = $this->call(self::METHOD_GET, $uri, decode: false);
@@ -498,12 +383,8 @@ class AzureBlob extends Device
         $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
 
         $this->headers['content-type'] = $contentType;
-        $this->headers['content-md5'] = \base64_encode(md5($data, true)); //TODO whould this work well with big file? can we skip it?
         $this->headers['content-length'] = \strlen($data);
         $this->azureHeaders['x-ms-blob-type'] = self::BLOCK_BLOB;
-
-        // $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
-        // $this->amzHeaders['x-amz-acl'] = $this->acl;
 
         $this->call(self::METHOD_PUT, $uri, $data);
 
