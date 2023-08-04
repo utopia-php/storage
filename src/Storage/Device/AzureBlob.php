@@ -18,17 +18,17 @@ class AzureBlob extends Device
 
     const METHOD_PUT = 'PUT';
 
-    const METHOD_PATCH = 'PATCH';   //Never use
+    const METHOD_PATCH = 'PATCH';   // never used
 
     const METHOD_DELETE = 'DELETE';
 
     const METHOD_HEAD = 'HEAD';
 
-    const METHOD_OPTIONS = 'OPTIONS'; //Never use
+    const METHOD_OPTIONS = 'OPTIONS'; // never used
 
-    const METHOD_CONNECT = 'CONNECT'; //Never use
+    const METHOD_CONNECT = 'CONNECT'; // never used
 
-    const METHOD_TRACE = 'TRACE';   //Nevre use
+    const METHOD_TRACE = 'TRACE';   // never used
 
     /**
      * (WE ARE IN THE PROCESS OF CHECKING IF THESE ARE COMPATIBLE WITH AZURE OR NOT)
@@ -214,6 +214,7 @@ class AzureBlob extends Device
 
     /**
      * Need to verify if this works.
+     * DONE; Tam believes it is correct. - James
      * @param  string  $filename
      * @param  string|null  $prefix
      * @return string
@@ -352,8 +353,6 @@ class AzureBlob extends Device
         // unset($headers['content-encoding']);
         // unset($headers['content-language']);
 
-        // $this->headers['content-md5'] = \base64_encode(md5('', true));  //No need according to documentation
-
         $uri = ($path !== '') ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
 
         if ($length !== null) {
@@ -432,12 +431,6 @@ class AzureBlob extends Device
         $this->azureHeaders['x-ms-delete-snapshots: include'];
         $this->call(self::METHOD_DELETE, $uri, '');
 
-        // leftover S3 code
-        // unset($this->headers['content-type']);
-        // unset($this->amzHeaders['x-amz-acl']);
-        // unset($this->amzHeaders['x-amz-content-sha256']);
-        // $this->headers['content-md5'] = \base64_encode(md5('', true));  // content encoding
-
         return true;
     }
 
@@ -455,7 +448,6 @@ class AzureBlob extends Device
     private function listBlobs($prefix = '', $maxresults = 5000, $marker = '') //Note: marker = continuationToken
     {
         $uri = '';
-        // $prefix = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */
         // $this->headers['content-type'] = 'text/plain';
         // $this->headers['content-md5'] = \base64_encode(md5('', true));
 
@@ -476,6 +468,7 @@ class AzureBlob extends Device
 
     /**
      * NEED TO VERIFY IF THIS WORKS.
+     * DONE; edited.
      * Delete files in given path, path must be a directory. Return true on success and false on failure.
      *
      * @param  string  $path
@@ -490,24 +483,6 @@ class AzureBlob extends Device
 
         $uri = '/';
         $marker = '';
-
-        // // call 'listObjects' method to get list of objects in path
-        // // NOTE - have to find a way to utilize markers below, since listBlobs returns 5000 items at a time
-        // $matchedBlobs = $this->listBlobs($path);    // check that call is correct, returns XML object 
-        // $blobsXML =  simplexml_load_file($matchedBlobs);
-
-        // // parsing through XML object, storing values for request
-        // $blobNamesArr = array();
-        // foreach ($blobsXML->Blob as $blob) {    // NOTE: 
-        //     array_push($blobNamesArr, (string)$blob->Name);
-        // }
-
-
-
-        // // delete all currently stored blobs
-        // foreach ($blobNamesArr as $blobName) {
-        //     this->delete("/$blobName");
-        // }
 
         /* Outer do-while loop: call listBlobs() multiple times until all matched blobs are retrieved.
            Suppose we need to delete 15000 blobs, we need to go through at least 3 outer loops*/
@@ -558,46 +533,7 @@ class AzureBlob extends Device
         // return True when deletePath operation is completed
         return true;
     }
-
-    // /**
-    //  * deletePath template/model from S3 implementation.
-    //  * Delete files in given path, path must be a directory. Return true on success and false on failure.
-    //  *
-    //  * @param  string  $path
-    //  * @return bool
-    //  *
-    //  * @throws \Exception
-    //  */
-    // public function deletePath(string $path): bool
-    // {
-    //     $path = $this->getRoot().'/'.$path;
-
-    //     $uri = '/';
-    //     $continuationToken = '';
-    //     do {
-    //         $objects = $this->listObjects($path, continuationToken: $continuationToken);
-    //         $count = (int) ($objects['KeyCount'] ?? 1);
-    //         if ($count < 1) {
-    //             break;
-    //         }
-    //         $continuationToken = $objects['NextContinuationToken'] ?? '';
-    //         $body = '<Delete xmlns="http://s3.amazonaws.com/doc/2006-03-01/">';
-    //         if ($count > 1) {
-    //             foreach ($objects['Contents'] as $object) {
-    //                 $body .= "<Object><Key>{$object['Key']}</Key></Object>";
-    //             }
-    //         } else {
-    //             $body .= "<Object><Key>{$objects['Contents']['Key']}</Key></Object>";
-    //         }
-    //         $body .= '<Quiet>true</Quiet>';
-    //         $body .= '</Delete>';
-    //         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
-    //         $this->headers['content-md5'] = \base64_encode(md5($body, true));
-    //         $this->call(self::METHOD_POST, $uri, $body, ['delete' => '']);
-    //     } while (! empty($continuationToken));
-
-    //     return true;
-    // }
+    
 
     /**
      * DONE.
@@ -742,84 +678,6 @@ class AzureBlob extends Device
         return $response->headers;
     }
 
-    /**
-     * NOTE - getSignatureV4 is an authentication method exclusive to S3, and not Azure
-     *        This will not be in use moving forward with Azure.
-     * Generate the headers for AWS Signature V4
-     *
-     * @param  string  $method
-     * @param  string  $uri
-     * @param array parameters
-     * @return string
-     */
-    // private function getSignatureV4(string $method, string $uri, array $parameters = []): string
-    // {
-    //     $service = 's3';
-    //     $region = $this->region;
-
-    //     $algorithm = 'AWS4-HMAC-SHA256';
-    //     $combinedHeaders = [];
-
-    //     $amzDateStamp = \substr($this->amzHeaders['x-amz-date'], 0, 8);
-
-    //     // CanonicalHeaders
-    //     foreach ($this->headers as $k => $v) {
-    //         $combinedHeaders[\strtolower($k)] = \trim($v);
-    //     }
-
-    //     foreach ($this->amzHeaders as $k => $v) {
-    //         $combinedHeaders[\strtolower($k)] = \trim($v);
-    //     }
-
-    //     uksort($combinedHeaders, [&$this, 'sortMetaHeadersCmp']);
-
-    //     // Convert null query string parameters to strings and sort
-    //     uksort($parameters, [&$this, 'sortMetaHeadersCmp']);
-    //     $queryString = \http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
-
-    //     // Payload
-    //     $amzPayload = [$method];
-
-    //     $qsPos = \strpos($uri, '?');
-    //     $amzPayload[] = ($qsPos === false ? $uri : \substr($uri, 0, $qsPos));
-
-    //     $amzPayload[] = $queryString;
-
-    //     foreach ($combinedHeaders as $k => $v) { // add header as string to requests
-    //         $amzPayload[] = $k.':'.$v;
-    //     }
-
-    //     $amzPayload[] = ''; // add a blank entry so we end up with an extra line break
-    //     $amzPayload[] = \implode(';', \array_keys($combinedHeaders)); // SignedHeaders
-    //     $amzPayload[] = $this->amzHeaders['x-amz-content-sha256']; // payload hash
-
-    //     $amzPayloadStr = \implode("\n", $amzPayload); // request as string
-
-    //     // CredentialScope
-    //     $credentialScope = [$amzDateStamp, $region, $service, 'aws4_request'];
-
-    //     // stringToSign
-    //     $stringToSignStr = \implode("\n", [
-    //         $algorithm, $this->amzHeaders['x-amz-date'],
-    //         \implode('/', $credentialScope), \hash('sha256', $amzPayloadStr),
-    //     ]);
-
-    //     // Make Signature
-    //     $kSecret = 'AWS4'.$this->secretKey;
-    //     $kDate = \hash_hmac('sha256', $amzDateStamp, $kSecret, true);
-    //     $kRegion = \hash_hmac('sha256', $region, $kDate, true);
-    //     $kService = \hash_hmac('sha256', $service, $kRegion, true);
-    //     $kSigning = \hash_hmac('sha256', 'aws4_request', $kService, true);
-
-    //     $signature = \hash_hmac('sha256', \utf8_encode($stringToSignStr), $kSigning);
-
-    //     return $algorithm.' '.\implode(',', [
-    //         'Credential='.$this->accessKey.'/'.\implode('/', $credentialScope),
-    //         'SignedHeaders='.\implode(';', \array_keys($combinedHeaders)),
-    //         'Signature='.$signature,
-    //     ]);
-    // }
-
     /* AUTHENTICATION FUNCTIONS FOR AZURE (added by Tam)
         Source: https://github.com/Azure/azure-storage-php/blob/master/azure-storage-common/src/Common/Internal/Authentication/SharedKeyAuthScheme.php */
         
@@ -880,7 +738,6 @@ class AzureBlob extends Device
 
         return $stringToSign;
     }
-
 
     /**
      * Returns authorization header to be included in the request.
@@ -1023,115 +880,6 @@ class AzureBlob extends Device
 
         return $canonicalizedResource;
     }
-    
-    // END OF NEWLY ADDED FUNCTIONS
-
-    /**
-     * (WE ARE IN THE PROCESS OF CHECKING IF THESE ARE COMPATIBLE WITH AZURE OR NOT)
-     * Get the S3 response
-     *
-     * @param  string  $method
-     * @param  string  $uri
-     * @param  string  $data
-     * @param  array  $parameters
-     * @param  bool  $decode
-     * @return  object
-     *
-     * @throws \Exception
-     */
-    // private function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
-    // {
-    //     $uri = $this->getAbsolutePath($uri);
-    //     $url = 'https://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
-    //     $response = new \stdClass;
-    //     $response->body = '';
-    //     $response->headers = [];
-
-    //     // Basic setup
-    //     $curl = \curl_init();
-    //     \curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
-    //     \curl_setopt($curl, CURLOPT_URL, $url);
-
-    //     // Headers
-    //     $httpHeaders = [];
-    //     $this->amzHeaders['x-amz-date'] = \gmdate('Ymd\THis\Z');
-
-    //     if (! isset($this->amzHeaders['x-amz-content-sha256'])) {
-    //         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
-    //     }
-
-    //     foreach ($this->amzHeaders as $header => $value) {
-    //         if (\strlen($value) > 0) {
-    //             $httpHeaders[] = $header.': '.$value;
-    //         }
-    //     }
-
-    //     $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
-
-    //     foreach ($this->headers as $header => $value) {
-    //         if (\strlen($value) > 0) {
-    //             $httpHeaders[] = $header.': '.$value;
-    //         }
-    //     }
-
-    //     $httpHeaders[] = 'Authorization: '.$this->getSignatureV4($method, $uri, $parameters);
-
-    //     \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
-    //     \curl_setopt($curl, CURLOPT_HEADER, false);
-    //     \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
-    //     \curl_setopt($curl, CURLOPT_WRITEFUNCTION, function ($curl, string $data) use ($response) {
-    //         $response->body .= $data;
-
-    //         return \strlen($data);
-    //     });
-    //     curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $header) use (&$response) {
-    //         $len = strlen($header);
-    //         $header = explode(':', $header, 2);
-
-    //         if (count($header) < 2) { // ignore invalid headers
-    //             return $len;
-    //         }
-
-    //         $response->headers[strtolower(trim($header[0]))] = trim($header[1]);
-
-    //         return $len;
-    //     });
-    //     \curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-    //     \curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
-
-    //     // Request types
-    //     switch ($method) {
-    //         case self::METHOD_PUT:
-    //         case self::METHOD_POST: // POST only used for CloudFront
-    //             \curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
-    //             break;
-    //         case self::METHOD_HEAD:
-    //         case self::METHOD_DELETE:
-    //             \curl_setopt($curl, CURLOPT_NOBODY, true);
-    //             break;
-    //     }
-
-    //     $result = \curl_exec($curl);
-
-    //     if (! $result) {
-    //         throw new Exception(\curl_error($curl));
-    //     }
-
-    //     $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
-    //     if ($response->code >= 400) {
-    //         throw new Exception($response->body, $response->code);
-    //     }
-
-    //     \curl_close($curl);
-
-    //     // Parse body into XML
-    //     if ($decode && ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml'))) {
-    //         $response->body = \simplexml_load_string($response->body);
-    //         $response->body = json_decode(json_encode($response->body), true);
-    //     }
-
-    //     return $response;
-    // }
 
     private function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
     {
@@ -1151,17 +899,10 @@ class AzureBlob extends Device
 
         // Headers
         $httpHeaders = [];
-        //Tam's note: fix this to be compatible with Azure format (ie 'x-ms-date')
-        // $this->amzHeaders['x-amz-date'] = \gmdate('Ymd\THis\Z');
         $this->azureHeaders['x-ms-date'] = \gmdate('D, d M Y H:i:s T');
 
         //Tam's note: Azure requires a x-ms-version header
         $this->azureHeaders['x-ms-version'] = self::X_MS_VERSION;
-
-        // Tam's note: this header is not needed for Azure Blob
-        // if (! isset($this->amzHeaders['x-amz-content-sha256'])) {
-        //     $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
-        // }
 
         // Tam's note: OK
         foreach ($this->azureHeaders as $header => $value) {
@@ -1251,36 +992,4 @@ class AzureBlob extends Device
 
         return $response;
     }
-
-    /**
-     * NEED TO SEE IF THIS WORKS.
-     * Sort compare for meta headers
-     *
-     * @internal Used to sort x-amz meta headers
-     *
-     * @param  string  $a String A
-     * @param  string  $b String B
-     * @return int
-     */
-
-     /* Tam's note: This function helps with getSignatureV4. Since we use a different function to generate 
-        Azure signature, we can get rid of this */ 
-    private function sortMetaHeadersCmp($a, $b)
-    {
-        $lenA = \strlen($a);
-        $lenB = \strlen($b);
-        $minLen = \min($lenA, $lenB);
-        $ncmp = \strncmp($a, $b, $minLen);
-        if ($lenA == $lenB) {
-            return $ncmp;
-        }
-
-        if (0 == $ncmp) {
-            return $lenA < $lenB ? -1 : 1;
-        }
-
-        return $ncmp;
-    }
 }
-
-
