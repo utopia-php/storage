@@ -610,21 +610,67 @@ class AzureBlob extends Device
         $uri = '/';
         $marker = '';
 
-        // call 'listObjects' method to get list of objects in path
-        // NOTE - have to find a way to utilize markers below, since listBlobs returns 5000 items at a time
-        $matchedBlobs = $this->listBlobs($path);    // check that call is correct, returns XML object 
-        $blobsXML = new simplexml_load_file($matchedBlobs);
+        // // call 'listObjects' method to get list of objects in path
+        // // NOTE - have to find a way to utilize markers below, since listBlobs returns 5000 items at a time
+        // $matchedBlobs = $this->listBlobs($path);    // check that call is correct, returns XML object 
+        // $blobsXML =  simplexml_load_file($matchedBlobs);
 
-        // parsing through XML object, storing values for request
-        $blobNamesArr = array();
-        foreach ($blobsXML->Blob as $blob) {    // NOTE: 
-            array_push($blobNamesArr, (string)$blob->Name);
-        }
+        // // parsing through XML object, storing values for request
+        // $blobNamesArr = array();
+        // foreach ($blobsXML->Blob as $blob) {    // NOTE: 
+        //     array_push($blobNamesArr, (string)$blob->Name);
+        // }
 
-        // delete all currently stored blobs
-        foreach ($blobNamesArr as $blobName) {
-            this->delete("/$blobName");
-        }
+
+
+        // // delete all currently stored blobs
+        // foreach ($blobNamesArr as $blobName) {
+        //     this->delete("/$blobName");
+        // }
+
+        /* Outer do-while loop: call listBlobs() multiple times until all matched blobs are retrieved.
+           Suppose we need to delete 15000 blobs, we need to go through at least 3 outer loops*/
+        do {
+            $matchedBlobs = $this->listBlobs($path, marker: $marker); //retrieve a parsed array from an XML file
+            $marker = $matchedBlobs['Next-Marker']; //retrieve the continuation token for next call
+            $blobNamesToDelete = [];
+            //Retrieve all blob names for current $matchedBlobs
+            foreach ($matchedBlobs as $k => $v) 
+            {
+                if ($k == "Blobs") {
+                    foreach ($v as $k2 => $v2) //Each value of $v is a Blob or Blob-Prefix tag
+                    {
+                        if ($k2 == "Blob") 
+                        {
+                            foreach ($v2 as $k3 => $v3) 
+                            {
+                                //Case 1: More than 1 blobs, each blob will have an integer key
+                                if (gettype($k3) == 'integer') 
+                                {
+                                    foreach ($v3 as $k4 => $v4) 
+                                    {
+                                        if ($k4 == "Name") 
+                                        {
+                                            $blobNamesToDelete[] = $v4;
+                                            break; //No need to search for other attributes
+                                        }
+                                    }
+                                }
+                                //Case 2: Just 1 blob
+                                else 
+                                {
+                                    $blobNamesToDelete[] = $v2['Name'];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+            //After retrieving all names, we need to delete all blobs in the array $blobNamesToDelete
+                // Code goes here...
+        } while (!empty($marker)); 
 
         // return True when deletePath operation is completed
         return true;
@@ -1313,7 +1359,7 @@ class AzureBlob extends Device
         \curl_close($curl);
 
         /* Tam's note: Azure responses usually don't have 'content-type' or XMLheaders, but
-            it's fine to keep the code, as if conditional will skip it anyways. */
+            it's fine to keep the code, as the if conditional will skip it anyways. */
         // Parse body into XML (may not be needed for Azure)
         if ($decode && ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml'))) {
             $response->body = \simplexml_load_string($response->body);
