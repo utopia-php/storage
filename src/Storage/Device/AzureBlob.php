@@ -551,7 +551,7 @@ class AzureBlob extends Device
             }
             //After retrieving all names, we need to delete all blobs in the array $blobNamesToDelete
             foreach ($blobNamesToDelete as $blobName) {
-                this->delete("$blobName");
+                $this->delete($blobName);
             }
         } while (!empty($marker)); 
 
