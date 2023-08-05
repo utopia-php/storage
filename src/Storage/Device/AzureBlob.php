@@ -682,18 +682,18 @@ class AzureBlob extends Device
         Source: https://github.com/Azure/azure-storage-php/blob/master/azure-storage-common/src/Common/Internal/Authentication/SharedKeyAuthScheme.php */
         
         // Tam's note: check whether to implement this as static or non-static function  
-        public static function tryGetValue($array, $key, $default = null)
+        private function tryGetValue($array, $key, $default = null)
         {
-            return (!is_null($array)) && is_array($array) && array_key_exists($key, $array)
+            return (!\is_null($array)) && \is_array($array) && \array_key_exists($key, $array)
                 ? $array[$key]
                 : $default;
         }
         
         // Tam's note: check whether to implement this as static or non-static function
-        public static function tryGetValueInsensitive($key, $haystack, $default = null)
+        private function tryGetValueInsensitive($key, $haystack, $default = null)
         {
-            $array = array_change_key_case($haystack);
-            return self::tryGetValue($array, strtolower($key), $default);
+            $array = \array_change_key_case($haystack);
+            return $this->tryGetValue($array, strtolower($key), $default);
         }
     
     /**
@@ -709,24 +709,17 @@ class AzureBlob extends Device
      *
      * @return string
      */
-    private function computeSignature(
-        array $requestHeaders,
-        $url,
-        array $queryParams,
-        $httpMethod
+    private function getAuthorizationHeader(array $requestHeaders, string $url, array $queryParams, string $httpMethod
     ) {
         $canonicalizedHeaders = $this->computeCanonicalizedHeaders($requestHeaders);
 
-        $canonicalizedResource = $this->computeCanonicalizedResource(
-            $url,
-            $queryParams
-        );
+        $canonicalizedResource = $this->computeCanonicalizedResource($url, $queryParams);
 
         $stringToSign   = array();
         $stringToSign[] = \strtoupper($httpMethod);
 
         foreach ($this->headers as $header) {
-            $stringToSign[] = AzureBlob::tryGetValueInsensitive($header, $requestHeaders);
+            $stringToSign[] = $this->tryGetValueInsensitive($header, $requestHeaders);  //MUST DOUBLE-CHECK
         }
 
         if (count($canonicalizedHeaders) > 0) {
@@ -736,7 +729,11 @@ class AzureBlob extends Device
         $stringToSign[] = $canonicalizedResource;
         $stringToSign   = \implode("\n", $stringToSign);
 
-        return $stringToSign;
+        // return $stringToSign;
+
+        return 'SharedKey ' . $this->storageAccount . ':' . \base64_encode(
+            \hash_hmac('sha256', $stringToSign, \base64_decode($this->accessKey), true)
+        );
     }
 
     /**
@@ -756,26 +753,24 @@ class AzureBlob extends Device
      /* Tam's note: Can we combine this and the computeSignature into a single function? 
         It depends on whether we will use the getAuthorizationHeader or computeSignature more often */
      
-    private function getAuthorizationHeader(
-        array $headers,
-        $url,
-        array $queryParams,
-        $httpMethod
-    ) {
-        $signature = $this->computeSignature(
-            $headers,
-            $url,
-            $queryParams,
-            $httpMethod
-        );
+    // private function getAuthorizationHeader(
+    //     array $headers,
+    //     $url,
+    //     array $queryParams,
+    //     $httpMethod
+    // ) {
+    //     $signature = $this->computeSignature(
+    //         $headers,
+    //         $url,
+    //         $queryParams,
+    //         $httpMethod
+    //     );
 
-        return 'SharedKey ' . $this->storageAccount . ':' . \base64_encode(
-            \hash_hmac('sha256', $signature, \base64_decode($this->accessKey), true)
-        );
-    }
+        
+    // }
 
     // Helper function for computeCanonicalizedHeaders, consider chnging to private non-static
-    public static function startsWith($string, $prefix, $ignoreCase = false)
+    private function startsWith($string, $prefix, $ignoreCase = false)
     {
         if ($ignoreCase) {
             $string = \strtolower($string);
@@ -794,13 +789,13 @@ class AzureBlob extends Device
      *
      * @return array
      */
-    private function computeCanonicalizedHeaders($headers)
+    private function computeCanonicalizedHeaders($headers): array
     {
         $canonicalizedHeaders = array();
         $normalizedHeaders    = array();
         $validPrefix          = 'x-ms-';
 
-        if (is_null($normalizedHeaders)) {
+        if (\is_null($normalizedHeaders)) {     //This looks weird, consider deleting in the end
             return $canonicalizedHeaders;
         }
 
@@ -810,7 +805,7 @@ class AzureBlob extends Device
 
             // Retrieve all headers for the resource that begin with x-ms-,
             // including the x-ms-date header.
-            if (self::startsWith($header, $validPrefix)) {
+            if ($this->startsWith($header, $validPrefix)) {
                 // Unfold the string by replacing any breaking white space
                 // (meaning what splits the headers, which is \r\n) with a single
                 // space.
@@ -826,7 +821,7 @@ class AzureBlob extends Device
 
         // Sort the headers lexicographically by header name, in ascending order.
         // Note that each header may appear only once in the string.
-        ksort($normalizedHeaders);
+        \ksort($normalizedHeaders);
 
         foreach ($normalizedHeaders as $key => $value) {
             $canonicalizedHeaders[] = $key . ':' . $value;
@@ -875,7 +870,7 @@ class AzureBlob extends Device
         foreach ($queryParams as $key => $value) {
             // $value must already be ordered lexicographically
             // See: ServiceRestProxy::groupQueryValues
-            $canonicalizedResource .= "\n" . $key . ':' . $value;
+            $canonicalizedResource .= "\n" . \urlencode($key) . ':' . \urlencode($value);
         }
 
         return $canonicalizedResource;
@@ -914,7 +909,7 @@ class AzureBlob extends Device
         /* Tam's note: this header is optional since x-ms-header has been set.
            Source: https://learn.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key#constructing-the-canonicalized-headers-string */
         
-        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
+        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');   //Might need to set this to empty
 
         // Tam's note: OK
         foreach ($this->headers as $header => $value) {
@@ -926,7 +921,7 @@ class AzureBlob extends Device
         /* Tam's note: call getAuthorizationHeader (new Azure function) instead.
             Arguments for the getAuthorizationHeader might be wrong */ 
         // $httpHeaders[] = 'Authorization: '.$this->getSignatureV4($method, $uri, $parameters);
-        $httpHeaders[] = 'Authorization: '.$this->getAuthorizationHeader($this->azureHeaders, $uri, $parameters, $method);
+        $httpHeaders[] = 'Authorization: '.$this->getAuthorizationHeader($this->azureHeaders, $url, $parameters, $method);
 
         /* Tam's note: seems OK */
         \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
