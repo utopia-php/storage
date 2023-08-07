@@ -428,7 +428,7 @@ class AzureBlob extends Device
     {
         $uri = ($path !== '') ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
 
-        $this->azureHeaders['x-ms-delete-snapshots: include'];
+        // $this->azureHeaders['x-ms-delete-snapshots: include'];
         $this->call(self::METHOD_DELETE, $uri, '');
 
         return true;
