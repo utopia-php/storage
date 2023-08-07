@@ -718,8 +718,8 @@ class AzureBlob extends Device
         $stringToSign   = array();
         $stringToSign[] = \strtoupper($httpMethod);
 
-        foreach ($this->headers as $header) {
-            $stringToSign[] = $this->tryGetValueInsensitive($header, $requestHeaders);  //MUST DOUBLE-CHECK
+        foreach ($this->headers as $header => $value) {
+            $stringToSign[] = $this->tryGetValueInsensitive($header, $this->headers);  //MUST DOUBLE-CHECK
         }
 
         if (count($canonicalizedHeaders) > 0) {
@@ -909,7 +909,7 @@ class AzureBlob extends Device
         /* Tam's note: this header is optional since x-ms-header has been set.
            Source: https://learn.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key#constructing-the-canonicalized-headers-string */
         
-        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');   //Might need to set this to empty
+        // $this->headers['date'] = \gmdate('D, d M Y H:i:s T');   //Might need to set this to empty
 
         // Tam's note: OK
         foreach ($this->headers as $header => $value) {
