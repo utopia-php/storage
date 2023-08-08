@@ -99,7 +99,7 @@ class AzureBlob extends Device
      * Other constants
     */
     const X_MS_VERSION = '2023-01-03';
-    const BLOCK_BLOB = 'BlockBlob'; 
+    const BLOCK_BLOB = 'BlockBlob';
     const PAGE_BLOB = 'PageBlob';
     const APPEND_BLOB = 'AppendBlob';
 
@@ -156,6 +156,7 @@ class AzureBlob extends Device
      * @var array
      */
     protected array $azureHeaders;
+
 
     /**
      * DONE
@@ -384,7 +385,7 @@ class AzureBlob extends Device
 
         $this->headers['content-type'] = $contentType;
         $this->headers['content-length'] = \strlen($data);
-        $this->azureHeaders['x-ms-blob-type'] = self::BLOCK_BLOB; 
+        $this->azureHeaders['x-ms-blob-type'] = self::BLOCK_BLOB;
 
         $this->call(self::METHOD_PUT, $uri, $data);
 
@@ -483,7 +484,7 @@ class AzureBlob extends Device
     public function deletePath(string $path): bool
     {
         // create variable that holds the path of objects to be deleted
-        $path = $this->getRoot().'/'.$path;
+        $path = $this->getRoot().DIRECTORY_SEPARATOR.$path;
 
         // $uri = '/';
         $marker = '';
@@ -529,8 +530,15 @@ class AzureBlob extends Device
                 }
             }
             //After retrieving all names, we need to delete all blobs in the array $blobNamesToDelete
+           
             foreach ($blobNamesToDelete as $blobName) {
-                $this->delete($blobName);
+                /* Tam: there is an invisible blob that has the same name as the directory.
+                    That blob is empty and we will get an error if attempting to delete it. 
+                    For example, if the directory is "/root/bucket", then there is an empty, 
+                    invisible blob named "root/bucket" */
+                if ($blobName != \ltrim($path, DIRECTORY_SEPARATOR)) {
+                    $this->delete($blobName);
+                }
             }
         } while (!empty($marker)); 
 
