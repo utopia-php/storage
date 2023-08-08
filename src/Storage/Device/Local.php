@@ -215,9 +215,8 @@ class Local extends Device
         }
 
         $totalChunks = \ceil($size / $this->transferChunkSize);
-        $counter = 0;
         $metadata = ['content_type' => $contentType];
-        for ($counter; $counter < $totalChunks; $counter++) {
+        for ($counter = 0; $counter < $totalChunks; $counter++) {
             $start = $counter * $this->transferChunkSize;
             $data = $this->read($path, $start, $this->transferChunkSize);
             $device->uploadData($data, $destination, $contentType, $counter + 1, $totalChunks, $metadata);
