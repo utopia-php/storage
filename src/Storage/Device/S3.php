@@ -224,13 +224,6 @@ class S3 extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        $fileSize = \filesize($source);
-        $freeMemory = System::getMemoryFree();
-
-        if ($fileSize > $freeMemory) {
-            throw new Exception('Trying to load file larger than available memory. Please use chunked upload.');
-        }
-
         return $this->uploadData(\file_get_contents($source), $path, \mime_content_type($source), $chunk, $chunks, $metadata);
     }
 
