@@ -99,7 +99,7 @@ class AzureBlob extends Device
      * Other constants
     */
     const X_MS_VERSION = '2023-01-03';
-    const BLOCK_BLOB = 'BlockBlob';
+    const BLOCK_BLOB = 'BlockBlob'; 
     const PAGE_BLOB = 'PageBlob';
     const APPEND_BLOB = 'AppendBlob';
 
@@ -251,12 +251,13 @@ class AzureBlob extends Device
         //Tam's note: The rest is the case for big blob that can be broken into small blocks
         //1. Create an empty blob. Similar to createMultipartUpload. 
         // Also create an array that holds all block IDs
+        unset($this->azureHeaders['x-ms-blob-type']);
         $blockList = [];
 
         //2. Upload the first block. Similar to uploadPart
         //generate a unique blockId, make sure they are of the same size
         $blockId = \base64_encode(\random_bytes(32).(\time() % 1000000));   
-        $blockId = \urlencode($blockId);
+        // $blockId = \urlencode($blockId);
         $this->putBlock($source, $path, $blockId); 
         $metadata['chunks'] ??= 0;
         $metadata['chunks']++;
@@ -383,7 +384,7 @@ class AzureBlob extends Device
 
         $this->headers['content-type'] = $contentType;
         $this->headers['content-length'] = \strlen($data);
-        $this->azureHeaders['x-ms-blob-type'] = self::BLOCK_BLOB;
+        $this->azureHeaders['x-ms-blob-type'] = self::BLOCK_BLOB; 
 
         $this->call(self::METHOD_PUT, $uri, $data);
 
@@ -448,6 +449,9 @@ class AzureBlob extends Device
     private function listBlobs($prefix = '', $maxresults = 5000, $marker = '') //Note: marker = continuationToken
     {
         $uri = '';
+        unset($this->azureHeaders['x-ms-blob-type']);
+        $this->headers['content-type'] = '';
+        $this->headers['content-length'] = '';
         // $this->headers['content-type'] = 'text/plain';
         // $this->headers['content-md5'] = \base64_encode(md5('', true));
 
@@ -481,14 +485,14 @@ class AzureBlob extends Device
         // create variable that holds the path of objects to be deleted
         $path = $this->getRoot().'/'.$path;
 
-        $uri = '/';
+        // $uri = '/';
         $marker = '';
 
         /* Outer do-while loop: call listBlobs() multiple times until all matched blobs are retrieved.
            Suppose we need to delete 15000 blobs, we need to go through at least 3 outer loops*/
         do {
             $matchedBlobs = $this->listBlobs($path, marker: $marker); //retrieve a parsed array from an XML file
-            $marker = $matchedBlobs['Next-Marker']; //retrieve the continuation token for next call
+            $marker = $matchedBlobs['NextMarker']; //retrieve the continuation token for next call
             $blobNamesToDelete = [];
             //Retrieve all blob names for current $matchedBlobs
             foreach ($matchedBlobs as $k => $v) 
@@ -870,7 +874,7 @@ class AzureBlob extends Device
         foreach ($queryParams as $key => $value) {
             // $value must already be ordered lexicographically
             // See: ServiceRestProxy::groupQueryValues
-            $canonicalizedResource .= "\n" . \urlencode($key) . ':' . \urlencode($value);
+            $canonicalizedResource .= "\n" . $key . ':' . $value;
         }
 
         return $canonicalizedResource;
