@@ -9,7 +9,6 @@ use Utopia\Storage\Storage;
 class AzureBlob extends Device
 {
     /**
-     * DONE
      * HTTP method constants
      */
     const METHOD_GET = 'GET';
@@ -18,17 +17,17 @@ class AzureBlob extends Device
 
     const METHOD_PUT = 'PUT';
 
-    const METHOD_PATCH = 'PATCH';   // never used
+    // const METHOD_PATCH = 'PATCH';   // never used
 
     const METHOD_DELETE = 'DELETE';
 
     const METHOD_HEAD = 'HEAD';
 
-    const METHOD_OPTIONS = 'OPTIONS'; // never used
+    // const METHOD_OPTIONS = 'OPTIONS'; // never used
 
-    const METHOD_CONNECT = 'CONNECT'; // never used
+    // const METHOD_CONNECT = 'CONNECT'; // never used
 
-    const METHOD_TRACE = 'TRACE';   // never used
+    // const METHOD_TRACE = 'TRACE';   // never used
 
     /**
      * (WE ARE IN THE PROCESS OF CHECKING IF THESE ARE COMPATIBLE WITH AZURE OR NOT)
@@ -36,99 +35,86 @@ class AzureBlob extends Device
      * 
      * Tam: seems like we never need to use the region throughout our AzureBlob file
      */
-    const US_EAST_1 = 'us-east-1';
+    // const US_EAST_1 = 'us-east-1';
 
-    const US_EAST_2 = 'us-east-2';
+    // const US_EAST_2 = 'us-east-2';
 
-    const US_WEST_1 = 'us-west-1';
+    // const US_WEST_1 = 'us-west-1';
 
-    const US_WEST_2 = 'us-west-2';
+    // const US_WEST_2 = 'us-west-2';
 
-    const AF_SOUTH_1 = 'af-south-1';
+    // const AF_SOUTH_1 = 'af-south-1';
 
-    const AP_EAST_1 = 'ap-east-1';
+    // const AP_EAST_1 = 'ap-east-1';
 
-    const AP_SOUTH_1 = 'ap-south-1';
+    // const AP_SOUTH_1 = 'ap-south-1';
 
-    const AP_NORTHEAST_3 = 'ap-northeast-3';
+    // const AP_NORTHEAST_3 = 'ap-northeast-3';
 
-    const AP_NORTHEAST_2 = 'ap-northeast-2';
+    // const AP_NORTHEAST_2 = 'ap-northeast-2';
 
-    const AP_NORTHEAST_1 = 'ap-northeast-1';
+    // const AP_NORTHEAST_1 = 'ap-northeast-1';
 
-    const AP_SOUTHEAST_1 = 'ap-southeast-1';
+    // const AP_SOUTHEAST_1 = 'ap-southeast-1';
 
-    const AP_SOUTHEAST_2 = 'ap-southeast-2';
+    // const AP_SOUTHEAST_2 = 'ap-southeast-2';
 
-    const CA_CENTRAL_1 = 'ca-central-1';
+    // const CA_CENTRAL_1 = 'ca-central-1';
 
-    const EU_CENTRAL_1 = 'eu-central-1';
+    // const EU_CENTRAL_1 = 'eu-central-1';
 
-    const EU_WEST_1 = 'eu-west-1';
+    // const EU_WEST_1 = 'eu-west-1';
 
-    const EU_SOUTH_1 = 'eu-south-1';
+    // const EU_SOUTH_1 = 'eu-south-1';
 
-    const EU_WEST_2 = 'eu-west-2';
+    // const EU_WEST_2 = 'eu-west-2';
 
-    const EU_WEST_3 = 'eu-west-3';
+    // const EU_WEST_3 = 'eu-west-3';
 
-    const EU_NORTH_1 = 'eu-north-1';
+    // const EU_NORTH_1 = 'eu-north-1';
 
-    const SA_EAST_1 = 'eu-north-1';
+    // const SA_EAST_1 = 'eu-north-1';
 
-    const CN_NORTH_1 = 'cn-north-1';
+    // const CN_NORTH_1 = 'cn-north-1';
 
-    const CN_NORTH_4 = 'cn-north-4';
+    // const CN_NORTH_4 = 'cn-north-4';
 
-    const CN_NORTHWEST_1 = 'cn-northwest-1';
+    // const CN_NORTHWEST_1 = 'cn-northwest-1';
 
-    const ME_SOUTH_1 = 'me-south-1';
+    // const ME_SOUTH_1 = 'me-south-1';
 
-    const US_GOV_EAST_1 = 'us-gov-east-1';
+    // const US_GOV_EAST_1 = 'us-gov-east-1';
 
-    const US_GOV_WEST_1 = 'us-gov-west-1';
+    // const US_GOV_WEST_1 = 'us-gov-west-1';
 
-    /**
-     * (WE ARE IN THE PROCESS OF CHECKING IF THESE ARE COMPATIBLE WITH AZURE OR NOT)
-     * Microsoft Azure ACL flag constants (taken from AWS ACL Flag in S3 file)
+    /* 
+     * Blob Type Constants (used for Put Blob operation)
      */
-    /* Tam's note: For Azure, there are only 3 access levels: private, full public read access, and 
-        public read access for blobs only. However, the way we set the access level is very different
-        from S3. Overall, it's not necessary to have the acl variable/constants. */
-    /** 
-     * Other constants
-    */
     const X_MS_VERSION = '2023-01-03';
     const BLOCK_BLOB = 'BlockBlob';
     const PAGE_BLOB = 'PageBlob';
     const APPEND_BLOB = 'AppendBlob';
 
     /**
-     * DONE
      * @var string
      */
     protected string $accessKey;
 
     /**
-     * DONE
      * @var string
      */
     protected string $storageAccount;
 
     /**
-     * DONE
      * @var string
      */
     protected string $container;
 
     /**
-     * DONE
      * @var string
      */
     protected string $root = 'temp';
 
-    // New $headers, probably more compatible with AzureBlob
-    //Tam: should headers be in properly case (e.g. Content-Length instead of content-length)
     protected array $headers = [
         'content-encoding' => '',
         'content-language' => '',
@@ -144,27 +130,22 @@ class AzureBlob extends Device
     ];
 
     /**
-     * Tam's note: remove the 'host' header as it is not a part of Azure standard headers.
-     * Make a host variable to save the API endpoint 
-     * 
      * @var array
      */
     protected string $host;
 
     /**
-     * Newly created for Azure. Need to verify if fully compatible.
      * @var array
      */
     protected array $azureHeaders;
 
 
     /**
-     * DONE
      * Azure Blob Constructor
      * @param string $root
-     * @param string $sharedKey
+     * @param string $accessKey
      * @param string $storageAccount
-     * @param string $acl
+     * @param string $container
      */
     
     public function __construct(string $root, string $accessKey, string $storageAccount, string $container)
@@ -178,7 +159,6 @@ class AzureBlob extends Device
     }
 
     /**
-     * DONE
      * @return string
      */
     public function getName(): string
@@ -187,7 +167,6 @@ class AzureBlob extends Device
     }
 
     /**
-     * DONE
      * @return string
      */
     public function getDescription(): string
@@ -196,7 +175,6 @@ class AzureBlob extends Device
     }
 
     /**
-     * DONE
      * @return string
      */
     public function getType(): string
@@ -205,7 +183,6 @@ class AzureBlob extends Device
     }
 
     /**
-     * DONE
      * @return string
      */
     public function getRoot(): string
@@ -214,8 +191,6 @@ class AzureBlob extends Device
     }
 
     /**
-     * Need to verify if this works.
-     * DONE; Tam believes it is correct. - James
      * @param  string  $filename
      * @param  string|null  $prefix
      * @return string
@@ -226,12 +201,10 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
-     * DONE by Tam
      * Upload.
-     *
+     * 
      * Upload a file to desired destination in the selected disk.
-     * return number of chunks uploaded or 0 if it fails.
+     * Return number of chunks uploaded or 0 if it fails.
      *
      * @param  string  $source
      * @param  string  $path
@@ -244,39 +217,38 @@ class AzureBlob extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        //This is the case for small blob 
+        // Case 1: Small blob, only one upload needed 
         if ($chunk == 1 && $chunks == 1) {
             return $this->write($path, \file_get_contents($source), \mime_content_type($source));
         }
 
-        //Tam's note: The rest is the case for big blob that can be broken into small blocks
-        //1. Create an empty blob. Similar to createMultipartUpload. 
-        // Also create an array that holds all block IDs
+        // Case 2: Big blob that are broken into small blocks, multiple uploads needed
         unset($this->azureHeaders['x-ms-blob-type']);
-        // $blockList = [];
-
-        //2. Upload the first block. Similar to uploadPart
-        //generate a unique blockId, make sure they are of the same size
-        $blockId = \base64_encode(\random_bytes(32).(\time() % 1000000));   
-        // $blockId = \urlencode($blockId);
+        // 1. Upload the block
+        $blockId = \base64_encode(\random_bytes(32).(\time() % 1000000));   //block Ids must be of the same size
         $this->putBlock(\file_get_contents($source), $path, $blockId); 
         $metadata['chunks'] ??= 0;
         $metadata['chunks']++;
         $metadata['parts'][] = $blockId;
-
-        //3. If all parts (ie. blocks) are uploaded, commit all blocks, similar to completeMultipartUpload
+        // 2. Once all blocks are uploaded, commit them
         if ($metadata['chunks'] == $chunks) {
-            // $erroLog = "metadata[chunks] => " . $metadata['chunks'] . "\nCommitBlocks Error: " . \implode("\n", $metadata['parts']);
-            // throw new Exception($erroLog);
             $this->commitBlocks($path, $metadata['parts']);
         }
-
-        // throw new Exception("Stop here: " . \strlen(\file_get_contents($source)));
 
         return $metadata['chunks'];
     }
 
-    /* Tam's helper functions for upload */
+    /**
+     * Put Block.
+     * 
+     * See Azure documentation: https://learn.microsoft.com/en-us/rest/api/storageservices/put-block?tabs=azure-ad  
+     *
+     * @param  string  $content
+     * @param  string  $path
+     * @param int blockId
+     *
+     * @throws \Exception
+     */
     private function putBlock(string $content, string $path, string $blockId): void
     {
         $this->headers['content-length'] = \strlen($content);
@@ -287,16 +259,30 @@ class AzureBlob extends Device
         $this->call(self::METHOD_PUT, $path, $content, $params);
     }
 
-
+    /**
+     * Commit all blocks into a blob.
+     * 
+     * See Azure documentation: https://learn.microsoft.com/en-us/rest/api/storageservices/put-block-list?tabs=azure-ad  
+     *
+     * @param  string  $path
+     * @param  array   $blockList
+     *
+     * @throws \Exception
+     */
     private function commitBlocks(string $path, array $blockList): void
     {
         $params = [ 'comp' => 'blocklist' ];
-        $body = $this->buildBlockListBody($blockList); //will need to build this as an XML file, appending several block IDs
+        $body = $this->buildBlockListBody($blockList);
         $this->headers['content-length'] = \strlen($body);
-        // throw new Exception(\strlen($body));
         $this->call(self::METHOD_PUT, $path, $body, $params);
     }
 
+    /**
+     * Build an XML body for commitBlocks()
+     * 
+     * @param  array   $blockList
+     * @return string
+     */
     private function buildBlockListBody(array $blockList): string
     {
         $result = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
@@ -308,11 +294,8 @@ class AzureBlob extends Device
         $result .= "</BlockList>";
         return $result;
     } 
-    // End of helper functions
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
-     * DONE by Jaime
      * Abort "Copy Blob" operation
      * Tam: This is quite tricky. The purpose of this function in S3 is to cancel/abort a multipatUplaod
      *      operation. However, Azure does not have multipartUpload. We simple abort an upload by not
@@ -327,24 +310,24 @@ class AzureBlob extends Device
      */
     public function abort(string $path, string $extra = ''): bool
     {
-        $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
+        // $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
         
-        $this->azureHeaders['x-ms-copy-action: abort'];
-        $params = [
-            'comp' => 'copy',
-            'copyid' => ''
-        ];
+        // $this->azureHeaders['x-ms-copy-action: abort'];
+        // $params = [
+        //     'comp' => 'copy',
+        //     'copyid' => ''
+        // ];
 
-        $this->call(self::METHOD_PUT, $uri, '', $params); 
+        // $this->call(self::METHOD_PUT, $uri, '', $params); 
 
-        return true;
+        // return true;
+
+        return false;
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
      * Read file or part of file by given path, offset and length.
-     * DONE by Jaime.
-     *
+     * 
      * @param  string  $path
      * @param int offset
      * @param int length
@@ -354,12 +337,6 @@ class AzureBlob extends Device
      */
     public function read(string $path, int $offset = 0, int $length = null): string
     {
-        // Remove or unset headers that are not needed or conflicting for Azure Blob storage
-        // Tam: these headers are needed for the signature, even if their values are empty
-        // unset($headers['content-type']); 
-        // unset($headers['content-encoding']);
-        // unset($headers['content-language']);
-
         $uri = ($path !== '') ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
 
         if ($length !== null) {
@@ -367,15 +344,12 @@ class AzureBlob extends Device
             $this->headers['range'] = "bytes=$offset-$end";  //Can have either, or both, of the headers
             $this->azureHeaders['x-ms-range'] = "bytes=$offset-$end";
         }
-        
         $response = $this->call(self::METHOD_GET, $uri, decode: false);
 
         return $response->body;
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS. 
-     * DONE by Tam
      * Write file by given path.
      *
      * @param  string  $path
@@ -398,10 +372,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * DONE.
      * Move file from given source to given path, Return true on success and false on failure.
-     *
-     * @see http://php.net/manual/en/function.filesize.php
      *
      * @param  string  $source
      * @param  string  $target
@@ -422,9 +393,7 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
-     * James: Function edited. 
-     * Delete blob in given path, Return true on success and false on failure.
+     * Delete blob in given path, return true on success and false on failure.
      *
      * @param  string  $path
      * @return bool
@@ -434,20 +403,16 @@ class AzureBlob extends Device
     public function delete(string $path, bool $recursive = false): bool
     {
         $uri = ($path !== '') ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
-
-        // $this->azureHeaders['x-ms-delete-snapshots: include'];
         $this->call(self::METHOD_DELETE, $uri, '');
-
         return true;
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
-     * Fairly DONE by Tam
-     * Get list of objects in the given path.
-     * Tam: API operation name is "List Blobs"
+     * Get a list of blobs in the container that match the prefix.
      *
-     * @param  string  $path
+     * @param  string  $prefix
+     * @param int $maxresults
+     * @param string $marker
      * @return array
      *
      * @throws \Exception
@@ -458,27 +423,22 @@ class AzureBlob extends Device
         unset($this->azureHeaders['x-ms-blob-type']);
         $this->headers['content-type'] = '';
         $this->headers['content-length'] = '';
-        // $this->headers['content-type'] = 'text/plain';
-        // $this->headers['content-md5'] = \base64_encode(md5('', true));
-
         $parameters = [
             'restype' => 'container',
             'comp' => 'list',
             'prefix' => $prefix,
             'maxresults' => $maxresults
         ];
-
         if (! empty($marker)) {
             $parameters['marker'] = $marker;
         }
+
         $response = $this->call(self::METHOD_GET, $uri, '', $parameters);
 
         return $response->body;
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
-     * DONE; edited.
      * Delete files in given path, path must be a directory. Return true on success and false on failure.
      *
      * @param  string  $path
@@ -488,18 +448,14 @@ class AzureBlob extends Device
      */
     public function deletePath(string $path): bool
     {
-        // create variable that holds the path of objects to be deleted
         $path = $this->getRoot().DIRECTORY_SEPARATOR.$path;
-
-        // $uri = '/';
         $marker = '';
 
-        /* Outer do-while loop: call listBlobs() multiple times until all matched blobs are retrieved.
-           Suppose we need to delete 15000 blobs, we need to go through at least 3 outer loops*/
         do {
-            $matchedBlobs = $this->listBlobs($path, marker: $marker); //retrieve a parsed array from an XML file
+            $matchedBlobs = $this->listBlobs($path, marker: $marker);
             $marker = $matchedBlobs['NextMarker']; //retrieve the continuation token for next call
             $blobNamesToDelete = [];
+
             //Retrieve all blob names for current $matchedBlobs
             foreach ($matchedBlobs as $k => $v) 
             {
@@ -518,7 +474,7 @@ class AzureBlob extends Device
                                         if ($k4 == "Name") 
                                         {
                                             $blobNamesToDelete[] = $v4;
-                                            break; //No need to search for other attributes
+                                            break;  //No need to search for other attributes
                                         }
                                     }
                                 }
@@ -534,26 +490,22 @@ class AzureBlob extends Device
                     break;
                 }
             }
-            //After retrieving all names, we need to delete all blobs in the array $blobNamesToDelete
            
             foreach ($blobNamesToDelete as $blobName) {
-                /* Tam: there is an invisible blob that has the same name as the directory.
+                /*  There is an invisible blob that has the same name as the directory.
                     That blob is empty and we will get an error if attempting to delete it. 
                     For example, if the directory is "/root/bucket", then there is an empty, 
-                    invisible blob named "root/bucket" */
+                    invisible blob named "root/bucket".   */
                 if ($blobName != \ltrim($path, DIRECTORY_SEPARATOR)) {
                     $this->delete($blobName);
                 }
             }
         } while (!empty($marker)); 
 
-        // return True when deletePath operation is completed
         return true;
     }
     
-
     /**
-     * DONE.
      * Check if file exists
      *
      * @param  string  $path
@@ -571,7 +523,6 @@ class AzureBlob extends Device
     }
 
     /**
-     * DONE.
      * Returns given file path its size.
      *
      * @see http://php.net/manual/en/function.filesize.php
@@ -587,7 +538,6 @@ class AzureBlob extends Device
     }
 
     /**
-     * DONE.
      * Returns given file path its mime type.
      *
      * @see http://php.net/manual/en/function.mime-content-type.php
@@ -603,7 +553,6 @@ class AzureBlob extends Device
     }
 
     /**
-     * DONE.
      * Returns given file path its MD5 hash value.
      *
      * @see http://php.net/manual/en/function.md5-file.php
@@ -619,7 +568,6 @@ class AzureBlob extends Device
     }
 
     /**
-     * DONE.
      * Create a directory at the specified path.
      *
      * Returns true on success or if the directory already exists and false on error
@@ -635,7 +583,6 @@ class AzureBlob extends Device
     }
 
     /**
-     * NEED TO VERIFY IF THIS WORKS.
      * Get directory size in bytes.
      *
      * Return -1 on error
@@ -651,7 +598,6 @@ class AzureBlob extends Device
     }
 
     /**
-     * DONE.
      * Get Partition Free Space.
      *
      * disk_free_space — Returns available space on filesystem or disk partition
@@ -664,7 +610,6 @@ class AzureBlob extends Device
     }
 
     /**
-     * DONE.
      * Get Partition Total Space.
      *
      * disk_total_space — Returns the total size of a filesystem or disk partition
@@ -677,57 +622,35 @@ class AzureBlob extends Device
     }
 
     /**
-     * DONE by Tam.
      * Get file info
-     *
+     * 
+     * @param string $path
      * @return array
      */
     private function getInfo(string $path): array
     {
-        // unset($this->headers['content-type']);
-        // unset($this->amzHeaders['x-amz-acl']);
-        // unset($this->amzHeaders['x-amz-content-sha256']);
-        // $this->headers['content-md5'] = \base64_encode(md5('', true));
-
         $uri = $path !== '' ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
         $response = $this->call(self::METHOD_GET, $uri);
 
         return $response->headers;
     }
 
-    /* AUTHENTICATION FUNCTIONS FOR AZURE (added by Tam)
-        Source: https://github.com/Azure/azure-storage-php/blob/master/azure-storage-common/src/Common/Internal/Authentication/SharedKeyAuthScheme.php */
-        
-        // Tam's note: check whether to implement this as static or non-static function  
-        private function tryGetValue($array, $key, $default = null)
-        {
-            return (!\is_null($array)) && \is_array($array) && \array_key_exists($key, $array)
-                ? $array[$key]
-                : $default;
-        }
-        
-        // Tam's note: check whether to implement this as static or non-static function
-        private function tryGetValueInsensitive($key, $haystack, $default = null)
-        {
-            $array = \array_change_key_case($haystack);
-            return $this->tryGetValue($array, strtolower($key), $default);
-        }
+    /* Source: https://github.com/Azure/azure-storage-php/blob/master/azure-storage-common/src/Common/Internal/Authentication/SharedKeyAuthScheme.php */
     
     /**
-     * Computes the authorization signature for blob and queue shared key.
+     * Computes the authorization header for blob shared key.
      *
-     * @param array  $headers     request headers.
-     * @param string $url         reuqest url.
-     * @param array  $queryParams query variables.
-     * @param string $httpMethod  request http method.
+     * @param array  $headers  
+     * @param string $url  
+     * @param array  $queryParams 
+     * @param string $httpMethod
      *
-     * @see Blob and Queue Services (Shared Key Authentication) at
-     *      http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx
+     * @see https://learn.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key
      *
      * @return string
      */
-    private function getAuthorizationHeader(array $requestHeaders, string $url, array $queryParams, string $httpMethod
-    ) {
+    private function getAuthorizationHeader(array $requestHeaders, string $url, array $queryParams, string $httpMethod) 
+    {
         $canonicalizedHeaders = $this->computeCanonicalizedHeaders($requestHeaders);
 
         $canonicalizedResource = $this->computeCanonicalizedResource($url, $queryParams);
@@ -746,48 +669,49 @@ class AzureBlob extends Device
         $stringToSign[] = $canonicalizedResource;
         $stringToSign   = \implode("\n", $stringToSign);
 
-        // return $stringToSign;
-
         return 'SharedKey ' . $this->storageAccount . ':' . \base64_encode(
             \hash_hmac('sha256', $stringToSign, \base64_decode($this->accessKey), true)
         );
     }
 
     /**
-     * Returns authorization header to be included in the request.
-     *
-     * @param array  $headers     request headers.
-     * @param string $url         reuqest url.
-     * @param array  $queryParams query variables.
-     * @param string $httpMethod  request http method.
-     *
-     * @see Specifying the Authorization Header section at
-     *      http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx
-     *
-     * @return string
+     * Get value in an array. 
+     * 
+     * @param array $array
+     * @param string $key
+     * @param any|null $default
+     * @return $array[$key]
      */
+    private function tryGetValue($array, $key, $default = null)
+    {
+        return (!\is_null($array)) && \is_array($array) && \array_key_exists($key, $array)
+            ? $array[$key]
+            : $default;
+    }
+       
+    /**
+     * Get value in an array when all keys are in lowercase. 
+     * 
+     * @param string $key
+     * @param array $haystack
+     * @param any|null $default
+     * @return $haystack[$key]
+     */
+    private function tryGetValueInsensitive($key, $haystack, $default = null)
+    {
+        $array = \array_change_key_case($haystack);
+        return $this->tryGetValue($array, strtolower($key), $default);
+    }
 
-     /* Tam's note: Can we combine this and the computeSignature into a single function? 
-        It depends on whether we will use the getAuthorizationHeader or computeSignature more often */
-     
-    // private function getAuthorizationHeader(
-    //     array $headers,
-    //     $url,
-    //     array $queryParams,
-    //     $httpMethod
-    // ) {
-    //     $signature = $this->computeSignature(
-    //         $headers,
-    //         $url,
-    //         $queryParams,
-    //         $httpMethod
-    //     );
-
-        
-    // }
-
-    // Helper function for computeCanonicalizedHeaders, consider chnging to private non-static
-    private function startsWith($string, $prefix, $ignoreCase = false)
+    /**
+     * Check whether a string starts with a prefix. 
+     * 
+     * @param string $string
+     * @param string $prefix
+     * @param bool|false $ignoreCase
+     * @return bool
+     */
+    private function startsWith(string $string, string $prefix, bool $ignoreCase = false): bool
     {
         if ($ignoreCase) {
             $string = \strtolower($string);
@@ -799,22 +723,21 @@ class AzureBlob extends Device
     /**
      * Computes canonicalized headers for headers array.
      *
-     * @param array $headers request headers.
+     * @param array $headers.
      *
-     * @see Constructing the Canonicalized Headers String section at
-     *      http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx
+     * @see http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx
      *
      * @return array
      */
-    private function computeCanonicalizedHeaders($headers): array
+    private function computeCanonicalizedHeaders(array $headers): array
     {
         $canonicalizedHeaders = array();
         $normalizedHeaders    = array();
         $validPrefix          = 'x-ms-';
 
-        if (\is_null($normalizedHeaders)) {     //This looks weird, consider deleting in the end
-            return $canonicalizedHeaders;
-        }
+        // if (\is_null($normalizedHeaders)) {     //This looks weird, consider deleting in the end
+        //     return $canonicalizedHeaders;
+        // }
 
         foreach ($headers as $header => $value) {
             // Convert header to lower case.
@@ -850,15 +773,14 @@ class AzureBlob extends Device
     /**
      * Computes canonicalized resources from URL.
      *
-     * @param string $url         request url.
-     * @param array  $queryParams request query variables.
+     * @param string $url       
+     * @param array  $queryParams
      *
-     * @see Constructing the Canonicalized Resource String section at
-     *      http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx
+     * @see http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx
      *
      * @return string
      */
-    protected function computeCanonicalizedResource($url, $queryParams)
+    protected function computeCanonicalizedResource(string $url, array $queryParams): string
     {
         $queryParams = \array_change_key_case($queryParams);
 
@@ -893,10 +815,22 @@ class AzureBlob extends Device
         return $canonicalizedResource;
     }
 
+    /**
+     * Make an API request to Azure Blob and get a response.
+     *
+     * @param string $method       
+     * @param string $uri
+     * @param string|'' $data
+     * @param array|[] $parameters
+     * @param bool|true $decode
+     *
+     * @see http://msdn.microsoft.com/en-us/library/windowsazure/dd179428.aspx
+     *
+     * @return object
+     */
     private function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
     {
         // initialization of endpoint url and response object
-        // Tam's note: OK
         $uri = $this->getAbsolutePath($uri);
         $url = 'https://'.$this->host.$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
@@ -904,43 +838,29 @@ class AzureBlob extends Device
         $response->headers = [];
 
         // setup of curl session and properties
-        // Tam's note: OK
         $curl = \curl_init();
         \curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
         \curl_setopt($curl, CURLOPT_URL, $url);
 
-        // Headers
+        // headers
         $httpHeaders = [];
         $this->azureHeaders['x-ms-date'] = \gmdate('D, d M Y H:i:s T');
-
-        //Tam's note: Azure requires a x-ms-version header
         $this->azureHeaders['x-ms-version'] = self::X_MS_VERSION;
 
-        // Tam's note: OK
         foreach ($this->azureHeaders as $header => $value) {
             if (\strlen($value) > 0) {
                 $httpHeaders[] = $header.': '.$value;
             }
         }
-
-        /* Tam's note: this header is optional since x-ms-header has been set.
-           Source: https://learn.microsoft.com/en-us/rest/api/storageservices/authorize-with-shared-key#constructing-the-canonicalized-headers-string */
-        
-        // $this->headers['date'] = \gmdate('D, d M Y H:i:s T');   //Might need to set this to empty
-
-        // Tam's note: OK
         foreach ($this->headers as $header => $value) {
             if (\strlen($value) > 0) {
                 $httpHeaders[] = $header.': '.$value;
             }
         }
 
-        /* Tam's note: call getAuthorizationHeader (new Azure function) instead.
-            Arguments for the getAuthorizationHeader might be wrong */ 
-        // $httpHeaders[] = 'Authorization: '.$this->getSignatureV4($method, $uri, $parameters);
         $httpHeaders[] = 'Authorization: '.$this->getAuthorizationHeader($this->azureHeaders, $url, $parameters, $method);
 
-        /* Tam's note: seems OK */
+        // set up cURL request options
         \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
         \curl_setopt($curl, CURLOPT_HEADER, false);
         \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
@@ -964,7 +884,6 @@ class AzureBlob extends Device
         \curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
         \curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
 
-        /* Tam's note: seems OK */
         // HTTP request types
         switch ($method) {
             case self::METHOD_PUT:
@@ -977,7 +896,6 @@ class AzureBlob extends Device
                 break;
         }
 
-        /* Tam's note: seems OK */
         //executing curl command
         $result = \curl_exec($curl);
 
@@ -994,9 +912,7 @@ class AzureBlob extends Device
         // closing curl session
         \curl_close($curl);
 
-        /* Tam's note: Azure responses usually don't have 'content-type' or XMLheaders, but
-            it's fine to keep the code, as the if conditional will skip it anyways. */
-        // Parse body into XML (may not be needed for Azure)
+        // Parse body into XML
         if ($decode && ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml'))) {
             $response->body = \simplexml_load_string($response->body);
             $response->body = json_decode(json_encode($response->body), true);
