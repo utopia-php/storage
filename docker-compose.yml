@@ -18,3 +18,5 @@ services:
       - BACKBLAZE_SECRET
       - WASABI_ACCESS_KEY
       - WASABI_SECRET
+      - AZURE_ACCOUNT
+      - AZURE_ACCESS_KEY

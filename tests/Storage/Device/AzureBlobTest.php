@@ -10,13 +10,10 @@ class AzureBlobTest extends S3Base
     protected function init(): void
     {
         $this->root = '/root';
-        // $key = $_SERVER['AZURE_BLOB_ACCESS_KEY'] ?? '';
-        // $secret = $_SERVER['AZURE_BLOB_SECRET'] ?? '';
-        // $bucket = 'appwriteblobtesting';
-        $accessKey = 'QeXSoWLjhW+XK7pMilHkMsnoesUFMVBKU0qHrT68z1451VDoD53XxBmlXySBYg5bNZ5QunUFSfNz+AStmjNYgA==';
-        $storageAccount = 'tamblobtest001';
+        $storageAccount = $_SERVER['AZURE_ACCOUNT'] ?? '';
+        $accessKey = $_SERVER['AZURE_ACCESS_KEY'] ?? '';
         $container = 'azurebucket';
-
+        
         $this->object = new AzureBlob($this->root, $accessKey, $storageAccount, $container);
     }
 
