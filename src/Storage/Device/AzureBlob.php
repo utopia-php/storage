@@ -253,21 +253,25 @@ class AzureBlob extends Device
         //1. Create an empty blob. Similar to createMultipartUpload. 
         // Also create an array that holds all block IDs
         unset($this->azureHeaders['x-ms-blob-type']);
-        $blockList = [];
+        // $blockList = [];
 
         //2. Upload the first block. Similar to uploadPart
         //generate a unique blockId, make sure they are of the same size
         $blockId = \base64_encode(\random_bytes(32).(\time() % 1000000));   
         // $blockId = \urlencode($blockId);
-        $this->putBlock($source, $path, $blockId); 
+        $this->putBlock(\file_get_contents($source), $path, $blockId); 
         $metadata['chunks'] ??= 0;
         $metadata['chunks']++;
-        $blockList[] = $blockId;
+        $metadata['parts'][] = $blockId;
 
         //3. If all parts (ie. blocks) are uploaded, commit all blocks, similar to completeMultipartUpload
         if ($metadata['chunks'] == $chunks) {
-            $this->commitBlocks($path, $blockList);
+            // $erroLog = "metadata[chunks] => " . $metadata['chunks'] . "\nCommitBlocks Error: " . \implode("\n", $metadata['parts']);
+            // throw new Exception($erroLog);
+            $this->commitBlocks($path, $metadata['parts']);
         }
+
+        // throw new Exception("Stop here: " . \strlen(\file_get_contents($source)));
 
         return $metadata['chunks'];
     }
@@ -289,6 +293,7 @@ class AzureBlob extends Device
         $params = [ 'comp' => 'blocklist' ];
         $body = $this->buildBlockListBody($blockList); //will need to build this as an XML file, appending several block IDs
         $this->headers['content-length'] = \strlen($body);
+        // throw new Exception(\strlen($body));
         $this->call(self::METHOD_PUT, $path, $body, $params);
     }
 
