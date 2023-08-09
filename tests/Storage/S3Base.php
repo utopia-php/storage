@@ -240,7 +240,6 @@ abstract class S3Base extends TestCase
         @fclose($handle);
         unlink($op);
 
-        //Tam: source = expected = 31730705;  dest = actual = 44
         $this->assertEquals(\filesize($source), $this->object->getFileSize($dest));
 
         // S3 doesnt provide a method to get a proper MD5-hash of a file created using multipart upload
