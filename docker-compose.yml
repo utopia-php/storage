@@ -6,7 +6,9 @@ services:
     build:
       context: .
     volumes:
-      - ./:/usr/src/code
+      - ./src:/usr/src/code/src
+      - ./tests:/usr/src/code/tests
+      - ./phpunit.xml:/usr/src/code/phpunit.xml
     environment:
       - S3_ACCESS_KEY
       - S3_SECRET
