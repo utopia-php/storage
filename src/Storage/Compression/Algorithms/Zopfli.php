@@ -21,9 +21,8 @@ class Zopfli extends Compression
      *
      * @return string
      */
-    public function compress(string $data): string
-    {
-        return \zopfliencode($data);
+    function zopfli_encode($data) {
+        return gzencode($data, 9, FORCE_DEFLATE);
     }
 
     /**
@@ -33,8 +32,8 @@ class Zopfli extends Compression
      *
      * @return string
      */
-    public function decompress(string $data): string
-    {
-        return \zopflidecode($data);
+    function zopfli_decode($data) {
+       return gzdecode($data);
     }
 }
+?>
