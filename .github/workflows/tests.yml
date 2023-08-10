@@ -31,6 +31,12 @@ jobs:
       run: |
         docker compose up -d
         sleep 10
+
+    - name: Doctor
+      run: |
+        docker compose logs
+        docker ps
+        docker network ls
     
     - name: Unit Tests
       run: docker compose exec -T tests vendor/bin/phpunit --configuration phpunit.xml --debug --testsuite unit
