@@ -14,7 +14,7 @@ class S3Test extends S3Base
         $secret = $_SERVER['S3_SECRET'] ?? '';
         $bucket = 'utopia-storage-test';
 
-        $this->object = new S3($this->root, $key, $secret, $bucket, S3::EU_WEST_1, S3::ACL_PRIVATE);
+        $this->object = new S3($this->root, $key, $secret, $bucket, S3::EU_CENTRAL_1, S3::ACL_PRIVATE);
     }
 
     /**
