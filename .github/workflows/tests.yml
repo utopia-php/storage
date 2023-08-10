@@ -1,0 +1,39 @@
+name: "Tests"
+
+on: [pull_request]
+jobs:
+  tests:
+    name: Unit & E2E
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build image
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        push: false
+        load: true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Start storage
+      env:
+        DO_ACCESS_KEY: ${{ secrets.DO_ACCESS_KEY }}
+        DO_SECRET: ${{ secrets.DO_SECRET }}
+        LINODE_ACCESS_KEY: ${{ secrets.LINODE_ACCESS_KEY }}
+        LINODE_SECRET: ${{ secrets.LINODE_SECRET }}
+      run: |
+        docker compose up -d
+        sleep 10
+    
+    - name: Unit Tests
+      run: docker compose exec -T tests vendor/bin/phpunit --configuration phpunit.xml --debug --testsuite unit
+      
+    - name: E2E Tests
+      run: docker compose exec -T tests vendor/bin/phpunit --configuration phpunit.xml --debug --testsuite e2e
