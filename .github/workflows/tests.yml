@@ -34,9 +34,8 @@ jobs:
 
     - name: Doctor
       run: |
-        docker compose logs
+        docker compose logs tests
         docker ps
-        docker network ls
     
     - name: Unit Tests
       run: docker compose exec -T tests vendor/bin/phpunit --configuration phpunit.xml --debug --testsuite unit
