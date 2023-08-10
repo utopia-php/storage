@@ -7,10 +7,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
+    - name: Checkout Repo
       uses: actions/checkout@v3
-  
-    - name: Start test stack
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build image
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        push: false
+        load: true
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Start storage
       env:
         DO_ACCESS_KEY: ${{ secrets.DO_ACCESS_KEY }}
         DO_SECRET: ${{ secrets.DO_SECRET }}
@@ -18,7 +30,7 @@ jobs:
         LINODE_SECRET: ${{ secrets.LINODE_SECRET }}
       run: |
         docker compose up -d
-        sleep 1
+        sleep 10
 
     - name: Doctor
       run: |
