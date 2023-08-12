@@ -45,9 +45,7 @@ jobs:
     
     - name: Unit Tests
       run: docker compose exec -T tests vendor/bin/phpunit --configuration phpunit.xml --debug --testsuite unit
-      
-    - name: E2E Tests
-      run: docker compose exec -T tests vendor/bin/phpunit --configuration phpunit.xml --debug --testsuite e2e
+
   e2e_test:
     name: E2E Test
     runs-on: ubuntu-latest
