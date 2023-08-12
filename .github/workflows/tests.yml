@@ -37,8 +37,8 @@ jobs:
         S3_SECRET: ${{ secrets.S3_SECRET }}
         WASABI_ACCESS_KEY: ${{ secrets.WASABI_ACCESS_KEY }}
         WASABI_SECRET: ${{ secrets.WASABI_SECRET }}
-        BLACKBLAZE_ACCESS_KEY: ${{ secrets.BLACKBLAZE_ACCESS_KEY }}
-        BLACKBLAZE_SECRET: ${{ secrets.BLACKBLAZE_SECRET }}
+        BACKBLAZE_ACCESS_KEY: ${{ secrets.BACKBLAZE_ACCESS_KEY }}
+        BACKBLAZE_SECRET: ${{ secrets.BACKBLAZE_SECRET }}
       run: |
         docker compose up -d
         sleep 10
@@ -73,8 +73,8 @@ jobs:
           S3_SECRET: ${{ secrets.S3_SECRET }}
           WASABI_ACCESS_KEY: ${{ secrets.WASABI_ACCESS_KEY }}
           WASABI_SECRET: ${{ secrets.WASABI_SECRET }}
-          BLACKBLAZE_ACCESS_KEY: ${{ secrets.BLACKBLAZE_ACCESS_KEY }}
-          BLACKBLAZE_SECRET: ${{ secrets.BLACKBLAZE_SECRET }}
+          BACKBLAZE_ACCESS_KEY: ${{ secrets.BACKBLAZE_ACCESS_KEY }}
+          BACKBLAZE_SECRET: ${{ secrets.BACKBLAZE_SECRET }}
         run: |
           docker compose up -d
           sleep 10
