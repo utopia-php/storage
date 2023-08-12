@@ -3,6 +3,7 @@ version: '3.1'
 services:
   tests:
     container_name: tests
+    image: storage-dev
     build:
       context: .
     volumes:
