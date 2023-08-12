@@ -1,9 +1,13 @@
 name: "Tests"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on: [pull_request]
 jobs:
-  tests:
-    name: Unit & E2E
+  build:
+    name: Build & Unit
     runs-on: ubuntu-latest
 
     steps:
@@ -44,3 +48,21 @@ jobs:
       
     - name: E2E Tests
       run: docker compose exec -T tests vendor/bin/phpunit --configuration phpunit.xml --debug --testsuite e2e
+  e2e_test:
+    name: E2E Test
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        devices: [BlackblazeTest, DOSpacesTest, LinodeTest, LocalTest, S3Test, WasabiTest]
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: Start storage
+        run: |
+          docker compose up -d
+          sleep 10
+      - name: Run ${{matrix.devices}}
+        run: docker compose exec -T vendor/bin/phpunit tests/Storage/Device/${{matrix.devices}}.php
