@@ -14,7 +14,7 @@ class LinodeTest extends S3Base
         $secret = $_SERVER['LINODE_SECRET'] ?? '';
         $bucket = 'storage-test';
 
-        $this->object = new Linode($this->root, $key, $secret, $bucket, Linode::EU_CENTRAL_1, Linode::ACL_PRIVATE);
+        $this->object = new Linode($this->root, $key, $secret, $bucket, Linode::AP_SOUTH_1, Linode::ACL_PRIVATE);
     }
 
     protected function getAdapterName(): string
