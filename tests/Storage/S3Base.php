@@ -3,6 +3,7 @@
 namespace Utopia\Tests\Storage;
 
 use PHPUnit\Framework\TestCase;
+use Utopia\Storage\Device\Local;
 use Utopia\Storage\Device\S3;
 
 abstract class S3Base extends TestCase
@@ -261,6 +262,42 @@ abstract class S3Base extends TestCase
         $chunk = file_get_contents($source, false, null, 0, 500);
         $readChunk = $this->object->read($path, 0, 500);
         $this->assertEquals($chunk, $readChunk);
+    }
+
+    /**
+     * @depends testPartUpload
+     */
+    public function testTransferLarge($path)
+    {
+        // chunked file
+        $this->object->setTransferChunkSize(10000000); //10 mb
+
+        $device = new Local(__DIR__.'/../resources/disk-a');
+        $destination = $device->getPath('largefile.mp4');
+
+        $this->assertTrue($this->object->transfer($path, $destination, $device));
+        $this->assertTrue($device->exists($destination));
+        $this->assertEquals($device->getFileMimeType($destination), 'video/mp4');
+
+        $device->delete($destination);
         $this->object->delete($path);
+    }
+
+    public function testTransferSmall()
+    {
+        $this->object->setTransferChunkSize(10000000); //10 mb
+
+        $device = new Local(__DIR__.'/../resources/disk-a');
+
+        $path = $this->object->getPath('text-for-read.txt');
+        $this->object->write($path, 'Hello World', 'text/plain');
+
+        $destination = $device->getPath('hello.txt');
+        $this->assertTrue($this->object->transfer($path, $destination, $device));
+        $this->assertTrue($device->exists($destination));
+        $this->assertEquals($device->read($destination), 'Hello World');
+
+        $this->object->delete($path);
+        $device->delete($destination);
     }
 }

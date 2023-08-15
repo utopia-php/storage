@@ -223,16 +223,37 @@ class S3 extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
+        return $this->uploadData(\file_get_contents($source), $path, \mime_content_type($source), $chunk, $chunks, $metadata);
+    }
+
+    /**
+     * Upload Data.
+     *
+     * Upload file contents to desired destination in the selected disk.
+     * return number of chunks uploaded or 0 if it fails.
+     *
+     * @param  string  $source
+     * @param  string  $path
+     * @param  string  $contentType
+     * @param int chunk
+     * @param int chunks
+     * @param  array  $metadata
+     * @return int
+     *
+     * @throws \Exception
+     */
+    public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    {
         if ($chunk == 1 && $chunks == 1) {
-            return $this->write($path, \file_get_contents($source), \mime_content_type($source));
+            return $this->write($path, $data, $contentType);
         }
         $uploadId = $metadata['uploadId'] ?? null;
         if (empty($uploadId)) {
-            $uploadId = $this->createMultipartUpload($path, $metadata['content_type']);
+            $uploadId = $this->createMultipartUpload($path, $contentType);
             $metadata['uploadId'] = $uploadId;
         }
 
-        $etag = $this->uploadPart($source, $path, $chunk, $uploadId);
+        $etag = $this->uploadPart($data, $path, $contentType, $chunk, $uploadId);
         $metadata['parts'] ??= [];
         $metadata['parts'][] = ['partNumber' => $chunk, 'etag' => $etag];
         $metadata['chunks'] ??= 0;
@@ -242,6 +263,42 @@ class S3 extends Device
         }
 
         return $metadata['chunks'];
+    }
+
+    /**
+     * Transfer
+     *
+     * @param  string  $path
+     * @param  string  $destination
+     * @param  Device  $device
+     * @return string
+     */
+    public function transfer(string $path, string $destination, Device $device): bool
+    {
+        $response = [];
+        try {
+            $response = $this->getInfo($path);
+        } catch (\Throwable $e) {
+            throw new Exception('File not found');
+        }
+        $size = (int) ($response['content-length'] ?? 0);
+        $contentType = $response['content-type'] ?? '';
+
+        if ($size <= $this->transferChunkSize) {
+            $source = $this->read($path);
+
+            return $device->write($destination, $source, $contentType);
+        }
+
+        $totalChunks = \ceil($size / $this->transferChunkSize);
+        $metadata = ['content_type' => $contentType];
+        for ($counter = 0; $counter < $totalChunks; $counter++) {
+            $start = $counter * $this->transferChunkSize;
+            $data = $this->read($path, $start, $this->transferChunkSize);
+            $device->uploadData($data, $destination, $contentType, $counter + 1, $totalChunks, $metadata);
+        }
+
+        return true;
     }
 
     /**
@@ -279,12 +336,11 @@ class S3 extends Device
      *
      * @throws \Exception
      */
-    protected function uploadPart(string $source, string $path, int $chunk, string $uploadId): string
+    protected function uploadPart(string $data, string $path, string $contentType, int $chunk, string $uploadId): string
     {
         $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
 
-        $data = \file_get_contents($source);
-        $this->headers['content-type'] = \mime_content_type($source);
+        $this->headers['content-type'] = $contentType;
         $this->headers['content-md5'] = \base64_encode(md5($data, true));
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
         unset($this->amzHeaders['x-amz-acl']); // ACL header is not allowed in parts, only createMultipartUpload accepts this header.
@@ -388,29 +444,6 @@ class S3 extends Device
         $this->amzHeaders['x-amz-acl'] = $this->acl;
 
         $this->call(self::METHOD_PUT, $uri, $data);
-
-        return true;
-    }
-
-    /**
-     * Move file from given source to given path, Return true on success and false on failure.
-     *
-     * @see http://php.net/manual/en/function.filesize.php
-     *
-     * @param  string  $source
-     * @param  string  $target
-     *
-     * @throw \Exception
-     *
-     * @return bool
-     */
-    public function move(string $source, string $target): bool
-    {
-        $type = $this->getFileMimeType($source);
-
-        if ($this->write($target, $this->read($source), $type)) {
-            $this->delete($source);
-        }
 
         return true;
     }
@@ -704,7 +737,7 @@ class S3 extends Device
         $kService = \hash_hmac('sha256', $service, $kRegion, true);
         $kSigning = \hash_hmac('sha256', 'aws4_request', $kService, true);
 
-        $signature = \hash_hmac('sha256', \utf8_encode($stringToSignStr), $kSigning);
+        $signature = \hash_hmac('sha256', \mb_convert_encoding($stringToSignStr, 'utf-8'), $kSigning);
 
         return $algorithm.' '.\implode(',', [
             'Credential='.$this->accessKey.'/'.\implode('/', $credentialScope),

@@ -4,6 +4,7 @@ namespace Utopia\Tests\Storage\Device;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Device\Local;
+use Utopia\Storage\Device\S3;
 
 class LocalTest extends TestCase
 {
@@ -234,7 +235,6 @@ class LocalTest extends TestCase
         $chunk = file_get_contents($source, false, null, 0, 500);
         $readChunk = $this->object->read($path, 0, 500);
         $this->assertEquals($chunk, $readChunk);
-        $this->object->delete($path);
     }
 
     public function testPartitionFreeSpace()
@@ -245,6 +245,51 @@ class LocalTest extends TestCase
     public function testPartitionTotalSpace()
     {
         $this->assertGreaterThan(0, $this->object->getPartitionTotalSpace());
+    }
+
+    /**
+     * @depends testPartUpload
+     */
+    public function testTransferLarge($path)
+    {
+        // chunked file
+        $this->object->setTransferChunkSize(10000000); //10 mb
+
+        $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
+        $secret = $_SERVER['S3_SECRET'] ?? '';
+        $bucket = 'utopia-storage-test';
+
+        $device = new S3('/root', $key, $secret, $bucket, S3::EU_CENTRAL_1, S3::ACL_PRIVATE);
+        $destination = $device->getPath('largefile.mp4');
+
+        $this->assertTrue($this->object->transfer($path, $destination, $device));
+        $this->assertTrue($device->exists($destination));
+        $this->assertEquals($device->getFileMimeType($destination), 'video/mp4');
+
+        $device->delete($destination);
+        $this->object->delete($path);
+    }
+
+    public function testTransferSmall()
+    {
+        $this->object->setTransferChunkSize(10000000); //10 mb
+
+        $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
+        $secret = $_SERVER['S3_SECRET'] ?? '';
+        $bucket = 'utopia-storage-test';
+
+        $device = new S3('/root', $key, $secret, $bucket, S3::EU_CENTRAL_1, S3::ACL_PRIVATE);
+
+        $path = $this->object->getPath('text-for-read.txt');
+        $this->object->write($path, 'Hello World');
+
+        $destination = $device->getPath('hello.txt');
+        $this->assertTrue($this->object->transfer($path, $destination, $device));
+        $this->assertTrue($device->exists($destination));
+        $this->assertEquals($device->read($destination), 'Hello World');
+
+        $this->object->delete($path);
+        $device->delete($destination);
     }
 
     public function testDeletePath()
