@@ -503,7 +503,7 @@ class Local extends Device
      * @param  string  $dir Directory to scan
      * @return string[]
      */
-    private function getFiles(string $dir): array
+    public function getFiles(string $dir): array
     {
         if (! (\str_ends_with($dir, DIRECTORY_SEPARATOR))) {
             $dir .= DIRECTORY_SEPARATOR;
