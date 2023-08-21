@@ -348,21 +348,25 @@ class Local extends Device
      */
     public function deletePath(string $path): bool
     {
-        $path = realpath($this->getRoot().DIRECTORY_SEPARATOR.$path);
+        $path = realpath($this->getRoot() . DIRECTORY_SEPARATOR . $path);
 
-        if (\is_dir($path)) {
-            $files = $this->getFiles($path);
-
-            foreach ($files as $file) {
-                $this->delete($file, true);
-            }
-
-            \rmdir($path);
-
-            return true;
+        if (!file_exists($path) || is_dir($path)) {
+            return false;
         }
 
-        return false;
+        $files = $this->getFiles($path);
+
+        foreach ($files as $file) {
+            if(is_dir($file)) {
+                $this->deletePath($file);
+            } else {
+                $this->delete($file, true);
+            }
+        }
+
+        \rmdir($path);
+
+        return true;
     }
 
     /**
