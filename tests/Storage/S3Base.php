@@ -30,6 +30,11 @@ abstract class S3Base extends TestCase
      */
     protected $root = '/root';
 
+    /**
+     * @var bool
+     */
+    protected $vhost = true;
+
     public function setUp(): void
     {
         $this->init();
@@ -139,12 +144,18 @@ abstract class S3Base extends TestCase
 
     public function testDeletePath()
     {
+        if ($this->vhost) {
+            $dpParam = 'bucket';
+        } else {
+            $dpParam = '';
+        }
+
         // Test Single Object
         $path = $this->object->getPath('text-for-delete-path.txt');
         $path = str_ireplace($this->object->getRoot(), $this->object->getRoot().DIRECTORY_SEPARATOR.'bucket', $path);
         $this->assertEquals(true, $this->object->write($path, 'Hello World', 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path));
-        $this->assertEquals(true, $this->object->deletePath('bucket'));
+        $this->assertEquals(true, $this->object->deletePath($dpParam));
         $this->assertEquals(false, $this->object->exists($path));
 
         // Test Multiple Objects
@@ -158,7 +169,7 @@ abstract class S3Base extends TestCase
         $this->assertEquals(true, $this->object->write($path2, 'Hello World', 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path2));
 
-        $this->assertEquals(true, $this->object->deletePath('bucket'));
+        $this->assertEquals(true, $this->object->deletePath($dpParam));
         $this->assertEquals(false, $this->object->exists($path));
         $this->assertEquals(false, $this->object->exists($path2));
     }
