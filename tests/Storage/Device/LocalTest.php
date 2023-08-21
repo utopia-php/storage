@@ -339,4 +339,21 @@ class LocalTest extends TestCase
         $files = $this->object->getFiles($dir);
         $this->assertEquals(2, \count($files));
     }
+
+    public function testNestedDeletePath()
+    {
+        $dir = DIRECTORY_SEPARATOR.'nested-delete-path-test';
+        $dir2 = $dir.DIRECTORY_SEPARATOR.'dir2';
+        $dir3 = $dir2.DIRECTORY_SEPARATOR.'dir3';
+
+        $this->assertTrue($this->object->createDirectory($dir));
+        $this->object->write($dir.DIRECTORY_SEPARATOR.'new-file.txt', 'Hello World');
+        $this->assertTrue($this->object->createDirectory($dir2));
+        $this->object->write($dir2.DIRECTORY_SEPARATOR.'new-file-2.txt', 'Hello World');
+        $this->assertTrue($this->object->createDirectory($dir3));
+        $this->object->write($dir3.DIRECTORY_SEPARATOR.'new-file-3.txt', 'Hello World');
+
+        $this->assertTrue($this->object->deletePath($dir));
+        $this->assertFalse($this->object->exists($dir));
+    }
 }
