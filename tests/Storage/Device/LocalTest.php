@@ -326,19 +326,17 @@ class LocalTest extends TestCase
 
     public function testGetFiles()
     {
-        $files = $this->object->getFiles(DIRECTORY_SEPARATOR);
-        $count = \count($files);
+        $dir = DIRECTORY_SEPARATOR.'get-files-test';
 
-        $path = $this->object->getPath('new-file.txt');
-        $this->object->write($path, 'Hello World');
+        $this->assertTrue($this->object->createDirectory($dir));
 
-        $path = $this->object->getPath('new-file-two.txt');
-        $this->object->write($path, 'Hello World');
+        $files = $this->object->getFiles($dir);
+        $this->assertEquals(0, \count($files));
 
-        $files = $this->object->getFiles(DIRECTORY_SEPARATOR);
-        $count2 = \count($files);
+        $this->object->write($dir.DIRECTORY_SEPARATOR.'new-file.txt', 'Hello World');
+        $this->object->write($dir.DIRECTORY_SEPARATOR.'new-file-two.txt', 'Hello World');
 
-        $this->assertEquals($count2, $count + 2);
-
+        $files = $this->object->getFiles($dir);
+        $this->assertEquals(2, \count($files));
     }
 }
