@@ -358,7 +358,7 @@ class Local extends Device
 
         foreach ($files as $file) {
             if (is_dir($file)) {
-                $this->deletePath($file);
+                $this->deletePath(\ltrim($file, $this->getRoot().DIRECTORY_SEPARATOR));
             } else {
                 $this->delete($file, true);
             }
