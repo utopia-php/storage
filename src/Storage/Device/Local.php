@@ -350,7 +350,7 @@ class Local extends Device
     {
         $path = realpath($this->getRoot().DIRECTORY_SEPARATOR.$path);
 
-        if (! file_exists($path) || is_dir($path)) {
+        if (! file_exists($path) || ! is_dir($path)) {
             return false;
         }
 
