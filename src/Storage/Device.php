@@ -268,6 +268,14 @@ abstract class Device
     abstract public function getPartitionTotalSpace(): float;
 
     /**
+     * Get all files and directories inside a directory.
+     *
+     * @param  string  $dir Directory to scan
+     * @return string[]
+     */
+    abstract public function getFiles(string $dir): array;
+
+    /**
      * Get the absolute path by resolving strings like ../, .., //, /\ and so on.
      *
      * Works like the realpath function but works on files that does not exist

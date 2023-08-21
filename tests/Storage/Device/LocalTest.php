@@ -323,4 +323,22 @@ class LocalTest extends TestCase
         $this->assertEquals(false, $this->object->exists($path2));
         $this->assertEquals(false, $this->object->exists($path3));
     }
+
+    public function testGetFiles()
+    {
+        $files = $this->object->getFiles(DIRECTORY_SEPARATOR);
+        $count = \count($files);
+
+        $path = $this->object->getPath('new-file.txt');
+        $this->object->write($path, 'Hello World');
+
+        $path = $this->object->getPath('new-file-two.txt');
+        $this->object->write($path, 'Hello World');
+
+        $files = $this->object->getFiles(DIRECTORY_SEPARATOR);
+        $count2 = \count($files);
+
+        $this->assertEquals($count2, $count + 2);
+
+    }
 }

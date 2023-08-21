@@ -498,7 +498,7 @@ class Local extends Device
     }
 
     /**
-     * Get all files inside a directory.
+     * Get all files and directories inside a directory.
      *
      * @param  string  $dir Directory to scan
      * @return string[]
