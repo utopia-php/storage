@@ -323,4 +323,37 @@ class LocalTest extends TestCase
         $this->assertEquals(false, $this->object->exists($path2));
         $this->assertEquals(false, $this->object->exists($path3));
     }
+
+    public function testGetFiles()
+    {
+        $dir = DIRECTORY_SEPARATOR.'get-files-test';
+
+        $this->assertTrue($this->object->createDirectory($dir));
+
+        $files = $this->object->getFiles($dir);
+        $this->assertEquals(0, \count($files));
+
+        $this->object->write($dir.DIRECTORY_SEPARATOR.'new-file.txt', 'Hello World');
+        $this->object->write($dir.DIRECTORY_SEPARATOR.'new-file-two.txt', 'Hello World');
+
+        $files = $this->object->getFiles($dir);
+        $this->assertEquals(2, \count($files));
+    }
+
+    public function testNestedDeletePath()
+    {
+        $dir = $this->object->getPath('nested-delete-path-test');
+        $dir2 = $dir.DIRECTORY_SEPARATOR.'dir2';
+        $dir3 = $dir2.DIRECTORY_SEPARATOR.'dir3';
+
+        $this->assertTrue($this->object->createDirectory($dir));
+        $this->object->write($dir.DIRECTORY_SEPARATOR.'new-file.txt', 'Hello World');
+        $this->assertTrue($this->object->createDirectory($dir2));
+        $this->object->write($dir2.DIRECTORY_SEPARATOR.'new-file-2.txt', 'Hello World');
+        $this->assertTrue($this->object->createDirectory($dir3));
+        $this->object->write($dir3.DIRECTORY_SEPARATOR.'new-file-3.txt', 'Hello World');
+
+        $this->assertTrue($this->object->deletePath('nested-delete-path-test'));
+        $this->assertFalse($this->object->exists($dir));
+    }
 }

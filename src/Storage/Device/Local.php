@@ -350,19 +350,23 @@ class Local extends Device
     {
         $path = realpath($this->getRoot().DIRECTORY_SEPARATOR.$path);
 
-        if (\is_dir($path)) {
-            $files = $this->getFiles($path);
-
-            foreach ($files as $file) {
-                $this->delete($file, true);
-            }
-
-            \rmdir($path);
-
-            return true;
+        if (! file_exists($path) || ! is_dir($path)) {
+            return false;
         }
 
-        return false;
+        $files = $this->getFiles($path);
+
+        foreach ($files as $file) {
+            if (is_dir($file)) {
+                $this->deletePath(\ltrim($file, $this->getRoot().DIRECTORY_SEPARATOR));
+            } else {
+                $this->delete($file, true);
+            }
+        }
+
+        \rmdir($path);
+
+        return true;
     }
 
     /**
@@ -498,12 +502,12 @@ class Local extends Device
     }
 
     /**
-     * Get all files inside a directory.
+     * Get all files and directories inside a directory.
      *
      * @param  string  $dir Directory to scan
      * @return string[]
      */
-    private function getFiles(string $dir): array
+    public function getFiles(string $dir): array
     {
         if (! (\str_ends_with($dir, DIRECTORY_SEPARATOR))) {
             $dir .= DIRECTORY_SEPARATOR;
