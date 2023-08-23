@@ -5,6 +5,7 @@ namespace Utopia\Tests\Storage;
 use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Device\Local;
 use Utopia\Storage\Device\S3;
+use Utopia\Storage\Storage;
 
 abstract class S3Base extends TestCase
 {
@@ -112,6 +113,18 @@ abstract class S3Base extends TestCase
         $this->assertEquals(false, $this->object->exists($this->object->getPath('text-for-move.txt')));
 
         $this->object->delete($this->object->getPath('text-for-move-new.txt'));
+    }
+
+    public function testMoveIdenticalName()
+    {
+        $file = '/kitten-1.jpg';
+
+        try {
+            $this->object->move($file, $file);
+            $this->fail('Failed to throw exception');
+        } catch (\Exception $e) {
+            $this->assertEquals('Source and target can not be identical!', $e->getMessage());
+        }
     }
 
     public function testDelete()
