@@ -158,15 +158,16 @@ abstract class Device
      *
      * @see http://php.net/manual/en/function.filesize.php
      *
-     * @param string $source
-     * @param string $target
+     * @param  string  $source
+     * @param  string  $target
      * @return bool
+     *
      * @throws Exception
      */
     public function move(string $source, string $target): bool
     {
-        if($source === $target){
-            Throw new Exception('Source and target can not be identical!');
+        if ($source === $target) {
+            throw new Exception('Source and target can not be identical!');
         }
 
         if ($this->transfer($source, $target, $this)) {

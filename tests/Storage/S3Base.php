@@ -5,7 +5,6 @@ namespace Utopia\Tests\Storage;
 use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Device\Local;
 use Utopia\Storage\Device\S3;
-use Utopia\Storage\Storage;
 
 abstract class S3Base extends TestCase
 {
