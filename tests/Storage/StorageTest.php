@@ -54,6 +54,5 @@ class StorageTest extends TestCase
         } catch (\Exception $e) {
             $this->assertEquals('Source and target can not be identical!', $e->getMessage());
         }
-
     }
 }
