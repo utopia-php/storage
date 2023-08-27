@@ -117,13 +117,7 @@ abstract class S3Base extends TestCase
     public function testMoveIdenticalName()
     {
         $file = '/kitten-1.jpg';
-
-        try {
-            $this->object->move($file, $file);
-            $this->fail('Failed to throw exception');
-        } catch (\Exception $e) {
-            $this->assertEquals('Source and target can not be identical!', $e->getMessage());
-        }
+        $this->assertFalse($this->object->move($file, $file));
     }
 
     public function testDelete()

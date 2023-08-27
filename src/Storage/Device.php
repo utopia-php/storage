@@ -161,13 +161,11 @@ abstract class Device
      * @param  string  $source
      * @param  string  $target
      * @return bool
-     *
-     * @throws Exception
      */
     public function move(string $source, string $target): bool
     {
         if ($source === $target) {
-            throw new Exception('Source and target can not be identical!');
+            return false;
         }
 
         if ($this->transfer($source, $target, $this)) {

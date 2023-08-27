@@ -304,7 +304,7 @@ class Local extends Device
     public function move(string $source, string $target): bool
     {
         if ($source === $target) {
-            throw new Exception('Source and target can not be identical!');
+            return false;
         }
 
         if (! \file_exists(\dirname($target))) { // Checks if directory path to file exists

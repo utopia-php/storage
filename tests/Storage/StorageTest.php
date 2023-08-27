@@ -40,19 +40,10 @@ class StorageTest extends TestCase
         $this->assertEquals(Storage::exists('disk-c'), false);
     }
 
-    /**
-     * @throws Exception
-     */
     public function testMoveIdenticalName()
     {
         $file = '/kitten-1.jpg';
         $device = Storage::getDevice('disk-a');
-
-        try {
-            $device->move($file, $file);
-            $this->fail('Failed to throw exception');
-        } catch (\Exception $e) {
-            $this->assertEquals('Source and target can not be identical!', $e->getMessage());
-        }
+        $this->assertFalse($device->move($file, $file));
     }
 }

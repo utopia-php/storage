@@ -653,12 +653,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/instantiator.git",
-                "reference": "40fc8fcd149f6ccff851e767c3fc5ded4e6a96c0"
+                "reference": "f49f6a836a816609c853718ba2ea422dc18a8e4a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/instantiator/zipball/40fc8fcd149f6ccff851e767c3fc5ded4e6a96c0",
-                "reference": "40fc8fcd149f6ccff851e767c3fc5ded4e6a96c0",
+                "url": "https://api.github.com/repos/doctrine/instantiator/zipball/f49f6a836a816609c853718ba2ea422dc18a8e4a",
+                "reference": "f49f6a836a816609c853718ba2ea422dc18a8e4a",
                 "shasum": ""
             },
             "require": {
@@ -716,7 +716,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-07-30T10:00:15+00:00"
+            "time": "2023-08-24T20:23:35+00:00"
         },
         {
             "name": "felixfbecker/advanced-json-rpc",
@@ -1710,12 +1710,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "6c24b9dd8390a031a5490a2443fff1958522b49a"
+                "reference": "1e5fec0e7eb197de7e50d5eb5012722dcc38a692"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/6c24b9dd8390a031a5490a2443fff1958522b49a",
-                "reference": "6c24b9dd8390a031a5490a2443fff1958522b49a",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/1e5fec0e7eb197de7e50d5eb5012722dcc38a692",
+                "reference": "1e5fec0e7eb197de7e50d5eb5012722dcc38a692",
                 "shasum": ""
             },
             "require": {
@@ -1805,7 +1805,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-08-21T05:56:05+00:00"
+            "time": "2023-08-26T05:31:07+00:00"
         },
         {
             "name": "psr/container",
