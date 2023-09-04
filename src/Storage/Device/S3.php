@@ -474,12 +474,14 @@ class S3 extends Device
     /**
      * Get list of objects in the given path.
      *
-     * @param  string  $path
+     * @param string $prefix
+     * @param int $maxKeys
+     * @param string $continuationToken
      * @return array
      *
-     * @throws \Exception
+     * @throws Exception
      */
-    private function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
+    private function listObjects(string $prefix = '', int $maxKeys = 1000, string $continuationToken = ''): array
     {
         $uri = '/';
         $prefix = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */
@@ -657,12 +659,12 @@ class S3 extends Device
      * Get all files and directories inside a directory.
      *
      * @param string $dir Directory to scan
-     * @return string[]
+     * @return array
      * @throws Exception
      */
     public function getFiles(string $dir): array
     {
-        return $this->listObjects($dir);
+        return $this->listObjects($dir, 9999);
     }
 
     /**

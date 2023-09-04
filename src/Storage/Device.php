@@ -270,8 +270,8 @@ abstract class Device
     /**
      * Get all files and directories inside a directory.
      *
-     * @param  string  $dir Directory to scan
-     * @return string[]
+     * @param string $dir Directory to scan
+     * @return array
      */
     abstract public function getFiles(string $dir): array;
 

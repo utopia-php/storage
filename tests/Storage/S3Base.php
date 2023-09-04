@@ -57,6 +57,23 @@ abstract class S3Base extends TestCase
         $this->removeTestFiles();
     }
 
+    public function testGetFiles()
+    {
+        $path = $this->object->getPath('testing/');
+        $files = $this->object->getFiles($path);
+        $this->assertEquals('4', $files['KeyCount']);
+        $this->assertEquals('false', $files['IsTruncated']);
+        $this->assertIsArray($files['Contents']);
+
+        $file = $files['Contents'][0];
+
+        $this->assertArrayHasKey('LastModified', $file);
+        $this->assertArrayHasKey('ETag', $file);
+        $this->assertArrayHasKey('Size', $file);
+        $this->assertArrayHasKey('StorageClass', $file);
+        $this->assertArrayHasKey('Type', $file);
+    }
+
     public function testName()
     {
         $this->assertEquals($this->getAdapterName(), $this->object->getName());
