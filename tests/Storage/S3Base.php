@@ -70,8 +70,8 @@ abstract class S3Base extends TestCase
         $this->assertArrayHasKey('Key', $file);
         $this->assertArrayHasKey('LastModified', $file);
         $this->assertArrayHasKey('ETag', $file);
-        $this->assertArrayHasKey('Size', $file);
         $this->assertArrayHasKey('StorageClass', $file);
+        $this->assertArrayHasKey('Size', $file);
     }
 
     public function testName()
