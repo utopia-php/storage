@@ -656,12 +656,13 @@ class S3 extends Device
     /**
      * Get all files and directories inside a directory.
      *
-     * @param  string  $dir Directory to scan
+     * @param string $dir Directory to scan
      * @return string[]
+     * @throws Exception
      */
     public function getFiles(string $dir): array
     {
-        throw new Exception('Not implemented.');
+        return $this->listObjects($dir);
     }
 
     /**
