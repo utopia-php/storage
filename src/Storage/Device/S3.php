@@ -665,7 +665,10 @@ class S3 extends Device
      */
     public function getFiles(string $dir): array
     {
-        return $this->listObjects($dir, 9999);
+        $data = $this->listObjects($dir);
+        $data['IsTruncated'] = $data['IsTruncated'] === 'true';
+        $data['KeyCount'] = intval($data['KeyCount']);
+        return $data;
     }
 
     /**

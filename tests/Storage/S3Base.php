@@ -61,8 +61,8 @@ abstract class S3Base extends TestCase
     {
         $path = $this->object->getPath('testing/');
         $files = $this->object->getFiles($path);
-        $this->assertEquals('4', $files['KeyCount']);
-        $this->assertEquals('false', $files['IsTruncated']);
+        $this->assertEquals(4, $files['KeyCount']);
+        $this->assertEquals(false, $files['IsTruncated']);
         $this->assertIsArray($files['Contents']);
 
         $file = $files['Contents'][0];
