@@ -474,9 +474,9 @@ class S3 extends Device
     /**
      * Get list of objects in the given path.
      *
-     * @param string $prefix
-     * @param int $maxKeys
-     * @param string $continuationToken
+     * @param  string  $prefix
+     * @param  int  $maxKeys
+     * @param  string  $continuationToken
      * @return array
      *
      * @throws Exception
@@ -658,8 +658,9 @@ class S3 extends Device
     /**
      * Get all files and directories inside a directory.
      *
-     * @param string $dir Directory to scan
+     * @param  string  $dir Directory to scan
      * @return array
+     *
      * @throws Exception
      */
     public function getFiles(string $dir): array
