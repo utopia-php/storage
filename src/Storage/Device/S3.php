@@ -668,6 +668,7 @@ class S3 extends Device
         $data = $this->listObjects($dir);
         $data['IsTruncated'] = $data['IsTruncated'] === 'true';
         $data['KeyCount'] = intval($data['KeyCount']);
+
         return $data;
     }
 
