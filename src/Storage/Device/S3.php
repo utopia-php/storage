@@ -484,7 +484,7 @@ class S3 extends Device
     private function listObjects(string $prefix = '', int $maxKeys = self::MAX_KEYS, string $continuationToken = ''): array
     {
         if($maxKeys > self::MAX_KEYS){
-            throw new Exception('max-keys limit is 1000');
+            throw new Exception('max-keys limit is ' . self::MAX_KEYS);
         }
 
         $uri = '/';
