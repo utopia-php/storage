@@ -493,9 +493,11 @@ class S3 extends Device
             'prefix' => $prefix,
             'max-keys' => $maxKeys,
         ];
-        if (! empty($continuationToken)) {
+
+        if (!empty($continuationToken)) {
             $parameters['continuation-token'] = $continuationToken;
         }
+
         $response = $this->call(self::METHOD_GET, $uri, '', $parameters);
 
         return $response->body;
