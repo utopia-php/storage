@@ -658,16 +658,25 @@ class S3 extends Device
     /**
      * Get all files and directories inside a directory.
      *
-     * @param  string  $dir Directory to scan
-     * @return array
+     * @param string $dir Directory to scan
+     * @param int $keys
+     * @param string $continuationToken
+     * @return array<mixed>
      *
      * @throws Exception
      */
-    public function getFiles(string $dir): array
+    public function getFiles(string $dir, int $keys = 1000, string $continuationToken = ''): array
     {
-        $data = $this->listObjects($dir);
+        $data = $this->listObjects($dir, $keys, $continuationToken);
+
+        // Set to false if all the results were returned. Set to true if more keys are available to return.
         $data['IsTruncated'] = $data['IsTruncated'] === 'true';
+
+        // KeyCount is the number of keys returned with this request.
         $data['KeyCount'] = intval($data['KeyCount']);
+
+        // Sets the maximum number of keys returned to the response. By default, the action returns up to 1,000 key names.
+        $data['MaxKeys'] = intval($data['MaxKeys']);
 
         return $data;
     }
@@ -675,7 +684,9 @@ class S3 extends Device
     /**
      * Get file info
      *
+     * @param string $path
      * @return array
+     * @throws Exception
      */
     private function getInfo(string $path): array
     {

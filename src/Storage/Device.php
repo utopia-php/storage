@@ -270,10 +270,12 @@ abstract class Device
     /**
      * Get all files and directories inside a directory.
      *
-     * @param  string  $dir Directory to scan
-     * @return array
+     * @param string $dir Directory to scan
+     * @param int $keys
+     * @param string $continuationToken
+     * @return array<mixed>
      */
-    abstract public function getFiles(string $dir): array;
+    abstract public function getFiles(string $dir, int $keys = 1000, string $continuationToken = ''): array;
 
     /**
      * Get the absolute path by resolving strings like ../, .., //, /\ and so on.
