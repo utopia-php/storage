@@ -80,12 +80,12 @@ abstract class S3Base extends TestCase
 
         $files = $this->object->getFiles($path, 3);
         $this->assertEquals(3, $files['KeyCount']);
-        $this->assertEquals(1000, $files['MaxKeys']);
+        $this->assertEquals(3, $files['MaxKeys']);
         $this->assertEquals(true, $files['IsTruncated']);
         $this->assertIsArray($files['Contents']);
         $this->assertNotEmpty($files['NextContinuationToken']);
 
-        $files = $this->object->getFiles($path, 3, $files['NextContinuationToken']);
+        $files = $this->object->getFiles($path, 1000, $files['NextContinuationToken']);
         $this->assertEquals(1, $files['KeyCount']);
         $this->assertEquals(1000, $files['MaxKeys']);
         $this->assertEquals(false, $files['IsTruncated']);
