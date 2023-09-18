@@ -507,7 +507,7 @@ class Local extends Device
      * @param  string  $dir Directory to scan
      * @return string[]
      */
-    public function getFiles(string $dir, int $keys = 1000, string $continuationToken = ''): array
+    public function getFiles(string $dir, int $keys = self::MAX_KEYS, string $continuationToken = ''): array
     {
         if (! (\str_ends_with($dir, DIRECTORY_SEPARATOR))) {
             $dir .= DIRECTORY_SEPARATOR;

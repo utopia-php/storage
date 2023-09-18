@@ -481,9 +481,9 @@ class S3 extends Device
      *
      * @throws Exception
      */
-    private function listObjects(string $prefix = '', int $maxKeys = 1000, string $continuationToken = ''): array
+    private function listObjects(string $prefix = '', int $maxKeys = self::MAX_KEYS, string $continuationToken = ''): array
     {
-        if($maxKeys > 1000){
+        if($maxKeys > self::MAX_KEYS){
             throw new Exception('max-keys limit is 1000');
         }
 
@@ -671,7 +671,7 @@ class S3 extends Device
      *
      * @throws Exception
      */
-    public function getFiles(string $dir, int $keys = 1000, string $continuationToken = ''): array
+    public function getFiles(string $dir, int $keys = self::MAX_KEYS, string $continuationToken = ''): array
     {
         $data = $this->listObjects($dir, $keys, $continuationToken);
 

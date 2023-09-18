@@ -5,9 +5,14 @@ namespace Utopia\Storage;
 abstract class Device
 {
     /**
-     * Max chunk size while transfering file from one device to another
+     * Max chunk size while transferring file from one device to another
      */
     protected int $transferChunkSize = 20000000; //20 MB
+
+    /**
+     * Sets the maximum number of keys returned to the response. By default, the action returns up to 1,000 key names.
+     */
+    protected const MAX_KEYS = 1000;
 
     /**
      * Set Transfer Chunk Size
@@ -275,7 +280,7 @@ abstract class Device
      * @param string $continuationToken
      * @return array<mixed>
      */
-    abstract public function getFiles(string $dir, int $keys = 1000, string $continuationToken = ''): array;
+    abstract public function getFiles(string $dir, int $keys = self::MAX_KEYS, string $continuationToken = ''): array;
 
     /**
      * Get the absolute path by resolving strings like ../, .., //, /\ and so on.
