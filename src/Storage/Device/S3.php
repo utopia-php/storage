@@ -483,6 +483,10 @@ class S3 extends Device
      */
     private function listObjects(string $prefix = '', int $maxKeys = 1000, string $continuationToken = ''): array
     {
+        if($maxKeys > 1000){
+            throw new Exception('max-keys limit is 1000');
+        }
+
         $uri = '/';
         $prefix = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */
         $this->headers['content-type'] = 'text/plain';
