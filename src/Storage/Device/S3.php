@@ -483,8 +483,8 @@ class S3 extends Device
      */
     private function listObjects(string $prefix = '', int $maxKeys = self::MAX_KEYS, string $continuationToken = ''): array
     {
-        if($maxKeys > self::MAX_KEYS){
-            throw new Exception('max-keys limit is ' . self::MAX_KEYS);
+        if ($maxKeys > self::MAX_KEYS) {
+            throw new Exception('max-keys limit is '.self::MAX_KEYS);
         }
 
         $uri = '/';
@@ -498,7 +498,7 @@ class S3 extends Device
             'max-keys' => $maxKeys,
         ];
 
-        if (!empty($continuationToken)) {
+        if (! empty($continuationToken)) {
             $parameters['continuation-token'] = $continuationToken;
         }
 
@@ -664,9 +664,9 @@ class S3 extends Device
     /**
      * Get all files and directories inside a directory.
      *
-     * @param string $dir Directory to scan
-     * @param int $keys
-     * @param string $continuationToken
+     * @param  string  $dir Directory to scan
+     * @param  int  $keys
+     * @param  string  $continuationToken
      * @return array<mixed>
      *
      * @throws Exception
@@ -690,8 +690,9 @@ class S3 extends Device
     /**
      * Get file info
      *
-     * @param string $path
+     * @param  string  $path
      * @return array
+     *
      * @throws Exception
      */
     private function getInfo(string $path): array

@@ -275,9 +275,9 @@ abstract class Device
     /**
      * Get all files and directories inside a directory.
      *
-     * @param string $dir Directory to scan
-     * @param int $keys
-     * @param string $continuationToken
+     * @param  string  $dir Directory to scan
+     * @param  int  $keys
+     * @param  string  $continuationToken
      * @return array<mixed>
      */
     abstract public function getFiles(string $dir, int $keys = self::MAX_KEYS, string $continuationToken = ''): array;
