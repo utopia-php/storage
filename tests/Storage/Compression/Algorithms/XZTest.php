@@ -3,18 +3,15 @@
 namespace Utopia\Tests\Storage\Compression\Algorithms;
 
 use PHPUnit\Framework\TestCase;
-use Utopia\Storage\Compression\Algorithms\GZIP;
+use Utopia\Storage\Compression\Algorithms\XZ;
 
-class GZIPTest extends TestCase
+class XZTest extends TestCase
 {
-    /**
-     * @var GZIP
-     */
-    protected $object = null;
+    protected XZ $object;
 
     public function setUp(): void
     {
-        $this->object = new GZIP();
+        $this->object = new XZ();
     }
 
     public function tearDown(): void
@@ -23,7 +20,7 @@ class GZIPTest extends TestCase
 
     public function testName()
     {
-        $this->assertEquals($this->object->getName(), 'gzip');
+        $this->assertEquals($this->object->getName(), 'xz');
     }
 
     public function testCompressDecompressWithText()
@@ -35,28 +32,9 @@ class GZIPTest extends TestCase
         $dataSize = mb_strlen($data, '8bit');
 
         $this->assertEquals($demoSize, 21);
-        $this->assertEquals($dataSize, 39);
+        $this->assertEquals($dataSize, 80);
 
         $this->assertEquals($this->object->decompress($data), $demo);
-    }
-
-    public function testCompressDecompressWithLargeText()
-    {
-        $demo = \file_get_contents(__DIR__.'/../../../resources/disk-a/lorem.txt');
-        $demoSize = mb_strlen($demo, '8bit');
-
-        $data = $this->object->compress($demo);
-        $dataSize = mb_strlen($data, '8bit');
-
-        $this->assertEquals($demoSize, 386795);
-        $this->assertEquals($dataSize, 44444);
-
-        $this->assertGreaterThan($dataSize, $demoSize);
-
-        $data = $this->object->decompress($data);
-        $dataSize = mb_strlen($data, '8bit');
-
-        $this->assertEquals($dataSize, 386795);
     }
 
     public function testCompressDecompressWithJPGImage()
@@ -68,7 +46,7 @@ class GZIPTest extends TestCase
         $dataSize = mb_strlen($data, '8bit');
 
         $this->assertEquals($demoSize, 599639);
-        $this->assertEquals($dataSize, 599107);
+        $this->assertEquals($dataSize, 599432);
 
         $this->assertGreaterThan($dataSize, $demoSize);
 
@@ -87,7 +65,7 @@ class GZIPTest extends TestCase
         $dataSize = mb_strlen($data, '8bit');
 
         $this->assertEquals($demoSize, 3038056);
-        $this->assertEquals($dataSize, 3029202);
+        $this->assertEquals($dataSize, 2981000);
 
         $this->assertGreaterThan($dataSize, $demoSize);
 

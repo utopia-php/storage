@@ -4,16 +4,21 @@ namespace Utopia\Storage;
 
 class Storage
 {
-
     /**
      * Supported devices
      */
-    public const DEVICE_LOCAL = 'Local';
-    public const DEVICE_S3 = 'S3';
-    public const DEVICE_DO_SPACES = 'DOSpaces';
-    public const DEVICE_WASABI = 'Wasabi';
-    public const DEVICE_BACKBLAZE = 'Backblaze';
-    public const DEVICE_LINODE= 'Linode';
+    const DEVICE_LOCAL = 'local';
+
+    const DEVICE_S3 = 's3';
+
+    const DEVICE_DO_SPACES = 'dospaces';
+
+    const DEVICE_WASABI = 'wasabi';
+
+    const DEVICE_BACKBLAZE = 'backblaze';
+
+    const DEVICE_LINODE = 'linode';
+
     public const DEVICE_SCALITY = 'Scality';
 
     /**
@@ -45,8 +50,7 @@ class Storage
      *
      * Get device by name
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return Device
      *
      * @throws \Exception
@@ -65,8 +69,7 @@ class Storage
      *
      * Checks if given storage name is registered or not
      *
-     * @param string $name
-     *
+     * @param  string  $name
      * @return bool
      */
     public static function exists(string $name): bool
@@ -79,10 +82,9 @@ class Storage
      *
      * Based on: https://stackoverflow.com/a/38659168/2299554
      *
-     * @param int $bytes
-     * @param int $decimals
-     * @param string $system
-     *
+     * @param  int  $bytes
+     * @param  int  $decimals
+     * @param  string  $system
      * @return string
      */
     public static function human(int $bytes, int $decimals = 2, string $system = 'metric'): string
@@ -114,7 +116,7 @@ class Storage
             ],
         ];
 
-        $factor = (int)floor((strlen((string)$bytes) - 1) / 3);
+        $factor = (int) floor((strlen((string) $bytes) - 1) / 3);
 
         return sprintf("%.{$decimals}f%s", $bytes / pow($mod, $factor), $units[$system][$factor]);
     }
