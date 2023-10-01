@@ -19,7 +19,7 @@ class Storage
 
     const DEVICE_LINODE = 'linode';
 
-    public const DEVICE_SCALITY = 'Scality';
+    public const DEVICE_SCALITY = 'scality';
 
     /**
      * Devices.
