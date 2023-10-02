@@ -19,7 +19,7 @@ class Ceph extends S3
      * @param  string  $region
      * @param  string  $acl
      */
-    public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_WEST_004, string $acl = self::ACL_PRIVATE)
+    public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_WEST_001, string $acl = self::ACL_PRIVATE)
     {
         parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl);
         $this->headers['host'] = $bucket.'.'.'s3'.'.'.$region.'.ceph.io';
