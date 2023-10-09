@@ -5,7 +5,7 @@ namespace Utopia\Tests\Storage\Device;
 use Utopia\Storage\Device\Swiftstack;
 use Utopia\Tests\Storage\S3Base;
 
-class Swiftstack extends S3Base
+class SwiftstackTest extends S3Base
 {
     protected function init(): void
     {
