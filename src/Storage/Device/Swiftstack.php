@@ -4,7 +4,7 @@ namespace Utopia\Storage\Device;
 
 use Utopia\Storage\Storage;
 
-class SwiftStack extends Local
+class SwiftStack extends S3
 {
     /**
      * Set SwiftStack credentials.
