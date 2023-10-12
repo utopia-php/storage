@@ -501,13 +501,13 @@ class Local extends Device
         return \disk_total_space($this->getRoot());
     }
 
-    /**
-     * Get all files and directories inside a directory.
-     *
-     * @param  string  $dir Directory to scan
+    /**s
+     * @param string $dir
+     * @param int $max
+     * @param string $continuationToken
      * @return string[]
      */
-    public function getFiles(string $dir, int $keys = self::MAX_KEYS, string $continuationToken = ''): array
+    public function getFiles(string $dir, int $max = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
     {
         if (! (\str_ends_with($dir, DIRECTORY_SEPARATOR))) {
             $dir .= DIRECTORY_SEPARATOR;

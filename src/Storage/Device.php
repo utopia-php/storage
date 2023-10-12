@@ -12,7 +12,7 @@ abstract class Device
     /**
      * Sets the maximum number of keys returned to the response. By default, the action returns up to 1,000 key names.
      */
-    protected const MAX_KEYS = 1000;
+    protected const MAX_PAGE_SIZE = PHP_INT_MAX;
 
     /**
      * Set Transfer Chunk Size
@@ -276,11 +276,11 @@ abstract class Device
      * Get all files and directories inside a directory.
      *
      * @param  string  $dir Directory to scan
-     * @param  int  $keys
+     * @param  int  $max
      * @param  string  $continuationToken
      * @return array<mixed>
      */
-    abstract public function getFiles(string $dir, int $keys = self::MAX_KEYS, string $continuationToken = ''): array;
+    abstract public function getFiles(string $dir, int $max = self::MAX_PAGE_SIZE, string $continuationToken = ''): array;
 
     /**
      * Get the absolute path by resolving strings like ../, .., //, /\ and so on.

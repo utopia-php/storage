@@ -92,6 +92,8 @@ class S3 extends Device
 
     const ACL_AUTHENTICATED_READ = 'authenticated-read';
 
+    protected const MAX_PAGE_SIZE = 1000;
+
     /**
      * @var string
      */
@@ -481,10 +483,10 @@ class S3 extends Device
      *
      * @throws Exception
      */
-    private function listObjects(string $prefix = '', int $maxKeys = self::MAX_KEYS, string $continuationToken = ''): array
+    private function listObjects(string $prefix = '', int $maxKeys = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
     {
-        if ($maxKeys > self::MAX_KEYS) {
-            throw new Exception('Cannot list more than ' .  self::MAX_KEYS . ' objects');
+        if ($maxKeys > self::MAX_PAGE_SIZE) {
+            throw new Exception('Cannot list more than '.self::MAX_PAGE_SIZE.' objects');
         }
 
         $uri = '/';
@@ -665,15 +667,15 @@ class S3 extends Device
      * Get all files and directories inside a directory.
      *
      * @param  string  $dir Directory to scan
-     * @param  int  $keys
+     * @param  int  $max
      * @param  string  $continuationToken
      * @return array<mixed>
      *
      * @throws Exception
      */
-    public function getFiles(string $dir, int $keys = self::MAX_KEYS, string $continuationToken = ''): array
+    public function getFiles(string $dir, int $max = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
     {
-        $data = $this->listObjects($dir, $keys, $continuationToken);
+        $data = $this->listObjects($dir, $max, $continuationToken);
 
         // Set to false if all the results were returned. Set to true if more keys are available to return.
         $data['IsTruncated'] = $data['IsTruncated'] === 'true';
