@@ -32,7 +32,6 @@ class IBMCloudObject extends S3
         parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl);
         $this->headers['host'] = $bucket.'.'.$region.'.'.'cloud.ibm.com';
     }
-    
 
     /**
      * @return string
