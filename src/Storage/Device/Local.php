@@ -510,9 +510,9 @@ class Local extends Device
     /**
      * Get all files and directories inside a directory.
      *
-     * @param string $dir
-     * @param int $max
-     * @param string $continuationToken
+     * @param  string  $dir
+     * @param  int  $max
+     * @param  string  $continuationToken
      * @return string[]
      */
     public function getFiles(string $dir, int $max = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
