@@ -114,6 +114,12 @@ abstract class S3Base extends TestCase
         $this->object->delete($this->object->getPath('text-for-move-new.txt'));
     }
 
+    public function testMoveIdenticalName()
+    {
+        $file = '/kitten-1.jpg';
+        $this->assertFalse($this->object->move($file, $file));
+    }
+
     public function testDelete()
     {
         $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-delete.txt'), 'Hello World', 'text/plain'));

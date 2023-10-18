@@ -298,9 +298,15 @@ class Local extends Device
      * @param  string  $source
      * @param  string  $target
      * @return bool
+     *
+     * @throws Exception
      */
     public function move(string $source, string $target): bool
     {
+        if ($source === $target) {
+            return false;
+        }
+
         if (! \file_exists(\dirname($target))) { // Checks if directory path to file exists
             if (! @\mkdir(\dirname($target), 0755, true)) {
                 throw new Exception('Can\'t create directory '.\dirname($target));
