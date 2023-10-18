@@ -501,7 +501,9 @@ class Local extends Device
         return \disk_total_space($this->getRoot());
     }
 
-    /**s
+    /**
+     * Get all files and directories inside a directory.
+     *
      * @param string $dir
      * @param int $max
      * @param string $continuationToken
