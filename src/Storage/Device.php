@@ -2,6 +2,8 @@
 
 namespace Utopia\Storage;
 
+use Exception;
+
 abstract class Device
 {
     /**
@@ -95,7 +97,7 @@ abstract class Device
      * @param  array  $metadata
      * @return int
      *
-     * @throws \Exception
+     * @throws Exception
      */
     abstract public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
 
@@ -113,7 +115,7 @@ abstract class Device
      * @param  array  $metadata
      * @return int
      *
-     * @throws \Exception
+     * @throws Exception
      */
     abstract public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
 
@@ -167,6 +169,10 @@ abstract class Device
      */
     public function move(string $source, string $target): bool
     {
+        if ($source === $target) {
+            return false;
+        }
+
         if ($this->transfer($source, $target, $this)) {
             return $this->delete($source);
         }
