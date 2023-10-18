@@ -92,6 +92,8 @@ class S3 extends Device
 
     const ACL_AUTHENTICATED_READ = 'authenticated-read';
 
+    protected const MAX_PAGE_SIZE = 1000;
+
     /**
      * @var string
      */
@@ -474,13 +476,19 @@ class S3 extends Device
     /**
      * Get list of objects in the given path.
      *
-     * @param  string  $path
+     * @param  string  $prefix
+     * @param  int  $maxKeys
+     * @param  string  $continuationToken
      * @return array
      *
-     * @throws \Exception
+     * @throws Exception
      */
-    private function listObjects($prefix = '', $maxKeys = 1000, $continuationToken = '')
+    private function listObjects(string $prefix = '', int $maxKeys = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
     {
+        if ($maxKeys > self::MAX_PAGE_SIZE) {
+            throw new Exception('Cannot list more than '.self::MAX_PAGE_SIZE.' objects');
+        }
+
         $uri = '/';
         $prefix = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */
         $this->headers['content-type'] = 'text/plain';
@@ -491,9 +499,11 @@ class S3 extends Device
             'prefix' => $prefix,
             'max-keys' => $maxKeys,
         ];
+
         if (! empty($continuationToken)) {
             $parameters['continuation-token'] = $continuationToken;
         }
+
         $response = $this->call(self::METHOD_GET, $uri, '', $parameters);
 
         return $response->body;
@@ -657,17 +667,35 @@ class S3 extends Device
      * Get all files and directories inside a directory.
      *
      * @param  string  $dir Directory to scan
-     * @return string[]
+     * @param  int  $max
+     * @param  string  $continuationToken
+     * @return array<mixed>
+     *
+     * @throws Exception
      */
-    public function getFiles(string $dir): array
+    public function getFiles(string $dir, int $max = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
     {
-        throw new Exception('Not implemented.');
+        $data = $this->listObjects($dir, $max, $continuationToken);
+
+        // Set to false if all the results were returned. Set to true if more keys are available to return.
+        $data['IsTruncated'] = $data['IsTruncated'] === 'true';
+
+        // KeyCount is the number of keys returned with this request.
+        $data['KeyCount'] = intval($data['KeyCount']);
+
+        // Sets the maximum number of keys returned to the response. By default, the action returns up to 1,000 key names.
+        $data['MaxKeys'] = intval($data['MaxKeys']);
+
+        return $data;
     }
 
     /**
      * Get file info
      *
+     * @param  string  $path
      * @return array
+     *
+     * @throws Exception
      */
     private function getInfo(string $path): array
     {

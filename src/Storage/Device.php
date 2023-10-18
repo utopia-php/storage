@@ -7,9 +7,14 @@ use Exception;
 abstract class Device
 {
     /**
-     * Max chunk size while transfering file from one device to another
+     * Max chunk size while transferring file from one device to another
      */
     protected int $transferChunkSize = 20000000; //20 MB
+
+    /**
+     * Sets the maximum number of keys returned to the response. By default, the action returns up to 1,000 key names.
+     */
+    protected const MAX_PAGE_SIZE = PHP_INT_MAX;
 
     /**
      * Set Transfer Chunk Size
@@ -277,9 +282,11 @@ abstract class Device
      * Get all files and directories inside a directory.
      *
      * @param  string  $dir Directory to scan
-     * @return string[]
+     * @param  int  $max
+     * @param  string  $continuationToken
+     * @return array<mixed>
      */
-    abstract public function getFiles(string $dir): array;
+    abstract public function getFiles(string $dir, int $max = self::MAX_PAGE_SIZE, string $continuationToken = ''): array;
 
     /**
      * Get the absolute path by resolving strings like ../, .., //, /\ and so on.

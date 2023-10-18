@@ -510,10 +510,12 @@ class Local extends Device
     /**
      * Get all files and directories inside a directory.
      *
-     * @param  string  $dir Directory to scan
+     * @param  string  $dir
+     * @param  int  $max
+     * @param  string  $continuationToken
      * @return string[]
      */
-    public function getFiles(string $dir): array
+    public function getFiles(string $dir, int $max = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
     {
         if (! (\str_ends_with($dir, DIRECTORY_SEPARATOR))) {
             $dir .= DIRECTORY_SEPARATOR;

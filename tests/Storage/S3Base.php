@@ -57,6 +57,42 @@ abstract class S3Base extends TestCase
         $this->removeTestFiles();
     }
 
+    public function testGetFiles()
+    {
+        $path = $this->object->getPath('testing/');
+        $files = $this->object->getFiles($path);
+        $this->assertEquals(4, $files['KeyCount']);
+        $this->assertEquals(false, $files['IsTruncated']);
+        $this->assertIsArray($files['Contents']);
+
+        $file = $files['Contents'][0];
+
+        $this->assertArrayHasKey('Key', $file);
+        $this->assertArrayHasKey('LastModified', $file);
+        $this->assertArrayHasKey('ETag', $file);
+        $this->assertArrayHasKey('StorageClass', $file);
+        $this->assertArrayHasKey('Size', $file);
+    }
+
+    public function testGetFilesPagination()
+    {
+        $path = $this->object->getPath('testing/');
+
+        $files = $this->object->getFiles($path, 3);
+        $this->assertEquals(3, $files['KeyCount']);
+        $this->assertEquals(3, $files['MaxKeys']);
+        $this->assertEquals(true, $files['IsTruncated']);
+        $this->assertIsArray($files['Contents']);
+        $this->assertArrayHasKey('NextContinuationToken', $files);
+
+        $files = $this->object->getFiles($path, 1000, $files['NextContinuationToken']);
+        $this->assertEquals(1, $files['KeyCount']);
+        $this->assertEquals(1000, $files['MaxKeys']);
+        $this->assertEquals(false, $files['IsTruncated']);
+        $this->assertIsArray($files['Contents']);
+        $this->assertArrayNotHasKey('NextContinuationToken', $files);
+    }
+
     public function testName()
     {
         $this->assertEquals($this->getAdapterName(), $this->object->getName());
