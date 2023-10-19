@@ -14,7 +14,7 @@ class CloudfareR2Test extends S3Base
         $secret = $_SERVER['CLOUDFLARE_R2_SECRET'] ?? '';
         $bucket = 'utopia-storage-test';
 
-        $this->object = new CloudflareR2($this->root, $key, $secret, $bucket, CloudflareR2:: AUTO , CloudflareR2::ACL_PRIVATE);
+        $this->object = new CloudflareR2($this->root, $key, $secret, $bucket, CloudflareR2::AUTO, CloudflareR2::ACL_PRIVATE);
     }
 
     protected function getAdapterName(): string
