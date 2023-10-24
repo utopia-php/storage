@@ -339,7 +339,7 @@ class Local extends Device
             }
 
             \rmdir($path);
-        } elseif (\is_file($path)) {
+        } elseif (\is_file($path) || \is_link($path)) {
             return \unlink($path);
         }
 
