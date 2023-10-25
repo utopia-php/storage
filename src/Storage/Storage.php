@@ -21,7 +21,7 @@ class Storage
 
     const DEVICE_LINODE = 'linode';
 
-    const CLOUDFARE_R2 = 'cloudflare-r2';
+    const CLOUDFARE_R2 = 'cloudflarer2';
 
     /**
      * Devices.

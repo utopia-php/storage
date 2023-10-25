@@ -5,7 +5,7 @@ namespace Utopia\Tests\Storage\Device;
 use Utopia\Storage\Device\CloudflareR2;
 use Utopia\Tests\Storage\S3Base;
 
-class CloudfareR2Test extends S3Base
+class CloudflareR2Test extends S3Base
 {
     protected function init(): void
     {

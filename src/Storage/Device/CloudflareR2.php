@@ -26,7 +26,7 @@ class CloudflareR2 extends S3
     const AUTO = 'auto';
 
     /**
-     * CloudflareR2 Constructor
+     * Cloudflare R2 Constructor
      *
      * @param  string  $root
      * @param  string  $accessKey
