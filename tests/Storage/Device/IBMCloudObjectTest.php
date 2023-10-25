@@ -14,7 +14,7 @@ class IBMCloudObjectTest extends S3Base
         $secret = $_SERVER['CEPH_SECRET'] ?? '';
         $bucket = 'storage-test';
 
-        $this->object = new IBMCloudObject($this->root, $key, $secret, $bucket, Linode::AP_SOUTH_1, Linode::ACL_PRIVATE);
+        $this->object = new IBMCloudObject($this->root, $key, $secret, $bucket, IBMCloudObject::AP_SOUTH_1, IBMCloudObject::ACL_PRIVATE);
     }
 
     protected function getAdapterName(): string
