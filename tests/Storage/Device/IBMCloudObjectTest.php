@@ -2,10 +2,10 @@
 
 namespace Utopia\Tests\Storage\Device;
 
-use Utopia\Storage\Device\Linode;
+use Utopia\Storage\Device\IBMCloudObject;
 use Utopia\Tests\Storage\S3Base;
 
-class LinodeTest extends S3Base
+class IBMCloudObjectTest extends S3Base
 {
     protected function init(): void
     {
@@ -14,7 +14,7 @@ class LinodeTest extends S3Base
         $secret = $_SERVER['CEPH_SECRET'] ?? '';
         $bucket = 'storage-test';
 
-        $this->object = new Linode($this->root, $key, $secret, $bucket, Linode::AP_SOUTH_1, Linode::ACL_PRIVATE);
+        $this->object = new IBMCloudObject($this->root, $key, $secret, $bucket, Linode::AP_SOUTH_1, Linode::ACL_PRIVATE);
     }
 
     protected function getAdapterName(): string
