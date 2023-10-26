@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace Utopia\Tests\Storage\Device;
 
@@ -13,7 +13,7 @@ class AzureBlobTest extends S3Base
         $storageAccount = $_SERVER['AZURE_ACCOUNT'] ?? '';
         $accessKey = $_SERVER['AZURE_ACCESS_KEY'] ?? '';
         $container = 'azurebucket';
-        
+
         $this->object = new AzureBlob($this->root, $accessKey, $storageAccount, $container);
     }
 
@@ -32,8 +32,8 @@ class AzureBlobTest extends S3Base
         return 'Azure Blob Storage';
     }
 
-    /* It seems like we cannot use the testFileHash() function in S3Base because Azure Blob generates a 
-    different hash value each time, even for the same file. */ 
+    /* It seems like we cannot use the testFileHash() function in S3Base because Azure Blob generates a
+    different hash value each time, even for the same file. */
     public function testFileHash()
     {
         $this->assertEquals($this->object->getFileHash($this->object->getPath('testing/kitten-1.jpg')), $this->object->getFileHash($this->object->getPath('testing/kitten-1.jpg')));
@@ -41,4 +41,4 @@ class AzureBlobTest extends S3Base
         $this->assertEquals($this->object->getFileHash($this->object->getPath('testing/kitten-1.png')), $this->object->getFileHash($this->object->getPath('testing/kitten-1.png')));
         $this->assertEquals($this->object->getFileHash($this->object->getPath('testing/kitten-2.png')), $this->object->getFileHash($this->object->getPath('testing/kitten-2.png')));
     }
-} 
+}
