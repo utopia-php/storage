@@ -8,6 +8,7 @@ class CloudflareR2 extends S3
 {
     /**
      * Regions constants
+     * Reference: https://developers.cloudflare.com/durable-objects/platform/data-location/
      */
 
     /**
