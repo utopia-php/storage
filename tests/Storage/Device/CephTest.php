@@ -5,7 +5,7 @@ namespace Utopia\Tests\Storage\Device;
 use Utopia\Storage\Device\Ceph;
 use Utopia\Tests\Storage\S3Base;
 
-class BackblazeTest extends S3Base
+class CephTest extends S3Base
 {
     protected function init(): void
     {
