@@ -2,8 +2,6 @@
 
 namespace Utopia\Storage\Device;
 
-use Exception;
-use Utopia\Storage\Device;
 use Utopia\Storage\Storage;
 
 // As NetAapp Storage grid uses S3 protocol, we can extend the S3 class
@@ -11,7 +9,9 @@ use Utopia\Storage\Storage;
 class NetappStorageGrid extends S3
 {
     protected string $accessKey;
+
     protected string $secretKey;
+
     protected string $bucket;
 
     public function __construct(string $root, string $accessKey, string $secretKey, string $bucket)
@@ -34,7 +34,7 @@ class NetappStorageGrid extends S3
 
     public function getName(): string
     {
-        return 'Netapp Storage Grid'
+        return 'Netapp Storage Grid';
     }
 
     public function getType(): string
@@ -46,5 +46,4 @@ class NetappStorageGrid extends S3
     {
         return 'NetApp Storage Grid using S3 Storage drive';
     }
-
 }
