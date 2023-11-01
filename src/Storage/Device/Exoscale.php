@@ -6,6 +6,7 @@ use Utopia\Storage\Storage;
 
 class Exoscale extends S3
 {
+    //https://community.exoscale.com/documentation/platform/exoscale-datacenter-zones/
     /**
      * Exoscale Regions constants
      */
@@ -16,16 +17,6 @@ class Exoscale extends S3
     const AT_VIE_1 = 'at-vie-1';
     const AT_VIE_2 = 'at-vie-2';
     const BG_SOF_1 = 'bg-sof-1';
-
-    private $regionEndpointMap = [
-        self::CH_GVA_2 => 'https://sos-ch-gva-2.exo.io',
-        self::CH_DK_2 => 'https://sos-ch-dk-2.exo.io',
-        self::DE_FRA_1 => 'https://sos-de-fra-1.exo.io',
-        self::DE_MUC_1 => 'https://sos-de-muc-1.exo.io',
-        self::AT_VIE_1 => 'https://sos-at-vie-1.exo.io',
-        self::AT_VIE_2 => 'https://sos-at-vie-2.exo.io',
-        self::BG_SOF_1 => 'https://sos-bg-sof-1.exo.io',
-    ];
 
     /**
      * Exoscale Constructor
