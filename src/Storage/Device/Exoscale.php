@@ -6,9 +6,9 @@ use Utopia\Storage\Storage;
 
 class Exoscale extends S3
 {
-    //https://community.exoscale.com/documentation/platform/exoscale-datacenter-zones/
     /**
      * Exoscale Regions constants
+     * https://community.exoscale.com/documentation/platform/exoscale-datacenter-zones/
      */
     const CH_GVA_2 = 'ch-gva-2';
     
