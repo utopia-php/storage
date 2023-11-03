@@ -60,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        devices: [BackblazeTest, DOSpacesTest, ExoscaleTest,LinodeTest, LocalTest, S3Test, WasabiTest]
+        devices: [BackblazeTest, DOSpacesTest, ExoscaleTest, LinodeTest, LocalTest, S3Test, WasabiTest]
 
     steps:
       - name: checkout
