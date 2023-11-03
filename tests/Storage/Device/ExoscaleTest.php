@@ -10,18 +10,16 @@ class ExoscaleTest extends S3Base
     protected function init(): void
     {
         $this->root = '/root';
-        $apiKey = 'YOUR_EXOSCALE_API_KEY';
-        $apiSecret = 'YOUR_EXOSCALE_API_SECRET';
-        $bucket = 'YOUR_EXOSCALE_BUCKET';
-        $region = Exoscale::CH_GVA_2; 
-        $acl = Exoscale::ACL_PRIVATE; 
+        $apiKey = $_SERVER['EXOSCALE_ACCESS_KEY'] ?? '';
+        $apiSecret = $_SERVER['EXOSCALE_SECRET'] ?? '';
+        $bucket = 'storage-test';
 
-        $this->object = new Exoscale($this->root, $apiKey, $apiSecret, $bucket, $region, $acl);
+        $this->object = new Exoscale($this->root, $apiKey, $apiSecret, $bucket, Exoscale::CH_GVA_2, Exoscale::ACL_PRIVATE);
     }
 
     protected function getAdapterName(): string
     {
-        return 'Exoscale Storage';
+        return 'Exoscale Simple Object Storage';
     }
 
     protected function getAdapterType(): string
@@ -31,6 +29,6 @@ class ExoscaleTest extends S3Base
 
     protected function getAdapterDescription(): string
     {
-        return 'Exoscale Storage';
+        return 'Exoscale Simple Object Storage';
     }
 }
