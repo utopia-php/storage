@@ -31,6 +31,8 @@ jobs:
       env:
         DO_ACCESS_KEY: ${{ secrets.DO_ACCESS_KEY }}
         DO_SECRET: ${{ secrets.DO_SECRET }}
+        EXOSCALE_ACCESS_KEY: ${{ secrets.EXOSCALE_ACCESS_KEY }}
+        EXOSCALE_SECRET: ${{ secrets.EXOSCALE_SECRET }}       
         LINODE_ACCESS_KEY: ${{ secrets.LINODE_ACCESS_KEY }}
         LINODE_SECRET: ${{ secrets.LINODE_SECRET }}
         S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
@@ -58,7 +60,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        devices: [BackblazeTest, DOSpacesTest, LinodeTest, LocalTest, S3Test, WasabiTest]
+        devices: [BackblazeTest, DOSpacesTest, ExoscaleTest,LinodeTest, LocalTest, S3Test, WasabiTest]
 
     steps:
       - name: checkout
@@ -67,6 +69,8 @@ jobs:
         env:
           DO_ACCESS_KEY: ${{ secrets.DO_ACCESS_KEY }}
           DO_SECRET: ${{ secrets.DO_SECRET }}
+          EXOSCALE_ACCESS_KEY: ${{ secrets.EXOSCALE_ACCESS_KEY }}
+          EXOSCALE_SECRET: ${{ secrets.EXOSCALE_SECRET }}          
           LINODE_ACCESS_KEY: ${{ secrets.LINODE_ACCESS_KEY }}
           LINODE_SECRET: ${{ secrets.LINODE_SECRET }}
           S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
