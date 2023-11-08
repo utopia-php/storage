@@ -17,6 +17,8 @@ class Storage
 
     const DEVICE_WASABI = 'wasabi';
 
+    const DEVICE_YANDEX = 'yandex';
+
     const DEVICE_BACKBLAZE = 'backblaze';
 
     const DEVICE_LINODE = 'linode';
@@ -58,8 +60,8 @@ class Storage
      */
     public static function getDevice($name)
     {
-        if (! \array_key_exists($name, self::$devices)) {
-            throw new Exception('The device "'.$name.'" is not listed');
+        if (!\array_key_exists($name, self::$devices)) {
+            throw new Exception('The device "' . $name . '" is not listed');
         }
 
         return self::$devices[$name];
