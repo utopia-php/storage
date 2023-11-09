@@ -14,10 +14,6 @@ class Yandex extends S3
     const RU_CENTRAL_B = 'ru-central1-b';
     const RU_CENTRAL_C = 'ru-central1-c';
 
-    protected string $bucket;
-
-    protected string $region = 'ru-central1-a';
-
     /**
      * YandexStorage Constructor
      *
