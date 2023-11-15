@@ -15,7 +15,6 @@ class YandexTest extends S3Base
         $bucket = 'utopia-storage-tests';
         $region = 'ru-central1-a';
 
-
         $this->object = new Yandex($this->root, $key, $secret, $bucket, $region, Yandex::ACL_PRIVATE);
     }
 
