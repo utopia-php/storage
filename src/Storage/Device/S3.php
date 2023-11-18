@@ -148,7 +148,7 @@ class S3 extends Device
      * @param  string  $region
      * @param  string  $acl
      */
-    public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_EAST_1, string $acl = self::ACL_PRIVATE)
+    public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_EAST_1, string $acl = self::ACL_PRIVATE, $endpointUrl = '')
     {
         $this->accessKey = $accessKey;
         $this->secretKey = $secretKey;
@@ -158,10 +158,14 @@ class S3 extends Device
         $this->acl = $acl;
         $this->amzHeaders = [];
 
-        $host = match ($region) {
-            self::CN_NORTH_1, self::CN_NORTH_4, self::CN_NORTHWEST_1 => $bucket.'.s3.'.$region.'.amazonaws.cn',
-            default => $bucket.'.s3.'.$region.'.amazonaws.com'
-        };
+        if (!empty($endpointUrl)) {
+            $host = $bucket.'.'.$endpointUrl;
+        } else {
+            $host = match ($region) {
+                    self::CN_NORTH_1, self::CN_NORTH_4, self::CN_NORTHWEST_1 => $bucket.'.s3.'.$region.'.amazonaws.cn',
+                    default => $bucket.'.s3.'.$region.'.amazonaws.com'
+            };
+        }
 
         $this->headers['host'] = $host;
     }
