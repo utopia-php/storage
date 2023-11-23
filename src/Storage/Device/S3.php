@@ -128,7 +128,8 @@ class S3 extends Device
      * @var array
      */
     protected array $headers = [
-        'host' => '', 'date' => '',
+        'host' => '',
+        'date' => '',
         'content-md5' => '',
         'content-type' => '',
     ];
@@ -158,12 +159,12 @@ class S3 extends Device
         $this->acl = $acl;
         $this->amzHeaders = [];
 
-        if (!empty($endpointUrl)) {
+        if (! empty($endpointUrl)) {
             $host = $bucket.'.'.$endpointUrl;
         } else {
             $host = match ($region) {
-                    self::CN_NORTH_1, self::CN_NORTH_4, self::CN_NORTHWEST_1 => $bucket.'.s3.'.$region.'.amazonaws.cn',
-                    default => $bucket.'.s3.'.$region.'.amazonaws.com'
+                self::CN_NORTH_1, self::CN_NORTH_4, self::CN_NORTHWEST_1 => $bucket.'.s3.'.$region.'.amazonaws.cn',
+                default => $bucket.'.s3.'.$region.'.amazonaws.com'
             };
         }
 
@@ -769,8 +770,10 @@ class S3 extends Device
 
         // stringToSign
         $stringToSignStr = \implode("\n", [
-            $algorithm, $this->amzHeaders['x-amz-date'],
-            \implode('/', $credentialScope), \hash('sha256', $amzPayloadStr),
+            $algorithm,
+            $this->amzHeaders['x-amz-date'],
+            \implode('/', $credentialScope),
+            \hash('sha256', $amzPayloadStr),
         ]);
 
         // Make Signature
