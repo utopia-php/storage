@@ -16,6 +16,8 @@ abstract class Compression
 
     public const XZ = 'xz';
 
+    public const NONE = 'none';
+
     /**
      * Return the name of compression algorithm.
      *
