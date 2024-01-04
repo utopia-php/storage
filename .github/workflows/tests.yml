@@ -58,7 +58,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        devices: [BackblazeTest, DOSpacesTest, LinodeTest, LocalTest, S3Test, WasabiTest]
+        devices: [BackblazeTest, DOSpacesTest, LinodeTest, LocalTest, S3Test, WasabiTest, CloudflareR2Test]
 
     steps:
       - name: checkout
@@ -75,6 +75,8 @@ jobs:
           WASABI_SECRET: ${{ secrets.WASABI_SECRET }}
           BACKBLAZE_ACCESS_KEY: ${{ secrets.BACKBLAZE_ACCESS_KEY }}
           BACKBLAZE_SECRET: ${{ secrets.BACKBLAZE_SECRET }}
+          CLOUDFLARE_R2_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY }}
+          CLOUDFLARE_R2_SECRET: ${{ secrets.CLOUDFLARE_R2_SECRET }}
         run: |
           docker compose up -d
           sleep 10
