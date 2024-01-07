@@ -23,6 +23,7 @@ ENV PHP_SNAPPY_VERSION="bfefe4906e0abb1f6cc19005b35f9af5240d9025"
 ENV PHP_LZ4_VERSION="2f006c3e4f1fb3a60d2656fc164f9ba26b71e995"
 ENV PHP_XZ_VERSION=5.2.7
 ENV PHP_EXT_XZ_VERSION=1.1.2
+ENV PHP_ZOPFLI_VERSION="ba6ae0d1f72537f002639cb811f073a3b4bbbabe"
 
 RUN apk add --no-cache \
   git \
@@ -31,7 +32,8 @@ RUN apk add --no-cache \
   g++  \
   zstd-dev \
   brotli-dev \
-  lz4-dev
+  lz4-dev \
+  zlib-dev
 
 ## Zstandard Extension
 FROM compile AS zstd
@@ -86,6 +88,15 @@ RUN git clone https://github.com/codemasher/php-ext-xz.git --branch ${PHP_EXT_XZ
   && phpize \
   && ./configure \
   && make && make install
+  
+## Zopfli Extension
+FROM compile AS zopfli
+RUN git clone --recursive https://github.com/kjdev/php-ext-zopfli.git \
+  && cd php-ext-zopfli \
+  && git reset --hard $PHP_ZOPFLI_VERSION \
+  && phpize \
+  && ./configure \
+  && make && make install
 
 FROM compile as final
 
@@ -98,6 +109,7 @@ RUN echo extension=brotli.so >> /usr/local/etc/php/conf.d/brotli.ini
 RUN echo extension=lz4.so >> /usr/local/etc/php/conf.d/lz4.ini
 RUN echo extension=snappy.so >> /usr/local/etc/php/conf.d/snappy.ini
 RUN echo extension=xz.so >> /usr/local/etc/php/conf.d/xz.ini
+RUN echo extension=zopfli.so >> /usr/local/etc/php/conf.d/zopfli.ini
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
   && echo "opcache.enable_cli=1" >> $PHP_INI_DIR/php.ini \
@@ -109,6 +121,7 @@ COPY --from=brotli /usr/local/lib/php/extensions/no-debug-non-zts-20200930/brotl
 COPY --from=lz4 /usr/local/lib/php/extensions/no-debug-non-zts-20200930/lz4.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
 COPY --from=snappy /usr/local/lib/php/extensions/no-debug-non-zts-20200930/snappy.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
 COPY --from=xz /usr/local/lib/php/extensions/no-debug-non-zts-20200930/xz.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
+COPY --from=zopfli /usr/local/lib/php/extensions/no-debug-non-zts-20200930/zopfli.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
 
 # Add Source Code
 COPY . /usr/src/code
