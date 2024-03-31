@@ -871,9 +871,9 @@ class S3 extends Device
 
         $result = \curl_exec($curl);
 
+        var_dump($this->headers);
+        var_dump($this->amzHeaders);
         if (! $result) {
-            var_dump($this->headers);
-            var_dump($this->amzHeaders);
             var_dump($response);
             $code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
             var_dump($code);
