@@ -26,6 +26,14 @@ class S3 extends Device
 
     const METHOD_TRACE = 'TRACE';
 
+    const HTTP_VERSION_1_1 = CURL_HTTP_VERSION_1_1;
+
+    const HTTP_VERSION_2_0 = CURL_HTTP_VERSION_2_0;
+
+    const HTTP_VERSION_2 = CURL_HTTP_VERSION_2;
+
+    const HTTP_VERSION_1_0 = CURL_HTTP_VERSION_1_0;
+
     /**
      * AWS Regions constants
      */
@@ -139,6 +147,13 @@ class S3 extends Device
     protected array $amzHeaders;
 
     /**
+     * Http version
+     *
+     * @var int|null
+     */
+    protected ?int $curlHttpVersion = null;
+
+    /**
      * S3 Constructor
      *
      * @param  string  $root
@@ -206,6 +221,20 @@ class S3 extends Device
     public function getPath(string $filename, string $prefix = null): string
     {
         return $this->getRoot().DIRECTORY_SEPARATOR.$filename;
+    }
+
+    /**
+     * Set http version
+     *
+     *
+     * @param  int|null  $httpVersion
+     * @return self
+     */
+    public function setHttpVersion(?int $httpVersion): self
+    {
+        $this->curlHttpVersion = $httpVersion;
+
+        return $this;
     }
 
     /**
@@ -837,6 +866,11 @@ class S3 extends Device
         \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
         \curl_setopt($curl, CURLOPT_HEADER, false);
         \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
+
+        if ($this->curlHttpVersion != null) {
+            \curl_setopt($curl, CURLOPT_HTTP_VERSION, $this->curlHttpVersion);
+        }
+
         \curl_setopt($curl, CURLOPT_WRITEFUNCTION, function ($curl, string $data) use ($response) {
             $response->body .= $data;
 
