@@ -525,8 +525,6 @@ class S3 extends Device
 
         $uri = '/';
         $prefix = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */
-        unset($this->amzHeaders['x-amz-acl']);
-        unset($this->amzHeaders['x-amz-content-sha256']);
         $this->headers['content-type'] = 'text/plain';
         $this->headers['content-md5'] = \base64_encode(md5('', true));
 
