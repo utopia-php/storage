@@ -523,6 +523,9 @@ class S3 extends Device
         $this->headers['content-type'] = 'text/plain';
         $this->headers['content-md5'] = \base64_encode(md5('', true));
 
+        unset($this->amzHeaders['x-amz-content-sha256']);
+        unset($this->amzHeaders['x-amz-acl']);
+
         $parameters = [
             'list-type' => 2,
             'prefix' => $prefix,
