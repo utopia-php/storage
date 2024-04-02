@@ -512,7 +512,7 @@ class S3 extends Device
      *
      * @throws Exception
      */
-    private function listObjects(string $prefix = '', int $maxKeys = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
+    protected function listObjects(string $prefix = '', int $maxKeys = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
     {
         if ($maxKeys > self::MAX_PAGE_SIZE) {
             throw new Exception('Cannot list more than '.self::MAX_PAGE_SIZE.' objects');
@@ -826,7 +826,7 @@ class S3 extends Device
      *
      * @throws \Exception
      */
-    private function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
+    protected function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
     {
         $uri = $this->getAbsolutePath($uri);
         $url = 'https://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
