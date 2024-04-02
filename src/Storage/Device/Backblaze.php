@@ -62,39 +62,4 @@ class Backblaze extends S3
     {
         return Storage::DEVICE_BACKBLAZE;
     }
-
-    /**
-     * Get list of objects in the given path.
-     *
-     * @param  string  $prefix
-     * @param  int  $maxKeys
-     * @param  string  $continuationToken
-     * @return array
-     *
-     * @throws Exception
-     */
-    protected function listObjects(string $prefix = '', int $maxKeys = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
-    {
-        if ($maxKeys > S3::MAX_PAGE_SIZE) {
-            throw new Exception('Cannot list more than '.S3::MAX_PAGE_SIZE.' objects');
-        }
-
-        $uri = '/';
-        $prefix = ltrim($prefix, '/'); /** S3 specific requirement that prefix should never contain a leading slash */
-        $this->headers['content-type'] = 'text/plain';
-        $this->headers['content-md5'] = \base64_encode(md5('', true));
-
-        $parameters = [
-            'prefix' => $prefix,
-            'max-keys' => $maxKeys,
-        ];
-
-        if (! empty($continuationToken)) {
-            $parameters['continuation-token'] = $continuationToken;
-        }
-
-        $response = $this->call(S3::METHOD_GET, $uri, '', $parameters);
-
-        return $response->body;
-    }
 }
