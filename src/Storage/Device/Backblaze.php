@@ -2,7 +2,6 @@
 
 namespace Utopia\Storage\Device;
 
-use Exception;
 use Utopia\Storage\Storage;
 
 class Backblaze extends S3
