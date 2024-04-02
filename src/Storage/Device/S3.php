@@ -26,6 +26,14 @@ class S3 extends Device
 
     const METHOD_TRACE = 'TRACE';
 
+    const HTTP_VERSION_1_1 = CURL_HTTP_VERSION_1_1;
+
+    const HTTP_VERSION_2_0 = CURL_HTTP_VERSION_2_0;
+
+    const HTTP_VERSION_2 = CURL_HTTP_VERSION_2;
+
+    const HTTP_VERSION_1_0 = CURL_HTTP_VERSION_1_0;
+
     /**
      * AWS Regions constants
      */
@@ -140,6 +148,13 @@ class S3 extends Device
     protected array $amzHeaders;
 
     /**
+     * Http version
+     *
+     * @var int|null
+     */
+    protected ?int $curlHttpVersion = null;
+
+    /**
      * S3 Constructor
      *
      * @param  string  $root
@@ -211,6 +226,20 @@ class S3 extends Device
     public function getPath(string $filename, string $prefix = null): string
     {
         return $this->getRoot().DIRECTORY_SEPARATOR.$filename;
+    }
+
+    /**
+     * Set http version
+     *
+     *
+     * @param  int|null  $httpVersion
+     * @return self
+     */
+    public function setHttpVersion(?int $httpVersion): self
+    {
+        $this->curlHttpVersion = $httpVersion;
+
+        return $this;
     }
 
     /**
@@ -488,7 +517,7 @@ class S3 extends Device
      *
      * @throws Exception
      */
-    private function listObjects(string $prefix = '', int $maxKeys = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
+    protected function listObjects(string $prefix = '', int $maxKeys = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
     {
         if ($maxKeys > self::MAX_PAGE_SIZE) {
             throw new Exception('Cannot list more than '.self::MAX_PAGE_SIZE.' objects');
@@ -500,6 +529,9 @@ class S3 extends Device
         unset($this->amzHeaders['x-amz-content-sha256']);
         $this->headers['content-type'] = 'text/plain';
         $this->headers['content-md5'] = \base64_encode(md5('', true));
+
+        unset($this->amzHeaders['x-amz-content-sha256']);
+        unset($this->amzHeaders['x-amz-acl']);
 
         $parameters = [
             'list-type' => 2,
@@ -806,7 +838,7 @@ class S3 extends Device
      *
      * @throws \Exception
      */
-    private function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
+    protected function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
     {
         $uri = $this->getAbsolutePath($uri);
         $url = 'https://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
@@ -846,6 +878,11 @@ class S3 extends Device
         \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
         \curl_setopt($curl, CURLOPT_HEADER, false);
         \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
+
+        if ($this->curlHttpVersion != null) {
+            \curl_setopt($curl, CURLOPT_HTTP_VERSION, $this->curlHttpVersion);
+        }
+
         \curl_setopt($curl, CURLOPT_WRITEFUNCTION, function ($curl, string $data) use ($response) {
             $response->body .= $data;
 
