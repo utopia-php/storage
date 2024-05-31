@@ -2,7 +2,7 @@
 
 namespace Utopia\Storage\Validator;
 
-use Utopia\Validator;
+use Utopia\Http\Validator;
 
 class Upload extends Validator
 {
