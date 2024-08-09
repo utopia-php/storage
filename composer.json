@@ -24,7 +24,7 @@
         "ext-lz4": "*",
         "ext-snappy": "*",
         "php": ">=8.0",
-        "utopia-php/framework": "0.34.*",
+        "utopia-php/framework": "1.0.*",
         "utopia-php/system": "0.*.*"
     },
     "require-dev": {
@@ -32,5 +32,5 @@
         "vimeo/psalm": "4.0.1",
         "laravel/pint": "1.2.*"
     },
-    "minimum-stability": "dev"
+    "minimum-stability": "RC"
 }
