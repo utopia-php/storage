@@ -364,7 +364,6 @@ class Local extends Device
 
         foreach ($files as $file) {
             if (is_dir($file)) {
-                //$this->deletePath(\ltrim($file, $this->getRoot().DIRECTORY_SEPARATOR));
                 $this->deletePath(substr_replace($file, '', 0, strlen($this->getRoot())));
             } else {
                 $this->delete($file, true);
@@ -520,6 +519,10 @@ class Local extends Device
         $files = [];
 
         foreach (\glob($dir.DIRECTORY_SEPARATOR.'*') as $file) {
+            $files[] = $file;
+        }
+
+        foreach (\glob($dir.DIRECTORY_SEPARATOR.'.[!.]*') as $file) {
             $files[] = $file;
         }
 
