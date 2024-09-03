@@ -518,7 +518,7 @@ class Local extends Device
         $dir = rtrim($dir, DIRECTORY_SEPARATOR);
         $files = [];
 
-        foreach (\glob($dir.'/*') as $file) {
+        foreach (\glob($dir.DIRECTORY_SEPARATOR.'*') as $file) {
             $files[] = $file;
         }
 
