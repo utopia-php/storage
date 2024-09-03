@@ -522,7 +522,7 @@ class Local extends Device
         }
 
         $files = [];
-
+var_dump(\scandir($dir));
         foreach (\scandir($dir) as $file) {
             if ($file === '.' || $file === '..') {
                 continue;
