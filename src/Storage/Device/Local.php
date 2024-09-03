@@ -364,15 +364,13 @@ class Local extends Device
 
         foreach ($files as $file) {
             if (is_dir($file)) {
-                $this->deletePath(\ltrim($file, $this->getRoot().DIRECTORY_SEPARATOR));
+                $this->deletePath(substr_replace($file, '', 0, strlen($this->getRoot())));
             } else {
                 $this->delete($file, true);
             }
         }
 
-        \rmdir($path);
-
-        return true;
+        return \rmdir($path);
     }
 
     /**
@@ -517,18 +515,11 @@ class Local extends Device
      */
     public function getFiles(string $dir, int $max = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
     {
-        if (! (\str_ends_with($dir, DIRECTORY_SEPARATOR))) {
-            $dir .= DIRECTORY_SEPARATOR;
-        }
-
+        $dir = rtrim($dir, DIRECTORY_SEPARATOR);
         $files = [];
 
-        foreach (\scandir($dir) as $file) {
-            if ($file === '.' || $file === '..') {
-                continue;
-            }
-
-            $files[] = $dir.$file;
+        foreach (\glob($dir.'/*') as $file) {
+            $files[] = $file;
         }
 
         return $files;
