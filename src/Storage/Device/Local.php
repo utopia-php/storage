@@ -522,6 +522,9 @@ class Local extends Device
             $files[] = $file;
         }
 
+        /**
+         * Hidden files
+         */
         foreach (\glob($dir.DIRECTORY_SEPARATOR.'.[!.]*') as $file) {
             $files[] = $file;
         }
