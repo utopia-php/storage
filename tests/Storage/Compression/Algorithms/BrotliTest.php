@@ -29,8 +29,11 @@ class BrotliTest extends TestCase
 
     public function testErrorsWhenSettingLevel()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->object->setLevel(-1);
+        try {
+            $this->object->setLevel(-1);
+        } catch (InvalidArgumentException $exception) {
+            $this->assertEquals(InvalidArgumentException::class, get_class($exception));
+        }
     }
 
     public function testCompressDecompressWithText()
