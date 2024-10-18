@@ -154,6 +154,11 @@ class S3 extends Device
      */
     protected ?int $curlHttpVersion = null;
 
+     /**
+     * @var string
+     */
+    protected string $protocol = 'https';
+
     /**
      * S3 Constructor
      *
@@ -163,8 +168,9 @@ class S3 extends Device
      * @param  string  $bucket
      * @param  string  $region
      * @param  string  $acl
+     * @param  string  $protocol
      */
-    public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_EAST_1, string $acl = self::ACL_PRIVATE, $endpointUrl = '')
+    public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_EAST_1, string $acl = self::ACL_PRIVATE, $endpointUrl = '', $protocol = 'https')
     {
         $this->accessKey = $accessKey;
         $this->secretKey = $secretKey;
@@ -172,10 +178,16 @@ class S3 extends Device
         $this->region = $region;
         $this->root = $root;
         $this->acl = $acl;
+        $this->protocol = $protocol;
         $this->amzHeaders = [];
 
         if (! empty($endpointUrl)) {
-            $host = $bucket.'.'.$endpointUrl;
+            $host = '';
+            if (! empty($bucket)) {
+                $host .= $bucket.'.';
+            }
+            
+            $host .= $endpointUrl;
         } else {
             $host = match ($region) {
                 self::CN_NORTH_1, self::CN_NORTH_4, self::CN_NORTHWEST_1 => $bucket.'.s3.'.$region.'.amazonaws.cn',
@@ -839,7 +851,7 @@ class S3 extends Device
     protected function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
     {
         $uri = $this->getAbsolutePath($uri);
-        $url = 'https://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
+        $url = $this->protocol.'://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
         $response->body = '';
         $response->headers = [];
