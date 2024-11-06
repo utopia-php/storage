@@ -102,9 +102,9 @@ class S3 extends Device
 
     protected const MAX_PAGE_SIZE = 1000;
 
-    protected static int $retryAttempts = 5;
+    protected static int $retryAttempts = 3;
 
-    protected static int $retryDelay = 100; // milliseconds
+    protected static int $retryDelay = 500; // milliseconds
 
     /**
      * @var string
