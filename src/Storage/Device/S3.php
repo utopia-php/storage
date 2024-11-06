@@ -102,6 +102,10 @@ class S3 extends Device
 
     protected const MAX_PAGE_SIZE = 1000;
 
+    protected static int $retryAttempts = 3;
+
+    protected static int $retryDelay = 500; // milliseconds
+
     /**
      * @var string
      */
@@ -240,6 +244,28 @@ class S3 extends Device
         $this->curlHttpVersion = $httpVersion;
 
         return $this;
+    }
+
+    /**
+     * Set retry attempts
+     *
+     * @param  int  $attempts
+     * @return void
+     */
+    public static function setRetryAttempts(int $attempts)
+    {
+        self::$retryAttempts = $attempts;
+    }
+
+    /**
+     * Set retry delay in milliseconds
+     *
+     * @param  int  $delay
+     * @return void
+     */
+    public static function setRetryDelay(int $delay): void
+    {
+        self::$retryDelay = $delay;
     }
 
     /**
@@ -915,11 +941,20 @@ class S3 extends Device
 
         $result = \curl_exec($curl);
 
+        $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+        $attempt = 0;
+        while ($attempt < self::$retryAttempts && $response->code === 503) {
+            usleep(self::$retryDelay * 1000);
+            $attempt++;
+            $result = \curl_exec($curl);
+            $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        }
+
         if (! $result) {
             throw new Exception(\curl_error($curl));
         }
 
-        $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
         if ($response->code >= 400) {
             throw new Exception($response->body, $response->code);
         }
