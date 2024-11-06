@@ -945,7 +945,7 @@ class S3 extends Device
 
         $attempt = 0;
         while ($attempt < self::$retryAttempts && $response->code === 503) {
-            usleep(self::$retryDelay);
+            usleep(self::$retryDelay * 1000);
             $attempt++;
             $result = \curl_exec($curl);
             $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
