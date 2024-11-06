@@ -104,7 +104,7 @@ class S3 extends Device
 
     protected static int $retryAttempts = 5;
 
-    protected static int $retryDelay = 2; // seconds
+    protected static int $retryDelay = 100; // milliseconds
 
     /**
      * @var string
@@ -258,7 +258,7 @@ class S3 extends Device
     }
 
     /**
-     * Set retry delay in seconds
+     * Set retry delay in milliseconds
      *
      * @param  int  $delay
      * @return void
@@ -945,7 +945,7 @@ class S3 extends Device
 
         $attempt = 0;
         while ($attempt < self::$retryAttempts && $response->code === 503) {
-            sleep(self::$retryDelay);
+            usleep(self::$retryDelay);
             $attempt++;
             $result = \curl_exec($curl);
             $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
