@@ -317,7 +317,7 @@ class S3 extends Device
 
         $etag = $this->uploadPart($data, $path, $contentType, $chunk, $uploadId);
         $metadata['parts'] ??= [];
-        $metadata['parts'][] = ['partNumber' => $chunk, 'etag' => $etag];
+        $metadata['parts'][$chunk] = $etag;
         $metadata['chunksUploaded'] ??= [];
         $metadata['chunks'] ??= 0;
         // skip incrementing if the chunk was re-uploaded
@@ -435,8 +435,8 @@ class S3 extends Device
         $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
 
         $body = '<CompleteMultipartUpload>';
-        foreach ($parts as $part) {
-            $body .= "<Part><ETag>{$part['etag']}</ETag><PartNumber>{$part['partNumber']}</PartNumber></Part>";
+        foreach ($parts as $key => $etag) {
+            $body .= "<Part><ETag>{$etag}</ETag><PartNumber>{$key}</PartNumber></Part>";
         }
         $body .= '</CompleteMultipartUpload>';
 

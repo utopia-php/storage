@@ -274,8 +274,7 @@ abstract class S3Base extends TestCase
             $cc = fopen($op, 'wb');
             fwrite($cc, $contents);
             fclose($cc);
-            $etag = $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
-            $parts[] = ['partNumber' => $chunk, 'etag' => $etag];
+            $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
             $start += strlen($contents);
             $chunk++;
             fseek($handle, $start);
@@ -322,8 +321,7 @@ abstract class S3Base extends TestCase
             $cc = fopen($op, 'wb');
             fwrite($cc, $contents);
             fclose($cc);
-            $etag = $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
-            $parts[] = ['partNumber' => $chunk, 'etag' => $etag];
+            $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
             $start += strlen($contents);
             $chunk++;
             if ($chunk == 2) {
@@ -345,8 +343,7 @@ abstract class S3Base extends TestCase
             $cc = fopen($op, 'wb');
             fwrite($cc, $contents);
             fclose($cc);
-            $etag = $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
-            $parts[] = ['partNumber' => $chunk, 'etag' => $etag];
+            $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
             $start += strlen($contents);
             $chunk++;
             fseek($handle, $start);
