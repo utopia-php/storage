@@ -315,16 +315,15 @@ class S3 extends Device
             $metadata['uploadId'] = $uploadId;
         }
 
-        $etag = $this->uploadPart($data, $path, $contentType, $chunk, $uploadId);
         $metadata['parts'] ??= [];
-        $metadata['parts'][$chunk] = $etag;
-        $metadata['chunksUploaded'] ??= [];
         $metadata['chunks'] ??= 0;
+
+        $etag = $this->uploadPart($data, $path, $contentType, $chunk, $uploadId);
         // skip incrementing if the chunk was re-uploaded
-        if (! array_key_exists($chunk, $metadata['chunksUploaded'])) {
-            $metadata['chunksUploaded'][$chunk] = true;
+        if (! array_key_exists($chunk, $metadata['parts'])) {
             $metadata['chunks']++;
         }
+        $metadata['parts'][$chunk] = $etag;
         if ($metadata['chunks'] == $chunks) {
             $this->completeMultipartUpload($path, $uploadId, $metadata['parts']);
         }
