@@ -274,8 +274,76 @@ abstract class S3Base extends TestCase
             $cc = fopen($op, 'wb');
             fwrite($cc, $contents);
             fclose($cc);
-            $etag = $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
-            $parts[] = ['partNumber' => $chunk, 'etag' => $etag];
+            $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
+            $start += strlen($contents);
+            $chunk++;
+            fseek($handle, $start);
+        }
+        @fclose($handle);
+        unlink($op);
+
+        $this->assertEquals(\filesize($source), $this->object->getFileSize($dest));
+
+        // S3 doesnt provide a method to get a proper MD5-hash of a file created using multipart upload
+        // https://stackoverflow.com/questions/8618218/amazon-s3-checksum
+        // More info on how AWS calculates ETag for multipart upload here
+        // https://savjee.be/2015/10/Verifying-Amazon-S3-multi-part-uploads-with-ETag-hash/
+        // TODO
+        // $this->assertEquals(\md5_file($source), $this->object->getFileHash($dest));
+        // $this->object->delete($dest);
+        return $dest;
+    }
+
+    public function testPartUploadRetry()
+    {
+        $source = __DIR__.'/../resources/disk-a/large_file.mp4';
+        $dest = $this->object->getPath('uploaded.mp4');
+        $totalSize = \filesize($source);
+        // AWS S3 requires each part to be at least 5MB except for last part
+        $chunkSize = 5 * 1024 * 1024;
+
+        $chunks = ceil($totalSize / $chunkSize);
+
+        $chunk = 1;
+        $start = 0;
+
+        $metadata = [
+            'parts' => [],
+            'chunks' => 0,
+            'uploadId' => null,
+            'content_type' => \mime_content_type($source),
+        ];
+        $handle = @fopen($source, 'rb');
+        $op = __DIR__.'/chunk.part';
+        while ($start < $totalSize) {
+            $contents = fread($handle, $chunkSize);
+            $op = __DIR__.'/chunk.part';
+            $cc = fopen($op, 'wb');
+            fwrite($cc, $contents);
+            fclose($cc);
+            $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
+            $start += strlen($contents);
+            $chunk++;
+            if ($chunk == 2) {
+                break;
+            }
+            fseek($handle, $start);
+        }
+        @fclose($handle);
+        unlink($op);
+
+        $chunk = 1;
+        $start = 0;
+        // retry from first to make sure duplicate chunk re-upload works without issue
+        $handle = @fopen($source, 'rb');
+        $op = __DIR__.'/chunk.part';
+        while ($start < $totalSize) {
+            $contents = fread($handle, $chunkSize);
+            $op = __DIR__.'/chunk.part';
+            $cc = fopen($op, 'wb');
+            fwrite($cc, $contents);
+            fclose($cc);
+            $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
             $start += strlen($contents);
             $chunk++;
             fseek($handle, $start);
