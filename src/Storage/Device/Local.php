@@ -95,8 +95,14 @@ class Local extends Device
         $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path).DIRECTORY_SEPARATOR.\basename($path).'_chunks.log';
 
         $this->createDirectory(\dirname($tmp));
-        if (! file_put_contents($tmp, "$chunk\n", FILE_APPEND)) {
-            throw new Exception('Can\'t write chunk log '.$tmp);
+
+        $chunkFilePath = dirname($tmp).DIRECTORY_SEPARATOR.pathinfo($path, PATHINFO_FILENAME).'.part.'.$chunk;
+
+        // skip writing chunk if the chunk was re-uploaded
+        if (! file_exists($chunkFilePath)) {
+            if (! file_put_contents($tmp, "$chunk\n", FILE_APPEND)) {
+                throw new Exception('Can\'t write chunk log '.$tmp);
+            }
         }
 
         $chunkLogs = file($tmp);
@@ -106,7 +112,7 @@ class Local extends Device
 
         $chunksReceived = count(file($tmp));
 
-        if (! \rename($source, dirname($tmp).DIRECTORY_SEPARATOR.pathinfo($path, PATHINFO_FILENAME).'.part.'.$chunk)) {
+        if (! \rename($source, $chunkFilePath)) {
             throw new Exception('Failed to write chunk '.$chunk);
         }
 

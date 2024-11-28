@@ -173,6 +173,60 @@ class LocalTest extends TestCase
         return $dest;
     }
 
+    public function testPartUploadRetry()
+    {
+        $source = __DIR__.'/../../resources/disk-a/large_file.mp4';
+        $dest = $this->object->getPath('uploaded2.mp4');
+        $totalSize = \filesize($source);
+        // AWS S3 requires each part to be at least 5MB except for last part
+        $chunkSize = 5 * 1024 * 1024;
+
+        $chunks = ceil($totalSize / $chunkSize);
+
+        $chunk = 1;
+        $start = 0;
+        $handle = @fopen($source, 'rb');
+        $op = __DIR__.'/chunkx.part';
+        while ($start < $totalSize) {
+            $contents = fread($handle, $chunkSize);
+            $op = __DIR__.'/chunkx.part';
+            $cc = fopen($op, 'wb');
+            fwrite($cc, $contents);
+            fclose($cc);
+            $this->object->upload($op, $dest, $chunk, $chunks);
+            $start += strlen($contents);
+            $chunk++;
+            if ($chunk == 2) {
+                break;
+            }
+            fseek($handle, $start);
+        }
+        @fclose($handle);
+
+        $chunk = 1;
+        $start = 0;
+        // retry from first to make sure duplicate chunk re-upload works without issue
+        $handle = @fopen($source, 'rb');
+        $op = __DIR__.'/chunkx.part';
+        while ($start < $totalSize) {
+            $contents = fread($handle, $chunkSize);
+            $op = __DIR__.'/chunkx.part';
+            $cc = fopen($op, 'wb');
+            fwrite($cc, $contents);
+            fclose($cc);
+            $this->object->upload($op, $dest, $chunk, $chunks);
+            $start += strlen($contents);
+            $chunk++;
+            fseek($handle, $start);
+        }
+        @fclose($handle);
+
+        $this->assertEquals(\filesize($source), $this->object->getFileSize($dest));
+        $this->assertEquals(\md5_file($source), $this->object->getFileHash($dest));
+
+        return $dest;
+    }
+
     public function testAbort()
     {
         $source = __DIR__.'/../../resources/disk-a/large_file.mp4';
