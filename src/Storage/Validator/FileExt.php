@@ -2,7 +2,7 @@
 
 namespace Utopia\Storage\Validator;
 
-use Utopia\Validator;
+use Utopia\Http\Validator;
 
 class FileExt extends Validator
 {
@@ -46,6 +46,7 @@ class FileExt extends Validator
     public function isValid($filename): bool
     {
         $ext = pathinfo($filename, PATHINFO_EXTENSION);
+        $ext = strtolower($ext);
 
         if (! in_array($ext, $this->allowed)) {
             return false;

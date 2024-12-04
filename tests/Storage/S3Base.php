@@ -3,6 +3,7 @@
 namespace Utopia\Tests\Storage;
 
 use PHPUnit\Framework\TestCase;
+use Utopia\Storage\Device\Local;
 use Utopia\Storage\Device\S3;
 
 abstract class S3Base extends TestCase
@@ -54,6 +55,42 @@ abstract class S3Base extends TestCase
     public function tearDown(): void
     {
         $this->removeTestFiles();
+    }
+
+    public function testGetFiles()
+    {
+        $path = $this->object->getPath('testing/');
+        $files = $this->object->getFiles($path);
+        $this->assertEquals(4, $files['KeyCount']);
+        $this->assertEquals(false, $files['IsTruncated']);
+        $this->assertIsArray($files['Contents']);
+
+        $file = $files['Contents'][0];
+
+        $this->assertArrayHasKey('Key', $file);
+        $this->assertArrayHasKey('LastModified', $file);
+        $this->assertArrayHasKey('ETag', $file);
+        $this->assertArrayHasKey('StorageClass', $file);
+        $this->assertArrayHasKey('Size', $file);
+    }
+
+    public function testGetFilesPagination()
+    {
+        $path = $this->object->getPath('testing/');
+
+        $files = $this->object->getFiles($path, 3);
+        $this->assertEquals(3, $files['KeyCount']);
+        $this->assertEquals(3, $files['MaxKeys']);
+        $this->assertEquals(true, $files['IsTruncated']);
+        $this->assertIsArray($files['Contents']);
+        $this->assertArrayHasKey('NextContinuationToken', $files);
+
+        $files = $this->object->getFiles($path, 1000, $files['NextContinuationToken']);
+        $this->assertEquals(1, $files['KeyCount']);
+        $this->assertEquals(1000, $files['MaxKeys']);
+        $this->assertEquals(false, $files['IsTruncated']);
+        $this->assertIsArray($files['Contents']);
+        $this->assertArrayNotHasKey('NextContinuationToken', $files);
     }
 
     public function testName()
@@ -111,6 +148,12 @@ abstract class S3Base extends TestCase
         $this->assertEquals(false, $this->object->exists($this->object->getPath('text-for-move.txt')));
 
         $this->object->delete($this->object->getPath('text-for-move-new.txt'));
+    }
+
+    public function testMoveIdenticalName()
+    {
+        $file = '/kitten-1.jpg';
+        $this->assertFalse($this->object->move($file, $file));
     }
 
     public function testDelete()
@@ -231,8 +274,76 @@ abstract class S3Base extends TestCase
             $cc = fopen($op, 'wb');
             fwrite($cc, $contents);
             fclose($cc);
-            $etag = $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
-            $parts[] = ['partNumber' => $chunk, 'etag' => $etag];
+            $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
+            $start += strlen($contents);
+            $chunk++;
+            fseek($handle, $start);
+        }
+        @fclose($handle);
+        unlink($op);
+
+        $this->assertEquals(\filesize($source), $this->object->getFileSize($dest));
+
+        // S3 doesnt provide a method to get a proper MD5-hash of a file created using multipart upload
+        // https://stackoverflow.com/questions/8618218/amazon-s3-checksum
+        // More info on how AWS calculates ETag for multipart upload here
+        // https://savjee.be/2015/10/Verifying-Amazon-S3-multi-part-uploads-with-ETag-hash/
+        // TODO
+        // $this->assertEquals(\md5_file($source), $this->object->getFileHash($dest));
+        // $this->object->delete($dest);
+        return $dest;
+    }
+
+    public function testPartUploadRetry()
+    {
+        $source = __DIR__.'/../resources/disk-a/large_file.mp4';
+        $dest = $this->object->getPath('uploaded.mp4');
+        $totalSize = \filesize($source);
+        // AWS S3 requires each part to be at least 5MB except for last part
+        $chunkSize = 5 * 1024 * 1024;
+
+        $chunks = ceil($totalSize / $chunkSize);
+
+        $chunk = 1;
+        $start = 0;
+
+        $metadata = [
+            'parts' => [],
+            'chunks' => 0,
+            'uploadId' => null,
+            'content_type' => \mime_content_type($source),
+        ];
+        $handle = @fopen($source, 'rb');
+        $op = __DIR__.'/chunk.part';
+        while ($start < $totalSize) {
+            $contents = fread($handle, $chunkSize);
+            $op = __DIR__.'/chunk.part';
+            $cc = fopen($op, 'wb');
+            fwrite($cc, $contents);
+            fclose($cc);
+            $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
+            $start += strlen($contents);
+            $chunk++;
+            if ($chunk == 2) {
+                break;
+            }
+            fseek($handle, $start);
+        }
+        @fclose($handle);
+        unlink($op);
+
+        $chunk = 1;
+        $start = 0;
+        // retry from first to make sure duplicate chunk re-upload works without issue
+        $handle = @fopen($source, 'rb');
+        $op = __DIR__.'/chunk.part';
+        while ($start < $totalSize) {
+            $contents = fread($handle, $chunkSize);
+            $op = __DIR__.'/chunk.part';
+            $cc = fopen($op, 'wb');
+            fwrite($cc, $contents);
+            fclose($cc);
+            $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
             $start += strlen($contents);
             $chunk++;
             fseek($handle, $start);
@@ -261,6 +372,42 @@ abstract class S3Base extends TestCase
         $chunk = file_get_contents($source, false, null, 0, 500);
         $readChunk = $this->object->read($path, 0, 500);
         $this->assertEquals($chunk, $readChunk);
+    }
+
+    /**
+     * @depends testPartUpload
+     */
+    public function testTransferLarge($path)
+    {
+        // chunked file
+        $this->object->setTransferChunkSize(10000000); //10 mb
+
+        $device = new Local(__DIR__.'/../resources/disk-a');
+        $destination = $device->getPath('largefile.mp4');
+
+        $this->assertTrue($this->object->transfer($path, $destination, $device));
+        $this->assertTrue($device->exists($destination));
+        $this->assertEquals($device->getFileMimeType($destination), 'video/mp4');
+
+        $device->delete($destination);
         $this->object->delete($path);
+    }
+
+    public function testTransferSmall()
+    {
+        $this->object->setTransferChunkSize(10000000); //10 mb
+
+        $device = new Local(__DIR__.'/../resources/disk-a');
+
+        $path = $this->object->getPath('text-for-read.txt');
+        $this->object->write($path, 'Hello World', 'text/plain');
+
+        $destination = $device->getPath('hello.txt');
+        $this->assertTrue($this->object->transfer($path, $destination, $device));
+        $this->assertTrue($device->exists($destination));
+        $this->assertEquals($device->read($destination), 'Hello World');
+
+        $this->object->delete($path);
+        $device->delete($destination);
     }
 }

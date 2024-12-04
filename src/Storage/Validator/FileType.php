@@ -3,7 +3,7 @@
 namespace Utopia\Storage\Validator;
 
 use Exception;
-use Utopia\Validator;
+use Utopia\Http\Validator;
 
 class FileType extends Validator
 {

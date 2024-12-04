@@ -4,6 +4,7 @@ namespace Utopia\Tests\Storage\Device;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Device\Local;
+use Utopia\Storage\Device\S3;
 
 class LocalTest extends TestCase
 {
@@ -172,6 +173,60 @@ class LocalTest extends TestCase
         return $dest;
     }
 
+    public function testPartUploadRetry()
+    {
+        $source = __DIR__.'/../../resources/disk-a/large_file.mp4';
+        $dest = $this->object->getPath('uploaded2.mp4');
+        $totalSize = \filesize($source);
+        // AWS S3 requires each part to be at least 5MB except for last part
+        $chunkSize = 5 * 1024 * 1024;
+
+        $chunks = ceil($totalSize / $chunkSize);
+
+        $chunk = 1;
+        $start = 0;
+        $handle = @fopen($source, 'rb');
+        $op = __DIR__.'/chunkx.part';
+        while ($start < $totalSize) {
+            $contents = fread($handle, $chunkSize);
+            $op = __DIR__.'/chunkx.part';
+            $cc = fopen($op, 'wb');
+            fwrite($cc, $contents);
+            fclose($cc);
+            $this->object->upload($op, $dest, $chunk, $chunks);
+            $start += strlen($contents);
+            $chunk++;
+            if ($chunk == 2) {
+                break;
+            }
+            fseek($handle, $start);
+        }
+        @fclose($handle);
+
+        $chunk = 1;
+        $start = 0;
+        // retry from first to make sure duplicate chunk re-upload works without issue
+        $handle = @fopen($source, 'rb');
+        $op = __DIR__.'/chunkx.part';
+        while ($start < $totalSize) {
+            $contents = fread($handle, $chunkSize);
+            $op = __DIR__.'/chunkx.part';
+            $cc = fopen($op, 'wb');
+            fwrite($cc, $contents);
+            fclose($cc);
+            $this->object->upload($op, $dest, $chunk, $chunks);
+            $start += strlen($contents);
+            $chunk++;
+            fseek($handle, $start);
+        }
+        @fclose($handle);
+
+        $this->assertEquals(\filesize($source), $this->object->getFileSize($dest));
+        $this->assertEquals(\md5_file($source), $this->object->getFileHash($dest));
+
+        return $dest;
+    }
+
     public function testAbort()
     {
         $source = __DIR__.'/../../resources/disk-a/large_file.mp4';
@@ -234,7 +289,6 @@ class LocalTest extends TestCase
         $chunk = file_get_contents($source, false, null, 0, 500);
         $readChunk = $this->object->read($path, 0, 500);
         $this->assertEquals($chunk, $readChunk);
-        $this->object->delete($path);
     }
 
     public function testPartitionFreeSpace()
@@ -245,6 +299,51 @@ class LocalTest extends TestCase
     public function testPartitionTotalSpace()
     {
         $this->assertGreaterThan(0, $this->object->getPartitionTotalSpace());
+    }
+
+    /**
+     * @depends testPartUpload
+     */
+    public function testTransferLarge($path)
+    {
+        // chunked file
+        $this->object->setTransferChunkSize(10000000); //10 mb
+
+        $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
+        $secret = $_SERVER['S3_SECRET'] ?? '';
+        $bucket = 'utopia-storage-test';
+
+        $device = new S3('/root', $key, $secret, $bucket, S3::EU_CENTRAL_1, S3::ACL_PRIVATE);
+        $destination = $device->getPath('largefile.mp4');
+
+        $this->assertTrue($this->object->transfer($path, $destination, $device));
+        $this->assertTrue($device->exists($destination));
+        $this->assertEquals($device->getFileMimeType($destination), 'video/mp4');
+
+        $device->delete($destination);
+        $this->object->delete($path);
+    }
+
+    public function testTransferSmall()
+    {
+        $this->object->setTransferChunkSize(10000000); //10 mb
+
+        $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
+        $secret = $_SERVER['S3_SECRET'] ?? '';
+        $bucket = 'utopia-storage-test';
+
+        $device = new S3('/root', $key, $secret, $bucket, S3::EU_CENTRAL_1, S3::ACL_PRIVATE);
+
+        $path = $this->object->getPath('text-for-read.txt');
+        $this->object->write($path, 'Hello World');
+
+        $destination = $device->getPath('hello.txt');
+        $this->assertTrue($this->object->transfer($path, $destination, $device));
+        $this->assertTrue($device->exists($destination));
+        $this->assertEquals($device->read($destination), 'Hello World');
+
+        $this->object->delete($path);
+        $device->delete($destination);
     }
 
     public function testDeletePath()
@@ -277,5 +376,38 @@ class LocalTest extends TestCase
         $this->assertEquals(false, $this->object->exists($path));
         $this->assertEquals(false, $this->object->exists($path2));
         $this->assertEquals(false, $this->object->exists($path3));
+    }
+
+    public function testGetFiles()
+    {
+        $dir = DIRECTORY_SEPARATOR.'get-files-test';
+
+        $this->assertTrue($this->object->createDirectory($dir));
+
+        $files = $this->object->getFiles($dir);
+        $this->assertEquals(0, \count($files));
+
+        $this->object->write($dir.DIRECTORY_SEPARATOR.'new-file.txt', 'Hello World');
+        $this->object->write($dir.DIRECTORY_SEPARATOR.'new-file-two.txt', 'Hello World');
+
+        $files = $this->object->getFiles($dir);
+        $this->assertEquals(2, \count($files));
+    }
+
+    public function testNestedDeletePath()
+    {
+        $dir = $this->object->getPath('nested-delete-path-test');
+        $dir2 = $dir.DIRECTORY_SEPARATOR.'dir2';
+        $dir3 = $dir2.DIRECTORY_SEPARATOR.'dir3';
+
+        $this->assertTrue($this->object->createDirectory($dir));
+        $this->object->write($dir.DIRECTORY_SEPARATOR.'new-file.txt', 'Hello World');
+        $this->assertTrue($this->object->createDirectory($dir2));
+        $this->object->write($dir2.DIRECTORY_SEPARATOR.'new-file-2.txt', 'Hello World');
+        $this->assertTrue($this->object->createDirectory($dir3));
+        $this->object->write($dir3.DIRECTORY_SEPARATOR.'new-file-3.txt', 'Hello World');
+
+        $this->assertTrue($this->object->deletePath('nested-delete-path-test'));
+        $this->assertFalse($this->object->exists($dir));
     }
 }

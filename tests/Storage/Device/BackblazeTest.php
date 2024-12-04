@@ -12,7 +12,7 @@ class BackblazeTest extends S3Base
         $this->root = '/root';
         $key = $_SERVER['BACKBLAZE_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['BACKBLAZE_SECRET'] ?? '';
-        $bucket = 'backblaze-demo';
+        $bucket = 'utopia-storage-test-new';
 
         $this->object = new Backblaze($this->root, $key, $secret, $bucket, Backblaze::US_WEST_004, Backblaze::ACL_PRIVATE);
     }

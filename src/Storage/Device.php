@@ -2,8 +2,41 @@
 
 namespace Utopia\Storage;
 
+use Exception;
+
 abstract class Device
 {
+    /**
+     * Max chunk size while transferring file from one device to another
+     */
+    protected int $transferChunkSize = 20000000; //20 MB
+
+    /**
+     * Sets the maximum number of keys returned to the response. By default, the action returns up to 1,000 key names.
+     */
+    protected const MAX_PAGE_SIZE = PHP_INT_MAX;
+
+    /**
+     * Set Transfer Chunk Size
+     *
+     * @param  int  $chunkSize
+     * @return void
+     */
+    public function setTransferChunkSize(int $chunkSize): void
+    {
+        $this->transferChunkSize = $chunkSize;
+    }
+
+    /**
+     * Get Transfer Chunk Size
+     *
+     * @return int
+     */
+    public function getTransferChunkSize(): int
+    {
+        return $this->transferChunkSize;
+    }
+
     /**
      * Get Name.
      *
@@ -64,9 +97,27 @@ abstract class Device
      * @param  array  $metadata
      * @return int
      *
-     * @throws \Exception
+     * @throws Exception
      */
     abstract public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
+
+    /**
+     * Upload Data.
+     *
+     * Upload file contents to desired destination in the selected disk.
+     * return number of chunks uploaded or 0 if it fails.
+     *
+     * @param  string  $data
+     * @param  string  $path
+     * @param  string  $contentType
+     * @param int chunk
+     * @param int chunks
+     * @param  array  $metadata
+     * @return int
+     *
+     * @throws Exception
+     */
+    abstract public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
 
     /**
      * Abort Chunked Upload
@@ -88,6 +139,17 @@ abstract class Device
     abstract public function read(string $path, int $offset = 0, int $length = null): string;
 
     /**
+     * Transfer
+     * Transfer a file from current device to destination device.
+     *
+     * @param  string  $path
+     * @param  string  $destination
+     * @param  Device  $device
+     * @return bool
+     */
+    abstract public function transfer(string $path, string $destination, Device $device): bool;
+
+    /**
      * Write file by given path.
      *
      * @param  string  $path
@@ -105,7 +167,18 @@ abstract class Device
      * @param  string  $target
      * @return bool
      */
-    abstract public function move(string $source, string $target): bool;
+    public function move(string $source, string $target): bool
+    {
+        if ($source === $target) {
+            return false;
+        }
+
+        if ($this->transfer($source, $target, $this)) {
+            return $this->delete($source);
+        }
+
+        return false;
+    }
 
     /**
      * Delete file in given path return true on success and false on failure.
@@ -204,6 +277,16 @@ abstract class Device
      * @return float
      */
     abstract public function getPartitionTotalSpace(): float;
+
+    /**
+     * Get all files and directories inside a directory.
+     *
+     * @param  string  $dir Directory to scan
+     * @param  int  $max
+     * @param  string  $continuationToken
+     * @return array<mixed>
+     */
+    abstract public function getFiles(string $dir, int $max = self::MAX_PAGE_SIZE, string $continuationToken = ''): array;
 
     /**
      * Get the absolute path by resolving strings like ../, .., //, /\ and so on.

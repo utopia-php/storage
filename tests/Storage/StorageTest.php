@@ -39,4 +39,11 @@ class StorageTest extends TestCase
         $this->assertEquals(Storage::exists('disk-b'), true);
         $this->assertEquals(Storage::exists('disk-c'), false);
     }
+
+    public function testMoveIdenticalName()
+    {
+        $file = '/kitten-1.jpg';
+        $device = Storage::getDevice('disk-a');
+        $this->assertFalse($device->move($file, $file));
+    }
 }
