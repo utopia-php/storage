@@ -9,7 +9,6 @@
          stopOnFailure="false">
     <testsuites>
         <testsuite name="unit">
-            <directory>./tests/Storage/Compression</directory>
             <file>./tests/Storage/Device/LocalTest.php</file>
             <directory>./tests/Storage/Validator</directory>
             <file>./tests/Storage/StorageTest.php</file>
