@@ -9,17 +9,17 @@ class DOSpaces extends S3
     /**
      * Regions constants
      */
-    const SGP1 = 'sgp1';
+    public const SGP1 = 'sgp1';
 
-    const NYC3 = 'nyc3';
+    public const NYC3 = 'nyc3';
 
-    const FRA1 = 'fra1';
+    public const FRA1 = 'fra1';
 
-    const SFO2 = 'sfo2';
+    public const SFO2 = 'sfo2';
 
-    const SFO3 = 'sfo3';
+    public const SFO3 = 'sfo3';
 
-    const AMS3 = 'AMS3';
+    public const AMS3 = 'AMS3';
 
     /**
      * DOSpaces Constructor
