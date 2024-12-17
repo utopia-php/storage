@@ -12,8 +12,8 @@
         "psr-4": {"Utopia\\Tests\\Storage\\":"tests/Storage"}
     },
     "scripts": {
-        "lint": "./vendor/bin/pint --test",
-        "format": "./vendor/bin/pint"
+        "lint": "./vendor/bin/pint --test --config pint.json",
+        "format": "./vendor/bin/pint --config pint.json"
     },
     "require": {
         "ext-fileinfo": "*",
@@ -30,7 +30,8 @@
     "require-dev": {
         "phpunit/phpunit": "^9.3",
         "vimeo/psalm": "4.0.1",
-        "laravel/pint": "1.2.*"
+        "phpstan/phpstan": "^1.12",
+        "laravel/pint": "^1.2"
     },
     "minimum-stability": "stable"
 }
