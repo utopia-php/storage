@@ -16,6 +16,7 @@
         "format": "./vendor/bin/pint"
     },
     "require": {
+        "php": ">=8.0",
         "ext-fileinfo": "*",
         "ext-zlib": "*",
         "ext-zstd": "*",
@@ -23,8 +24,7 @@
         "ext-brotli": "*",
         "ext-lz4": "*",
         "ext-snappy": "*",
-        "php": ">=8.0",
-        "utopia-php/framework": "1.0.*",
+        "utopia-php/framework": "0.33.*",
         "utopia-php/system": "0.9.*"
     },
     "require-dev": {
