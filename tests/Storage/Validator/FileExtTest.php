@@ -14,7 +14,7 @@ class FileExtTest extends TestCase
 
     public function setUp(): void
     {
-        $this->object = new FileExt([FileExt::TYPE_GIF, FileExt::TYPE_GZIP]);
+        $this->object = new FileExt([FileExt::TYPE_GIF, FileExt::TYPE_GZIP, FileExt::TYPE_ZIP]);
     }
 
     public function tearDown(): void
@@ -36,5 +36,7 @@ class FileExtTest extends TestCase
         $this->assertEquals($this->object->isValid('file.tar.gz'), true);
         $this->assertEquals($this->object->isValid('file.gz'), true);
         $this->assertEquals($this->object->isValid('file.GIF'), true);
+        $this->assertEquals($this->object->isValid('file.zip'), true);
+        $this->assertEquals($this->object->isValid('file.7zip'), false);
     }
 }
