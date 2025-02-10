@@ -7,11 +7,15 @@ use Utopia\Http\Validator;
 class FileExt extends Validator
 {
     const TYPE_JPEG = 'jpeg';
+
     const TYPE_JPG = 'jpg';
+
     const TYPE_GIF = 'gif';
+
     const TYPE_PNG = 'png';
 
     const TYPE_GZIP = 'gz';
+
     const TYPE_ZIP = 'zip';
 
     /**
