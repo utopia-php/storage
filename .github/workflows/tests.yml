@@ -58,7 +58,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        devices: [BackblazeTest, DOSpacesTest, LinodeTest, LocalTest, S3Test, WasabiTest]
+        devices: [BackblazeTest, DOSpacesTest, LinodeTest, LocalTest, AWSTest, WasabiTest]
 
     steps:
       - name: checkout
