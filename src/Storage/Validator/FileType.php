@@ -10,13 +10,13 @@ class FileType extends Validator
     /**
      * File Types Constants.
      */
-    const FILE_TYPE_JPEG = 'jpeg';
+    public const FILE_TYPE_JPEG = 'jpeg';
 
-    const FILE_TYPE_GIF = 'gif';
+    public const FILE_TYPE_GIF = 'gif';
 
-    const FILE_TYPE_PNG = 'png';
+    public const FILE_TYPE_PNG = 'png';
 
-    const FILE_TYPE_GZIP = 'gz';
+    public const FILE_TYPE_GZIP = 'gz';
 
     /**
      * File Type Binaries.

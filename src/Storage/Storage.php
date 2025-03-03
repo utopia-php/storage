@@ -9,17 +9,17 @@ class Storage
     /**
      * Supported devices
      */
-    const DEVICE_LOCAL = 'local';
+    public const DEVICE_LOCAL = 'local';
 
-    const DEVICE_S3 = 's3';
+    public const DEVICE_S3 = 's3';
 
-    const DEVICE_DO_SPACES = 'dospaces';
+    public const DEVICE_DO_SPACES = 'dospaces';
 
-    const DEVICE_WASABI = 'wasabi';
+    public const DEVICE_WASABI = 'wasabi';
 
-    const DEVICE_BACKBLAZE = 'backblaze';
+    public const DEVICE_BACKBLAZE = 'backblaze';
 
-    const DEVICE_LINODE = 'linode';
+    public const DEVICE_LINODE = 'linode';
 
     /**
      * Devices.

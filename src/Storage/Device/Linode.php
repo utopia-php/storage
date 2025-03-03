@@ -9,13 +9,13 @@ class Linode extends S3
     /**
      * Regions constants
      */
-    const EU_CENTRAL_1 = 'eu-central-1';
+    public const EU_CENTRAL_1 = 'eu-central-1';
 
-    const US_SOUTHEAST_1 = 'us-southeast-1';
+    public const US_SOUTHEAST_1 = 'us-southeast-1';
 
-    const US_EAST_1 = 'us-east-1';
+    public const US_EAST_1 = 'us-east-1';
 
-    const AP_SOUTH_1 = 'ap-south-1';
+    public const AP_SOUTH_1 = 'ap-south-1';
 
     /**
      * Object Storage Constructor
