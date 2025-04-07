@@ -211,10 +211,11 @@ class Local extends Device
         $chunkSize = $this->transferChunkSize;
         
         if($this->getType() === Storage::DEVICE_LOCAL && $device->getType() === Storage::DEVICE_LOCAL) {
-            \var_dump("ST FIRST " . \microtime(true));
+            \var_dump("Copy1 " . \microtime(true));
             $device->createDirectory(\dirname($destination));
+            \var_dump("Copy2 " . \microtime(true));
             \copy($path, $destination);
-            \var_dump("ST FINAL " . \microtime(true));
+            \var_dump("Copy3 " . \microtime(true));
             return true;
         }
     
