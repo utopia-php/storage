@@ -211,11 +211,14 @@ class Local extends Device
         $chunkSize = $this->transferChunkSize;
         
         if($this->getType() === Storage::DEVICE_LOCAL && $device->getType() === Storage::DEVICE_LOCAL) {
-            $chunkSize = 1024 * 1024 * 1024; // 1 GB
+            \var_dump("ST FIRST " . \microtime(true));
+            $device->createDirectory(\dirname($destination));
+            \copy($path, $destination);
+            \var_dump("ST FINAL " . \microtime(true));
+            return true;
         }
     
         \var_dump($chunkSize);
-        \var_dump("ST FIRST " . \microtime(true));
         
         if (! $this->exists($path)) {
             throw new Exception('File Not Found');
@@ -237,9 +240,6 @@ class Local extends Device
             $data = $this->read($path, $start, $chunkSize);
             $device->uploadData($data, $destination, $contentType, $counter + 1, $totalChunks, $metadata);
         }
-        
-        
-        \var_dump("ST FINAL " . \microtime(true));
 
         return true;
     }
