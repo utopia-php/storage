@@ -208,25 +208,37 @@ class Local extends Device
      */
     public function transfer(string $path, string $destination, Device $device): bool
     {
+        \var_dump("ST1 " . \microtime(true));
         if (! $this->exists($path)) {
             throw new Exception('File Not Found');
         }
         $size = $this->getFileSize($path);
         $contentType = $this->getFileMimeType($path);
+        \var_dump("ST2 " . \microtime(true));
 
         if ($size <= $this->transferChunkSize) {
             $source = $this->read($path);
 
             return $device->write($destination, $source, $contentType);
         }
+        
+        \var_dump("ST3 " . \microtime(true));
 
         $totalChunks = \ceil($size / $this->transferChunkSize);
         $metadata = ['content_type' => $contentType];
+        
+        \var_dump("ST4 " . \microtime(true));
+        
         for ($counter = 0; $counter < $totalChunks; $counter++) {
+            \var_dump("ST51 (" . $counter . ") " . \microtime(true));
             $start = $counter * $this->transferChunkSize;
             $data = $this->read($path, $start, $this->transferChunkSize);
             $device->uploadData($data, $destination, $contentType, $counter + 1, $totalChunks, $metadata);
+            \var_dump("ST52 (" . $counter . ") " . \microtime(true));
         }
+        
+        
+        \var_dump("ST FINAL " . \microtime(true));
 
         return true;
     }
