@@ -111,6 +111,8 @@ class S3 extends Device
      */
     public function __construct(string $root, string $accessKey, string $secretKey, string $host, string $region, string $acl = self::ACL_PRIVATE)
     {
+        parent::__construct();
+
         $this->accessKey = $accessKey;
         $this->secretKey = $secretKey;
         $this->region = $region;
@@ -323,7 +325,7 @@ class S3 extends Device
         unset($this->amzHeaders['x-amz-content-sha256']);
         $this->headers['content-type'] = $contentType;
         $this->amzHeaders['x-amz-acl'] = $this->acl;
-        $response = $this->call(self::METHOD_POST, $uri, '', ['uploads' => '']);
+        $response = $this->call('s3:createMultipartUpload', self::METHOD_POST, $uri, '', ['uploads' => '']);
 
         return $response->body['UploadId'];
     }
@@ -348,7 +350,7 @@ class S3 extends Device
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
         unset($this->amzHeaders['x-amz-acl']); // ACL header is not allowed in parts, only createMultipartUpload accepts this header.
 
-        $response = $this->call(self::METHOD_PUT, $uri, $data, [
+        $response = $this->call('s3:uploadPart', self::METHOD_PUT, $uri, $data, [
             'partNumber' => $chunk,
             'uploadId' => $uploadId,
         ]);
@@ -378,7 +380,7 @@ class S3 extends Device
 
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
         $this->headers['content-md5'] = \base64_encode(md5($body, true));
-        $this->call(self::METHOD_POST, $uri, $body, ['uploadId' => $uploadId]);
+        $this->call('s3:completeMultipartUpload', self::METHOD_POST, $uri, $body, ['uploadId' => $uploadId]);
 
         return true;
     }
@@ -397,7 +399,7 @@ class S3 extends Device
         $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
         unset($this->headers['content-type']);
         $this->headers['content-md5'] = \base64_encode(md5('', true));
-        $this->call(self::METHOD_DELETE, $uri, '', ['uploadId' => $extra]);
+        $this->call('s3:abort', self::METHOD_DELETE, $uri, '', ['uploadId' => $extra]);
 
         return true;
     }
@@ -423,7 +425,7 @@ class S3 extends Device
             $end = $offset + $length - 1;
             $this->headers['range'] = "bytes=$offset-$end";
         }
-        $response = $this->call(self::METHOD_GET, $uri, decode: false);
+        $response = $this->call('s3:read', self::METHOD_GET, $uri, decode: false);
 
         return $response->body;
     }
@@ -446,7 +448,7 @@ class S3 extends Device
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
         $this->amzHeaders['x-amz-acl'] = $this->acl;
 
-        $this->call(self::METHOD_PUT, $uri, $data);
+        $this->call('s3:write', self::METHOD_PUT, $uri, $data);
 
         return true;
     }
@@ -469,7 +471,7 @@ class S3 extends Device
         unset($this->amzHeaders['x-amz-acl']);
         unset($this->amzHeaders['x-amz-content-sha256']);
         $this->headers['content-md5'] = \base64_encode(md5('', true));
-        $this->call(self::METHOD_DELETE, $uri);
+        $this->call('s3:delete', self::METHOD_DELETE, $uri);
 
         return true;
     }
@@ -508,7 +510,7 @@ class S3 extends Device
             $parameters['continuation-token'] = $continuationToken;
         }
 
-        $response = $this->call(self::METHOD_GET, $uri, '', $parameters);
+        $response = $this->call('s3:list', self::METHOD_GET, $uri, '', $parameters);
 
         return $response->body;
     }
@@ -546,7 +548,7 @@ class S3 extends Device
             $body .= '</Delete>';
             $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
             $this->headers['content-md5'] = \base64_encode(md5($body, true));
-            $this->call(self::METHOD_POST, $uri, $body, ['delete' => '']);
+            $this->call('s3:deletePath', self::METHOD_POST, $uri, $body, ['delete' => '']);
         } while (! empty($continuationToken));
 
         return true;
@@ -708,7 +710,7 @@ class S3 extends Device
         unset($this->amzHeaders['x-amz-content-sha256']);
         $this->headers['content-md5'] = \base64_encode(md5('', true));
         $uri = $path !== '' ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
-        $response = $this->call(self::METHOD_HEAD, $uri);
+        $response = $this->call('s3:info', self::METHOD_HEAD, $uri);
 
         return $response->headers;
     }
@@ -794,6 +796,7 @@ class S3 extends Device
     /**
      * Get the S3 response
      *
+     * @param  string  $operation
      * @param  string  $method
      * @param  string  $uri
      * @param  string  $data
@@ -803,8 +806,10 @@ class S3 extends Device
      *
      * @throws \Exception
      */
-    protected function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
+    protected function call(string $operation, string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
     {
+        $startTime = microtime(true);
+
         $uri = $this->getAbsolutePath($uri);
         $url = $this->fqdn.$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
@@ -892,23 +897,34 @@ class S3 extends Device
             $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
         }
 
-        if (! $result) {
-            throw new Exception(\curl_error($curl));
+        try {
+            if (! $result) {
+                throw new Exception(\curl_error($curl));
+            }
+
+            if ($response->code >= 400) {
+                throw new Exception($response->body, $response->code);
+            }
+
+            // Parse body into XML
+            if ($decode && ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml'))) {
+                $response->body = \simplexml_load_string($response->body);
+                $response->body = json_decode(json_encode($response->body), true);
+            }
+
+            return $response;
+        } finally {
+            \curl_close($curl);
+
+            $this->storageOperationTelemetry->record(
+                microtime(true) - $startTime,
+                [
+                    'storage' => $this->getType(),
+                    'operation' => $operation,
+                    'attempts' => $attempt,
+                ]
+            );
         }
-
-        if ($response->code >= 400) {
-            throw new Exception($response->body, $response->code);
-        }
-
-        \curl_close($curl);
-
-        // Parse body into XML
-        if ($decode && ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml'))) {
-            $response->body = \simplexml_load_string($response->body);
-            $response->body = json_decode(json_encode($response->body), true);
-        }
-
-        return $response;
     }
 
     /**
