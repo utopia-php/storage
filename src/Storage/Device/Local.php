@@ -20,6 +20,7 @@ class Local extends Device
      */
     public function __construct(string $root = '')
     {
+        parent::__construct();
         $this->root = $root;
     }
 
