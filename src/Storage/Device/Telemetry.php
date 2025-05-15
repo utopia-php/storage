@@ -12,6 +12,12 @@ class Telemetry extends Device
         parent::__construct($telemetry);
     }
 
+    public function setTelemetry(Adapter $telemetry): void
+    {
+        parent::setTelemetry($telemetry);
+        $this->underlying->setTelemetry($telemetry);
+    }
+
     private function measure(string $method, array $args): mixed
     {
         $start = microtime(true);
