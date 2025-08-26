@@ -379,28 +379,28 @@ class LocalTest extends TestCase
 
         // Test Nested Directory Structure (prevents "Directory not empty" errors)
         $nestedBucket = 'nested-bucket';
-        
+
         // Create nested structure: nested-bucket/sub1/sub2/ with files at each level
         $this->assertTrue($this->object->createDirectory($nestedBucket));
         $this->assertTrue($this->object->createDirectory($nestedBucket.DIRECTORY_SEPARATOR.'sub1'));
         $this->assertTrue($this->object->createDirectory($nestedBucket.DIRECTORY_SEPARATOR.'sub1'.DIRECTORY_SEPARATOR.'sub2'));
-        
+
         // Add files in nested directories
         $rootFile = $this->object->getPath('file1.txt');
         $rootFile = str_ireplace($this->object->getRoot(), $this->object->getRoot().DIRECTORY_SEPARATOR.$nestedBucket, $rootFile);
         $this->assertTrue($this->object->write($rootFile, 'Content 1', 'text/plain'));
-        
+
         $nestedFile = $this->object->getPath('file2.txt');
         $nestedFile = str_ireplace($this->object->getRoot(), $this->object->getRoot().DIRECTORY_SEPARATOR.$nestedBucket.DIRECTORY_SEPARATOR.'sub1'.DIRECTORY_SEPARATOR.'sub2', $nestedFile);
         $this->assertTrue($this->object->write($nestedFile, 'Content 2', 'text/plain'));
-        
+
         // Verify files exist
         $this->assertTrue($this->object->exists($rootFile));
         $this->assertTrue($this->object->exists($nestedFile));
-        
+
         // Delete entire nested structure - should work without "Directory not empty" error
         $this->assertTrue($this->object->deletePath($nestedBucket));
-        
+
         // Verify everything is deleted
         $this->assertFalse($this->object->exists($rootFile));
         $this->assertFalse($this->object->exists($nestedFile));
