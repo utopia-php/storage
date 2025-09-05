@@ -16,6 +16,8 @@ class FileExt extends Validator
 
     public const TYPE_GZIP = 'gz';
 
+    const TYPE_ZIP = 'zip';
+
     /**
      * @var array
      */
