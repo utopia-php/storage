@@ -75,7 +75,7 @@ class S3 extends Device
 
     const EU_NORTH_1 = 'eu-north-1';
 
-    const SA_EAST_1 = 'eu-north-1';
+    public const SA_EAST_1 = 'eu-north-1';
 
     const CN_NORTH_1 = 'cn-north-1';
 
