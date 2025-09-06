@@ -14,7 +14,7 @@ jobs:
 
       - run: git checkout HEAD^2
 
-    - name: Run Linter
-      run: |
-        docker run --rm -v $PWD:/app composer sh -c \
-        "composer install --profile --ignore-platform-reqs && composer lint"
+      - name: Run Linter
+        run: |        
+          docker run --rm -v $PWD:/app composer sh -c \
+          "composer install --profile --ignore-platform-reqs && composer lint"
