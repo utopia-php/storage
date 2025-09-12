@@ -174,6 +174,10 @@ class Local extends Device
 
                     if (copy($file->getPathname(), $destinationPath)) {
                         $uploadedCount++;
+                    } else {
+                        $error = error_get_last();
+                        $errorMessage = isset($error['message']) ? $error['message'] : 'Unknown error';
+                        error_log("Failed to upload file {$file->getPathname()}: ".$errorMessage);
                     }
                 } catch (Exception $e) {
                     error_log("Failed to upload file {$file->getPathname()}: ".$e->getMessage());

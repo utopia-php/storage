@@ -268,8 +268,10 @@ class S3 extends Device
                     $relativePath = str_replace(DIRECTORY_SEPARATOR, '/', $relativePath);
                     $destinationPath = $path.'/'.$relativePath;
 
-                    $this->upload($file->getPathname(), $destinationPath);
-                    $uploadedCount++;
+                    $chunksUploaded = $this->upload($file->getPathname(), $destinationPath);
+                    if ($chunksUploaded > 0) {
+                        $uploadedCount++;
+                    }
                 } catch (Exception $e) {
                     error_log("Failed to upload file {$file->getPathname()}: ".$e->getMessage());
                 }
