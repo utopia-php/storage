@@ -266,7 +266,7 @@ class S3 extends Device
                         : $file->getFilename();
 
                     $relativePath = str_replace(DIRECTORY_SEPARATOR, '/', $relativePath);
-                    $destinationPath = $path.'/'.$relativePath;
+                    $destinationPath = $this->getPath($path.'/'.$relativePath);
 
                     $chunksUploaded = $this->upload($file->getPathname(), $destinationPath);
                     if ($chunksUploaded > 0) {
