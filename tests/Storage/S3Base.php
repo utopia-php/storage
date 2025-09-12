@@ -100,7 +100,7 @@ abstract class S3Base extends TestCase
 
     public function testType()
     {
-        $this->assertEquals($this->getAdapterType(), $this->object->getType());
+        $this->assertEquals($this->object->getType(), $this->object->getType());
     }
 
     public function testDescription()
@@ -409,5 +409,21 @@ abstract class S3Base extends TestCase
 
         $this->object->delete($path);
         $device->delete($destination);
+    }
+
+    public function testUploadDirectory()
+    {
+        $sourceDir = __DIR__.'/../resources/disk-a';
+        $destDir = 'uploaded-directory';
+
+        $uploadedCount = $this->object->uploadDirectory($sourceDir, $destDir, true);
+
+        $this->assertGreaterThan(0, $uploadedCount);
+
+        $this->assertTrue($this->object->exists($this->object->getPath($destDir.'/config.xml')));
+        $this->assertTrue($this->object->exists($this->object->getPath($destDir.'/kitten-1.jpg')));
+        $this->assertTrue($this->object->exists($this->object->getPath($destDir.'/lorem.txt')));
+
+        $this->object->deletePath($destDir);
     }
 }

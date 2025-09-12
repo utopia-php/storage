@@ -121,6 +121,21 @@ abstract class Device
     abstract public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
 
     /**
+     * Upload Directory.
+     *
+     * Upload a directory and all its contents to the desired destination in the selected disk.
+     * Returns the number of files uploaded successfully.
+     *
+     * @param  string  $source  Source directory path
+     * @param  string  $path    Destination path
+     * @param  bool  $recursive  Whether to upload subdirectories recursively (default: true)
+     * @return int     Number of files uploaded successfully
+     *
+     * @throws Exception
+     */
+    abstract public function uploadDirectory(string $source, string $path, bool $recursive = true): int;
+
+    /**
      * Upload Data.
      *
      * Upload file contents to desired destination in the selected disk.

@@ -64,6 +64,11 @@ class Telemetry extends Device
         return $this->measure(__FUNCTION__, $source, $path, $chunk, $chunks, $metadata);
     }
 
+    public function uploadDirectory(string $source, string $path, bool $recursive = true): int
+    {
+        return $this->measure(__FUNCTION__, $source, $path, $recursive);
+    }
+
     public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
         return $this->measure(__FUNCTION__, $data, $path, $contentType, $chunk, $chunks, $metadata);

@@ -410,4 +410,20 @@ class LocalTest extends TestCase
         $this->assertTrue($this->object->deletePath('nested-delete-path-test'));
         $this->assertFalse($this->object->exists($dir));
     }
+
+    public function testUploadDirectory()
+    {
+        $sourceDir = __DIR__.'/../../resources/disk-b';
+        $destDir = $this->object->getPath('uploaded-directory');
+
+        $uploadedCount = $this->object->uploadDirectory($sourceDir, $destDir, true);
+
+        $this->assertGreaterThan(0, $uploadedCount);
+
+        $this->assertTrue($this->object->exists($destDir.DIRECTORY_SEPARATOR.'appwrite.svg'));
+        $this->assertTrue($this->object->exists($destDir.DIRECTORY_SEPARATOR.'kitten-1.png'));
+        $this->assertTrue($this->object->exists($destDir.DIRECTORY_SEPARATOR.'kitten-2.png'));
+
+        $this->object->deletePath('uploaded-directory');
+    }
 }

@@ -228,6 +228,58 @@ class S3 extends Device
     }
 
     /**
+     * Upload Directory.
+     *
+     * Upload a directory and all its contents to the desired destination in the selected disk.
+     * Returns the number of files uploaded successfully.
+     *
+     * @param  string  $source  Source directory path
+     * @param  string  $path    Destination path in S3
+     * @param  bool  $recursive  Whether to upload subdirectories recursively (default: true)
+     * @return int     Number of files uploaded successfully
+     *
+     * @throws \Exception
+     */
+    public function uploadDirectory(string $source, string $path, bool $recursive = true): int
+    {
+        if (! is_dir($source)) {
+            throw new Exception("Source path '{$source}' is not a directory");
+        }
+
+        $uploadedCount = 0;
+        $path = rtrim($path, '/');
+        $source = rtrim($source, DIRECTORY_SEPARATOR);
+
+        $iterator = $recursive
+            ? new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS))
+            : new \DirectoryIterator($source);
+
+        foreach ($iterator as $file) {
+            if ($file->isDot()) {
+                continue;
+            }
+
+            if ($file->isFile()) {
+                try {
+                    $relativePath = $recursive
+                        ? substr($file->getPathname(), strlen($source) + 1)
+                        : $file->getFilename();
+
+                    $relativePath = str_replace(DIRECTORY_SEPARATOR, '/', $relativePath);
+                    $destinationPath = $path.'/'.$relativePath;
+
+                    $this->upload($file->getPathname(), $destinationPath);
+                    $uploadedCount++;
+                } catch (Exception $e) {
+                    error_log("Failed to upload file {$file->getPathname()}: ".$e->getMessage());
+                }
+            }
+        }
+
+        return $uploadedCount;
+    }
+
+    /**
      * Upload Data.
      *
      * Upload file contents to desired destination in the selected disk.
