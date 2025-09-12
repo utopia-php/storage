@@ -156,8 +156,6 @@ class Local extends Device
             : new \DirectoryIterator($source);
 
         foreach ($iterator as $file) {
-            // Skip dot files/directories for DirectoryIterator (non-recursive case)
-            // RecursiveDirectoryIterator already has SKIP_DOTS flag set
             if (! $recursive && $file instanceof \DirectoryIterator && $file->isDot()) {
                 continue;
             }

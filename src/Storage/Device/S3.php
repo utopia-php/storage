@@ -255,7 +255,7 @@ class S3 extends Device
             : new \DirectoryIterator($source);
 
         foreach ($iterator as $file) {
-            if ($file->isDot()) {
+            if (! $recursive && $file instanceof \DirectoryIterator && $file->isDot()) {
                 continue;
             }
 
