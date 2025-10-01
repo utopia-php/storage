@@ -630,7 +630,7 @@ class S3 extends Device
         } catch (\Throwable $th) {
             try {
                 $prefix = $this->getRoot().'/'.ltrim($path, '/');
-                
+
                 if (! empty($path) && ! str_ends_with($prefix, '/')) {
                     $prefix .= '/';
                 }
