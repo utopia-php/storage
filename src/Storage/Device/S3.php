@@ -630,10 +630,12 @@ class S3 extends Device
         } catch (\Throwable $th) {
             try {
                 $prefix = $this->getRoot().'/'.ltrim($path, '/');
+                
                 if (! empty($path) && ! str_ends_with($prefix, '/')) {
                     $prefix .= '/';
                 }
 
+                $prefix = ltrim($prefix, '/');
                 $objects = $this->listObjects($prefix, 1);
                 $count = (int) ($objects['KeyCount'] ?? 0);
 
