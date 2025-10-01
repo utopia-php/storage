@@ -84,6 +84,36 @@ class LocalTest extends TestCase
         $this->object->delete($this->object->getPath('text-for-test-exists.txt'));
     }
 
+    public function testDirectoryExists()
+    {
+        $this->assertEquals(false, $this->object->exists($this->object->getPath('nonexistent-directory')));
+        $this->assertEquals(false, $this->object->exists($this->object->getPath('nonexistent-directory/')));
+
+        $testDir = $this->object->getPath('test-directory-exists');
+        $this->assertTrue($this->object->createDirectory($testDir));
+        $this->assertEquals(true, $this->object->exists($testDir));
+        $this->assertEquals(true, $this->object->exists($testDir.'/'));
+
+        $nestedDir = $testDir.'/nested/deep/structure';
+        $this->assertTrue($this->object->createDirectory($nestedDir));
+        $this->object->write($nestedDir.'/test.txt', 'Hello World');
+
+        $this->assertEquals(true, $this->object->exists($testDir.'/nested'));
+        $this->assertEquals(true, $this->object->exists($testDir.'/nested/'));
+        $this->assertEquals(true, $this->object->exists($testDir.'/nested/deep'));
+        $this->assertEquals(true, $this->object->exists($testDir.'/nested/deep/'));
+        $this->assertEquals(true, $this->object->exists($nestedDir));
+        $this->assertEquals(true, $this->object->exists($nestedDir.'/'));
+
+        $this->assertEquals(true, $this->object->exists($nestedDir.'/test.txt'));
+
+        $this->object->delete($testDir, true);
+
+        $this->assertEquals(false, $this->object->exists($testDir));
+        $this->assertEquals(false, $this->object->exists($testDir.'/nested'));
+        $this->assertEquals(false, $this->object->exists($nestedDir));
+    }
+
     public function testMove()
     {
         $this->assertEquals($this->object->write($this->object->getPath('text-for-move.txt'), 'Hello World'), true);
