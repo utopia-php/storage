@@ -209,6 +209,14 @@ abstract class Device
     abstract public function exists(string $path): bool;
 
     /**
+     * Check if directory exists
+     *
+     * @param  string  $path
+     * @return bool
+     */
+    abstract public function directoryExists(string $path): bool;
+
+    /**
      * Returns given file path its size.
      *
      * @see http://php.net/manual/en/function.filesize.php

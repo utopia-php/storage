@@ -391,6 +391,17 @@ class Local extends Device
     }
 
     /**
+     * Check if directory exists
+     *
+     * @param  string  $path
+     * @return bool
+     */
+    public function directoryExists(string $path): bool
+    {
+        return \is_dir($path);
+    }
+
+    /**
      * Returns given file path its size.
      *
      * @see http://php.net/manual/en/function.filesize.php

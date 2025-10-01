@@ -84,6 +84,25 @@ class LocalTest extends TestCase
         $this->object->delete($this->object->getPath('text-for-test-exists.txt'));
     }
 
+    public function testDirectoryExists()
+    {
+        // Test existing directory
+        $this->assertEquals(true, $this->object->directoryExists(__DIR__.'/../../resources/disk-a'));
+        $this->assertEquals(true, $this->object->directoryExists(__DIR__.'/../../resources/disk-b'));
+
+        // Test non-existing directory
+        $this->assertEquals(false, $this->object->directoryExists(__DIR__.'/../../resources/nonexistent'));
+
+        // Test creating and checking directory
+        $testDir = $this->object->getPath('test-directory');
+        $this->assertEquals(false, $this->object->directoryExists($testDir));
+        $this->assertEquals(true, $this->object->createDirectory($testDir));
+        $this->assertEquals(true, $this->object->directoryExists($testDir));
+
+        // Cleanup
+        rmdir($testDir);
+    }
+
     public function testMove()
     {
         $this->assertEquals($this->object->write($this->object->getPath('text-for-move.txt'), 'Hello World'), true);

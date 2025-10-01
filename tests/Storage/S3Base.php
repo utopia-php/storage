@@ -21,6 +21,11 @@ abstract class S3Base extends TestCase
     abstract protected function getAdapterDescription(): string;
 
     /**
+     * @return string
+     */
+    abstract protected function getAdapterType(): string;
+
+    /**
      * @var S3
      */
     protected $object = null;
@@ -137,6 +142,26 @@ abstract class S3Base extends TestCase
     {
         $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/kitten-1.jpg')));
         $this->assertEquals(false, $this->object->exists($this->object->getPath('testing/kitten-5.jpg')));
+    }
+
+    public function testDirectoryExists()
+    {
+        // Test existing directory with files
+        $this->assertEquals(true, $this->object->directoryExists($this->object->getPath('testing')));
+        $this->assertEquals(true, $this->object->directoryExists($this->object->getPath('testing/')));
+
+        // Test non-existing directory
+        $this->assertEquals(false, $this->object->directoryExists($this->object->getPath('nonexistent')));
+        $this->assertEquals(false, $this->object->directoryExists($this->object->getPath('nonexistent/')));
+
+        // Test nested directory structure
+        $this->object->write($this->object->getPath('nested/deep/file.txt'), 'test content', 'text/plain');
+        $this->assertEquals(true, $this->object->directoryExists($this->object->getPath('nested')));
+        $this->assertEquals(true, $this->object->directoryExists($this->object->getPath('nested/deep')));
+        $this->assertEquals(false, $this->object->directoryExists($this->object->getPath('nested/nonexistent')));
+
+        // Cleanup
+        $this->object->delete($this->object->getPath('nested/deep/file.txt'));
     }
 
     public function testMove()

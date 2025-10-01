@@ -633,6 +633,30 @@ class S3 extends Device
     }
 
     /**
+     * Check if directory exists
+     *
+     * In S3, directories are virtual. We check if any objects exist with the given prefix.
+     *
+     * @param  string  $path
+     * @return bool
+     */
+    public function directoryExists(string $path): bool
+    {
+        try {
+            // Ensure path ends with / for directory prefix search
+            $prefix = rtrim($path, '/').'/';
+            $prefix = ltrim($prefix, '/'); // S3 specific requirement that prefix should never contain a leading slash
+
+            $objects = $this->listObjects($prefix, 1); // Only need to check if at least one object exists
+
+            // Check if any objects exist with this prefix
+            return isset($objects['KeyCount']) && (int) $objects['KeyCount'] > 0;
+        } catch (\Throwable $th) {
+            return false;
+        }
+    }
+
+    /**
      * Returns given file path its size.
      *
      * @see http://php.net/manual/en/function.filesize.php
