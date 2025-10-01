@@ -629,13 +629,17 @@ class S3 extends Device
             return true;
         } catch (\Throwable $th) {
             try {
-                $prefix = $this->getRoot().'/'.ltrim($path, '/');
+                $root = $this->getRoot();
+                if (str_starts_with($path, $root.'/') || str_starts_with($path, $root.'\\')) {
+                    $prefix = $path;
+                } else {
+                    $prefix = $root.'/'.ltrim($path, '/');
+                }
 
                 if (! empty($path) && ! str_ends_with($prefix, '/')) {
                     $prefix .= '/';
                 }
 
-                $prefix = ltrim($prefix, '/');
                 $objects = $this->listObjects($prefix, 1);
                 $count = (int) ($objects['KeyCount'] ?? 0);
 
