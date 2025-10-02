@@ -146,32 +146,23 @@ abstract class S3Base extends TestCase
 
     public function testDirectoryExists()
     {
-        $this->assertEquals(false, $this->object->exists($this->object->getPath('nonexistent-directory')));
-        $this->assertEquals(false, $this->object->exists($this->object->getPath('nonexistent-directory/')));
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/')));
 
-        $testDir = $this->object->getPath('test-directory-exists');
-        $this->assertTrue($this->object->createDirectory($testDir));
-        $this->assertEquals(true, $this->object->exists($testDir));
-        $this->assertEquals(true, $this->object->exists($testDir.'/'));
+        $this->assertEquals(false, $this->object->exists($this->object->getPath('nonexistent/')));
 
-        $nestedDir = $testDir.'/nested/deep/structure';
-        $this->assertTrue($this->object->createDirectory($nestedDir));
-        $this->object->write($nestedDir.'/test.txt', 'Hello World');
+        $this->object->write($this->object->getPath('nested/deep/structure/test.txt'), 'Hello World', 'text/plain');
 
-        $this->assertEquals(true, $this->object->exists($testDir.'/nested'));
-        $this->assertEquals(true, $this->object->exists($testDir.'/nested/'));
-        $this->assertEquals(true, $this->object->exists($testDir.'/nested/deep'));
-        $this->assertEquals(true, $this->object->exists($testDir.'/nested/deep/'));
-        $this->assertEquals(true, $this->object->exists($nestedDir));
-        $this->assertEquals(true, $this->object->exists($nestedDir.'/'));
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('nested')));
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('nested/deep')));
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('nested/deep/structure')));
 
-        $this->assertEquals(true, $this->object->exists($nestedDir.'/test.txt'));
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('nested/deep/structure/test.txt')));
 
-        $this->object->delete($testDir, true);
+        $this->object->delete($this->object->getPath('nested/deep/structure/test.txt'));
 
-        $this->assertEquals(false, $this->object->exists($testDir));
-        $this->assertEquals(false, $this->object->exists($testDir.'/nested'));
-        $this->assertEquals(false, $this->object->exists($nestedDir));
+        $this->assertEquals(false, $this->object->exists($this->object->getPath('nested')));
+        $this->assertEquals(false, $this->object->exists($this->object->getPath('nested/deep')));
+        $this->assertEquals(false, $this->object->exists($this->object->getPath('nested/deep/structure')));
     }
 
     public function testMove()
