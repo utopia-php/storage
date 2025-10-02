@@ -616,7 +616,7 @@ class S3 extends Device
     }
 
     /**
-     * Check if file exists
+     * Check if file or directory exists
      *
      * @param  string  $path
      * @return bool
@@ -625,11 +625,29 @@ class S3 extends Device
     {
         try {
             $this->getInfo($path);
-        } catch (\Throwable $th) {
-            return false;
-        }
 
-        return true;
+            return true;
+        } catch (\Throwable $th) {
+            try {
+                $root = $this->getRoot();
+                if (str_starts_with($path, $root.'/') || str_starts_with($path, $root.'\\')) {
+                    $prefix = $path;
+                } else {
+                    $prefix = $root.'/'.ltrim($path, '/');
+                }
+
+                if (! empty($path) && ! str_ends_with($prefix, '/')) {
+                    $prefix .= '/';
+                }
+
+                $objects = $this->listObjects($prefix, 1);
+                $count = (int) ($objects['KeyCount'] ?? 0);
+
+                return $count > 0;
+            } catch (\Throwable $th2) {
+                return false;
+            }
+        }
     }
 
     /**
