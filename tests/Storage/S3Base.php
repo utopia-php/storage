@@ -21,6 +21,11 @@ abstract class S3Base extends TestCase
     abstract protected function getAdapterDescription(): string;
 
     /**
+     * @return string
+     */
+    abstract protected function getAdapterType(): string;
+
+    /**
      * @var S3
      */
     protected $object = null;
@@ -137,6 +142,27 @@ abstract class S3Base extends TestCase
     {
         $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/kitten-1.jpg')));
         $this->assertEquals(false, $this->object->exists($this->object->getPath('testing/kitten-5.jpg')));
+    }
+
+    public function testDirectoryExists()
+    {
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/')));
+
+        $this->assertEquals(false, $this->object->exists($this->object->getPath('nonexistent/')));
+
+        $this->object->write($this->object->getPath('nested/deep/structure/test.txt'), 'Hello World', 'text/plain');
+
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('nested')));
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('nested/deep')));
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('nested/deep/structure')));
+
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('nested/deep/structure/test.txt')));
+
+        $this->object->delete($this->object->getPath('nested/deep/structure/test.txt'));
+
+        $this->assertEquals(false, $this->object->exists($this->object->getPath('nested')));
+        $this->assertEquals(false, $this->object->exists($this->object->getPath('nested/deep')));
+        $this->assertEquals(false, $this->object->exists($this->object->getPath('nested/deep/structure')));
     }
 
     public function testMove()
