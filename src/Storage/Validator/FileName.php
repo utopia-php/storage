@@ -15,7 +15,7 @@ class FileName extends Validator
     }
 
     /**
-     * The file name can only contain "a-z", "A-Z", "0-9" and "-" and not empty.
+     * The file name can only contain "a-z", "A-Z", "0-9", ".", "-", and "_", and not empty.
      *
      * @param  mixed  $name
      * @return bool
@@ -30,7 +30,7 @@ class FileName extends Validator
             return false;
         }
 
-        if (! \preg_match('/^[a-zA-Z0-9.]+$/', $name)) {
+        if (! \ctype_alnum(\str_replace(['.', '-', '_'], '', $name))) {
             return false;
         }
 
