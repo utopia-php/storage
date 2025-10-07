@@ -29,5 +29,8 @@ class FileNameTest extends TestCase
         $this->assertEquals($this->object->isValid('../test'), false);
         $this->assertEquals($this->object->isValid('test.png'), true);
         $this->assertEquals($this->object->isValid('test'), true);
+        $this->assertEquals($this->object->isValid('test-test'), true);
+        $this->assertEquals($this->object->isValid('test_test'), true);
+        $this->assertEquals($this->object->isValid('test.test-test_test'), true);
     }
 }
