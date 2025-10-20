@@ -2,7 +2,7 @@
 
 namespace Utopia\Storage\Validator;
 
-use Utopia\Http\Validator;
+use Utopia\Validator;
 
 class FileSize extends Validator
 {
