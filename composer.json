@@ -24,7 +24,7 @@
         "ext-lz4": "*",
         "ext-snappy": "*",
         "php": ">=8.0",
-        "utopia-php/framework": "1.0.*",
+        "utopia-php/validators": "0.0.*",
         "utopia-php/system": "0.9.*"
     },
     "require-dev": {
