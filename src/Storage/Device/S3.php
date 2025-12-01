@@ -636,8 +636,8 @@ class S3 extends Device
                     $prefix = $root.'/'.ltrim($path, '/');
                 }
 
-                if (! empty($path) && ! str_ends_with($prefix, '/')) {
-                    $prefix .= '/';
+                if (! empty($path) && str_ends_with($path, '/')) {
+                    $prefix = rtrim($prefix, '/').'/';
                 }
 
                 $objects = $this->listObjects($prefix, 1);

@@ -165,6 +165,25 @@ abstract class S3Base extends TestCase
         $this->assertEquals(false, $this->object->exists($this->object->getPath('nested/deep/structure')));
     }
 
+    /**
+     * Test that file paths without trailing slash don't incorrectly match directories
+     * Verifies fix: exists('file.html') should not return true when directory 'file.html/' exists
+     */
+    public function testFileExistsDoesNotMatchDirectoryPrefix()
+    {
+        $this->object->write($this->object->getPath('builds/index.html'), 'content', 'text/html');
+        $this->object->write($this->object->getPath('builds/other.css'), 'body {}', 'text/css');
+
+        $this->assertEquals(true, $this->object->exists($this->object->getPath('builds/index.html')));
+
+        $this->object->delete($this->object->getPath('builds/index.html'));
+
+        // File should not exist even though directory 'builds/' still contains other.css
+        $this->assertEquals(false, $this->object->exists($this->object->getPath('builds/index.html')));
+
+        $this->object->delete($this->object->getPath('builds/other.css'));
+    }
+
     public function testMove()
     {
         $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-move.txt'), 'Hello World', 'text/plain'));
