@@ -21,3 +21,5 @@ services:
       - BACKBLAZE_SECRET
       - WASABI_ACCESS_KEY
       - WASABI_SECRET
+      - CEPH_ACCESS_KEY
+      - CEPH_SECRET
