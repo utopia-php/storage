@@ -21,6 +21,8 @@ class Storage
 
     const DEVICE_LINODE = 'linode';
 
+    const DEVICE_DREAMOBJECTS = 'dreamobjects';
+
     /**
      * Devices.
      *
