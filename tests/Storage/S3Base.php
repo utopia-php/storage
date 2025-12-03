@@ -21,11 +21,6 @@ abstract class S3Base extends TestCase
     abstract protected function getAdapterDescription(): string;
 
     /**
-     * @return string
-     */
-    abstract protected function getAdapterType(): string;
-
-    /**
      * @var S3
      */
     protected $object = null;
