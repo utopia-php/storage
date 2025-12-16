@@ -5,6 +5,7 @@ namespace Utopia\Tests\Storage;
 use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Device\Local;
 use Utopia\Storage\Device\S3;
+use Utopia\Storage\Exception\NotFoundException;
 
 abstract class S3Base extends TestCase
 {
@@ -131,6 +132,12 @@ abstract class S3Base extends TestCase
         $this->assertEquals('Hello World', $this->object->read($this->object->getPath('text-for-read.txt')));
 
         $this->object->delete($this->object->getPath('text-for-read.txt'));
+    }
+
+    public function testReadNonExistentFile()
+    {
+        $this->expectException(NotFoundException::class);
+        $this->object->read($this->object->getPath('non-existent-file.txt'));
     }
 
     public function testFileExists()
@@ -409,5 +416,16 @@ abstract class S3Base extends TestCase
 
         $this->object->delete($path);
         $device->delete($destination);
+    }
+
+    public function testTransferNonExistentFile()
+    {
+        $device = new Local(__DIR__.'/../resources/disk-a');
+
+        $path = $this->object->getPath('non-existent-file.txt');
+        $destination = $device->getPath('hello.txt');
+
+        $this->expectException(NotFoundException::class);
+        $this->object->transfer($path, $destination, $device);
     }
 }
