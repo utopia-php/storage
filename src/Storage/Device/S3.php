@@ -931,8 +931,9 @@ class S3 extends Device
     /**
      * Parse S3 XML error response and throw appropriate exception
      *
-     * @param string $errorBody The error response body
-     * @param int $statusCode The HTTP status code
+     * @param  string  $errorBody The error response body
+     * @param  int  $statusCode The HTTP status code
+     *
      * @throws NotFoundException When the error is NoSuchKey
      * @throws Exception For other S3 errors
      */
