@@ -101,7 +101,7 @@ abstract class Device
      * @param  string  $prefix
      * @return string
      */
-    abstract public function getPath(string $filename, string $prefix = null): string;
+    abstract public function getPath(string $filename, ?string $prefix = null): string;
 
     /**
      * Upload.
@@ -155,7 +155,7 @@ abstract class Device
      * @param  int  $length
      * @return string
      */
-    abstract public function read(string $path, int $offset = 0, int $length = null): string;
+    abstract public function read(string $path, int $offset = 0, ?int $length = null): string;
 
     /**
      * Transfer
