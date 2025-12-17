@@ -5,6 +5,7 @@ namespace Utopia\Tests\Storage\Device;
 use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Device\AWS;
 use Utopia\Storage\Device\Local;
+use Utopia\Storage\Exception\NotFoundException;
 
 class LocalTest extends TestCase
 {
@@ -73,6 +74,12 @@ class LocalTest extends TestCase
         $this->assertEquals($this->object->read($this->object->getPath('text-for-read.txt')), 'Hello World');
 
         $this->object->delete($this->object->getPath('text-for-read.txt'));
+    }
+
+    public function testReadNonExistentFile()
+    {
+        $this->expectException(NotFoundException::class);
+        $this->object->read($this->object->getPath('non-existent-file.txt'));
     }
 
     public function testFileExists()

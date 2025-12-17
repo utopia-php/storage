@@ -4,6 +4,7 @@ namespace Utopia\Storage\Device;
 
 use Exception;
 use Utopia\Storage\Device;
+use Utopia\Storage\Exception\NotFoundException;
 use Utopia\Storage\Storage;
 
 class S3 extends Device
@@ -284,7 +285,7 @@ class S3 extends Device
         try {
             $response = $this->getInfo($path);
         } catch (\Throwable $e) {
-            throw new Exception('File not found');
+            throw new NotFoundException('File not found');
         }
         $size = (int) ($response['content-length'] ?? 0);
         $contentType = $response['content-type'] ?? '';
@@ -903,7 +904,7 @@ class S3 extends Device
             }
 
             if ($response->code >= 400) {
-                throw new Exception($response->body, $response->code);
+                $this->parseAndThrowS3Error($response->body, $response->code);
             }
 
             // Parse body into XML
@@ -925,6 +926,36 @@ class S3 extends Device
                 ]
             );
         }
+    }
+
+    /**
+     * Parse S3 XML error response and throw appropriate exception
+     *
+     * @param  string  $errorBody The error response body
+     * @param  int  $statusCode The HTTP status code
+     *
+     * @throws NotFoundException When the error is NoSuchKey
+     * @throws Exception For other S3 errors
+     */
+    private function parseAndThrowS3Error(string $errorBody, int $statusCode): void
+    {
+        if (str_starts_with($errorBody, '<?xml')) {
+            try {
+                $xml = \simplexml_load_string($errorBody);
+                $errorCode = (string) ($xml->Code ?? '');
+                $errorMessage = (string) ($xml->Message ?? '');
+
+                if ($errorCode === 'NoSuchKey') {
+                    throw new NotFoundException($errorMessage ?: 'File not found', $statusCode);
+                }
+            } catch (NotFoundException $e) {
+                throw $e;
+            } catch (\Throwable $e) {
+                // If XML parsing fails, fall through to original error
+            }
+        }
+
+        throw new Exception($errorBody, $statusCode);
     }
 
     /**

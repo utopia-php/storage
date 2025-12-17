@@ -4,6 +4,7 @@ namespace Utopia\Storage\Device;
 
 use Exception;
 use Utopia\Storage\Device;
+use Utopia\Storage\Exception\NotFoundException;
 use Utopia\Storage\Storage;
 
 class Local extends Device
@@ -272,7 +273,7 @@ class Local extends Device
     public function read(string $path, int $offset = 0, int $length = null): string
     {
         if (! $this->exists($path)) {
-            throw new Exception('File Not Found');
+            throw new NotFoundException('File not found');
         }
 
         return \file_get_contents($path, use_include_path: false, context: null, offset: $offset, length: $length);
