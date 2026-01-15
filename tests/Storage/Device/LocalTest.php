@@ -114,6 +114,18 @@ class LocalTest extends TestCase
         $this->assertEquals(is_readable($this->object->getPath('text-for-delete.txt')), false);
     }
 
+    public function testRecursiveDeleteRemovesHiddenFiles()
+    {
+        $directory = $this->object->getPath('delete-hidden');
+
+        $this->assertTrue($this->object->createDirectory($directory));
+        $this->assertTrue($this->object->write($directory.DIRECTORY_SEPARATOR.'.hidden', 'secret'));
+        $this->assertTrue($this->object->write($directory.DIRECTORY_SEPARATOR.'visible', 'visible'));
+
+        $this->assertTrue($this->object->delete($directory, true));
+        $this->assertFalse($this->object->exists($directory));
+    }
+
     public function testFileSize()
     {
         $this->assertEquals($this->object->getFileSize(__DIR__.'/../../resources/disk-a/kitten-1.jpg'), 599639);

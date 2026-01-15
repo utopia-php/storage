@@ -340,14 +340,26 @@ class Local extends Device
     public function delete(string $path, bool $recursive = false): bool
     {
         if (\is_dir($path) && $recursive) {
-            $files = $this->getFiles($path);
+            $entries = \scandir($path);
 
-            foreach ($files as $file) {
-                $this->delete($file, true);
+            if ($entries === false) {
+                return false;
             }
 
-            \rmdir($path);
-        } elseif (\is_file($path) || \is_link($path)) {
+            foreach ($entries as $entry) {
+                if ($entry === '.' || $entry === '..') {
+                    continue;
+                }
+
+                if (! $this->delete($path.DIRECTORY_SEPARATOR.$entry, true)) {
+                    return false;
+                }
+            }
+
+            return \rmdir($path);
+        }
+
+        if (\is_file($path) || \is_link($path)) {
             return \unlink($path);
         }
 
