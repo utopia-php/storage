@@ -8,97 +8,97 @@ use Utopia\Storage\Storage;
 
 class S3 extends Device
 {
-    const METHOD_GET = 'GET';
+    public const METHOD_GET = 'GET';
 
-    const METHOD_POST = 'POST';
+    public const METHOD_POST = 'POST';
 
-    const METHOD_PUT = 'PUT';
+    public const METHOD_PUT = 'PUT';
 
-    const METHOD_PATCH = 'PATCH';
+    public const METHOD_PATCH = 'PATCH';
 
-    const METHOD_DELETE = 'DELETE';
+    public const METHOD_DELETE = 'DELETE';
 
-    const METHOD_HEAD = 'HEAD';
+    public const METHOD_HEAD = 'HEAD';
 
-    const METHOD_OPTIONS = 'OPTIONS';
+    public const METHOD_OPTIONS = 'OPTIONS';
 
-    const METHOD_CONNECT = 'CONNECT';
+    public const METHOD_CONNECT = 'CONNECT';
 
-    const METHOD_TRACE = 'TRACE';
+    public const METHOD_TRACE = 'TRACE';
 
-    const HTTP_VERSION_1_1 = CURL_HTTP_VERSION_1_1;
+    public const HTTP_VERSION_1_1 = CURL_HTTP_VERSION_1_1;
 
-    const HTTP_VERSION_2_0 = CURL_HTTP_VERSION_2_0;
+    public const HTTP_VERSION_2_0 = CURL_HTTP_VERSION_2_0;
 
-    const HTTP_VERSION_2 = CURL_HTTP_VERSION_2;
+    public const HTTP_VERSION_2 = CURL_HTTP_VERSION_2;
 
-    const HTTP_VERSION_1_0 = CURL_HTTP_VERSION_1_0;
+    public const HTTP_VERSION_1_0 = CURL_HTTP_VERSION_1_0;
 
     /**
      * AWS Regions constants
      */
-    const US_EAST_1 = 'us-east-1';
+    public const US_EAST_1 = 'us-east-1';
 
-    const US_EAST_2 = 'us-east-2';
+    public const US_EAST_2 = 'us-east-2';
 
-    const US_WEST_1 = 'us-west-1';
+    public const US_WEST_1 = 'us-west-1';
 
-    const US_WEST_2 = 'us-west-2';
+    public const US_WEST_2 = 'us-west-2';
 
-    const AF_SOUTH_1 = 'af-south-1';
+    public const AF_SOUTH_1 = 'af-south-1';
 
-    const AP_EAST_1 = 'ap-east-1';
+    public const AP_EAST_1 = 'ap-east-1';
 
-    const AP_SOUTH_1 = 'ap-south-1';
+    public const AP_SOUTH_1 = 'ap-south-1';
 
-    const AP_NORTHEAST_3 = 'ap-northeast-3';
+    public const AP_NORTHEAST_3 = 'ap-northeast-3';
 
-    const AP_NORTHEAST_2 = 'ap-northeast-2';
+    public const AP_NORTHEAST_2 = 'ap-northeast-2';
 
-    const AP_NORTHEAST_1 = 'ap-northeast-1';
+    public const AP_NORTHEAST_1 = 'ap-northeast-1';
 
-    const AP_SOUTHEAST_1 = 'ap-southeast-1';
+    public const AP_SOUTHEAST_1 = 'ap-southeast-1';
 
-    const AP_SOUTHEAST_2 = 'ap-southeast-2';
+    public const AP_SOUTHEAST_2 = 'ap-southeast-2';
 
-    const CA_CENTRAL_1 = 'ca-central-1';
+    public const CA_CENTRAL_1 = 'ca-central-1';
 
-    const EU_CENTRAL_1 = 'eu-central-1';
+    public const EU_CENTRAL_1 = 'eu-central-1';
 
-    const EU_WEST_1 = 'eu-west-1';
+    public const EU_WEST_1 = 'eu-west-1';
 
-    const EU_SOUTH_1 = 'eu-south-1';
+    public const EU_SOUTH_1 = 'eu-south-1';
 
-    const EU_WEST_2 = 'eu-west-2';
+    public const EU_WEST_2 = 'eu-west-2';
 
-    const EU_WEST_3 = 'eu-west-3';
+    public const EU_WEST_3 = 'eu-west-3';
 
-    const EU_NORTH_1 = 'eu-north-1';
+    public const EU_NORTH_1 = 'eu-north-1';
 
-    const SA_EAST_1 = 'eu-north-1';
+    public const SA_EAST_1 = 'eu-north-1';
 
-    const CN_NORTH_1 = 'cn-north-1';
+    public const CN_NORTH_1 = 'cn-north-1';
 
-    const CN_NORTH_4 = 'cn-north-4';
+    public const CN_NORTH_4 = 'cn-north-4';
 
-    const CN_NORTHWEST_1 = 'cn-northwest-1';
+    public const CN_NORTHWEST_1 = 'cn-northwest-1';
 
-    const ME_SOUTH_1 = 'me-south-1';
+    public const ME_SOUTH_1 = 'me-south-1';
 
-    const US_GOV_EAST_1 = 'us-gov-east-1';
+    public const US_GOV_EAST_1 = 'us-gov-east-1';
 
-    const US_GOV_WEST_1 = 'us-gov-west-1';
+    public const US_GOV_WEST_1 = 'us-gov-west-1';
 
     /**
      * AWS ACL Flag constants
      */
-    const ACL_PRIVATE = 'private';
+    public const ACL_PRIVATE = 'private';
 
-    const ACL_PUBLIC_READ = 'public-read';
+    public const ACL_PUBLIC_READ = 'public-read';
 
-    const ACL_PUBLIC_READ_WRITE = 'public-read-write';
+    public const ACL_PUBLIC_READ_WRITE = 'public-read-write';
 
-    const ACL_AUTHENTICATED_READ = 'authenticated-read';
+    public const ACL_AUTHENTICATED_READ = 'authenticated-read';
 
     protected const MAX_PAGE_SIZE = 1000;
 
@@ -870,7 +870,7 @@ class S3 extends Device
     {
         $uri = $this->getAbsolutePath($uri);
         $url = 'https://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
-        $response = new \stdClass;
+        $response = new \stdClass();
         $response->body = '';
         $response->headers = [];
 

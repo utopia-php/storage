@@ -6,15 +6,15 @@ use Utopia\Validator;
 
 class FileExt extends Validator
 {
-    const TYPE_JPEG = 'jpeg';
+    public const TYPE_JPEG = 'jpeg';
 
-    const TYPE_JPG = 'jpg';
+    public const TYPE_JPG = 'jpg';
 
-    const TYPE_GIF = 'gif';
+    public const TYPE_GIF = 'gif';
 
-    const TYPE_PNG = 'png';
+    public const TYPE_PNG = 'png';
 
-    const TYPE_GZIP = 'gz';
+    public const TYPE_GZIP = 'gz';
 
     const TYPE_ZIP = 'zip';
 
