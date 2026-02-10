@@ -4,6 +4,7 @@ namespace Utopia\Storage\Device;
 
 use Exception;
 use Utopia\Storage\Device;
+use Utopia\Storage\Exception\NotFoundException;
 use Utopia\Storage\Storage;
 
 class S3 extends Device
@@ -35,61 +36,6 @@ class S3 extends Device
     const HTTP_VERSION_1_0 = CURL_HTTP_VERSION_1_0;
 
     /**
-     * AWS Regions constants
-     */
-    const US_EAST_1 = 'us-east-1';
-
-    const US_EAST_2 = 'us-east-2';
-
-    const US_WEST_1 = 'us-west-1';
-
-    const US_WEST_2 = 'us-west-2';
-
-    const AF_SOUTH_1 = 'af-south-1';
-
-    const AP_EAST_1 = 'ap-east-1';
-
-    const AP_SOUTH_1 = 'ap-south-1';
-
-    const AP_NORTHEAST_3 = 'ap-northeast-3';
-
-    const AP_NORTHEAST_2 = 'ap-northeast-2';
-
-    const AP_NORTHEAST_1 = 'ap-northeast-1';
-
-    const AP_SOUTHEAST_1 = 'ap-southeast-1';
-
-    const AP_SOUTHEAST_2 = 'ap-southeast-2';
-
-    const CA_CENTRAL_1 = 'ca-central-1';
-
-    const EU_CENTRAL_1 = 'eu-central-1';
-
-    const EU_WEST_1 = 'eu-west-1';
-
-    const EU_SOUTH_1 = 'eu-south-1';
-
-    const EU_WEST_2 = 'eu-west-2';
-
-    const EU_WEST_3 = 'eu-west-3';
-
-    const EU_NORTH_1 = 'eu-north-1';
-
-    const SA_EAST_1 = 'eu-north-1';
-
-    const CN_NORTH_1 = 'cn-north-1';
-
-    const CN_NORTH_4 = 'cn-north-4';
-
-    const CN_NORTHWEST_1 = 'cn-northwest-1';
-
-    const ME_SOUTH_1 = 'me-south-1';
-
-    const US_GOV_EAST_1 = 'us-gov-east-1';
-
-    const US_GOV_WEST_1 = 'us-gov-west-1';
-
-    /**
      * AWS ACL Flag constants
      */
     const ACL_PRIVATE = 'private';
@@ -119,11 +65,6 @@ class S3 extends Device
     /**
      * @var string
      */
-    protected string $bucket;
-
-    /**
-     * @var string
-     */
     protected string $region;
 
     /**
@@ -146,6 +87,8 @@ class S3 extends Device
         'content-type' => '',
     ];
 
+    protected string $fqdn;
+
     /**
      * @var array
      */
@@ -164,30 +107,27 @@ class S3 extends Device
      * @param  string  $root
      * @param  string  $accessKey
      * @param  string  $secretKey
-     * @param  string  $bucket
      * @param  string  $region
      * @param  string  $acl
      */
-    public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_EAST_1, string $acl = self::ACL_PRIVATE, $endpointUrl = '')
+    public function __construct(string $root, string $accessKey, string $secretKey, string $host, string $region, string $acl = self::ACL_PRIVATE)
     {
+        parent::__construct();
+
         $this->accessKey = $accessKey;
         $this->secretKey = $secretKey;
-        $this->bucket = $bucket;
         $this->region = $region;
         $this->root = $root;
         $this->acl = $acl;
         $this->amzHeaders = [];
 
-        if (! empty($endpointUrl)) {
-            $host = $bucket.'.'.$endpointUrl;
+        if (str_starts_with($host, 'http://') || str_starts_with($host, 'https://')) {
+            $this->fqdn = $host;
+            $this->headers['host'] = str_replace(['http://', 'https://'], '', $host);
         } else {
-            $host = match ($region) {
-                self::CN_NORTH_1, self::CN_NORTH_4, self::CN_NORTHWEST_1 => $bucket.'.s3.'.$region.'.amazonaws.cn',
-                default => $bucket.'.s3.'.$region.'.amazonaws.com'
-            };
+            $this->fqdn = 'https://'.$host;
+            $this->headers['host'] = $host;
         }
-
-        $this->headers['host'] = $host;
     }
 
     /**
@@ -211,7 +151,7 @@ class S3 extends Device
      */
     public function getDescription(): string
     {
-        return 'S3 Bucket Storage drive for AWS or on premise solution';
+        return 'S3 Storage drive for generic S3-compatible provider';
     }
 
     /**
@@ -227,7 +167,7 @@ class S3 extends Device
      * @param  string|null  $prefix
      * @return string
      */
-    public function getPath(string $filename, string $prefix = null): string
+    public function getPath(string $filename, ?string $prefix = null): string
     {
         return $this->getRoot().DIRECTORY_SEPARATOR.$filename;
     }
@@ -345,7 +285,7 @@ class S3 extends Device
         try {
             $response = $this->getInfo($path);
         } catch (\Throwable $e) {
-            throw new Exception('File not found');
+            throw new NotFoundException('File not found');
         }
         $size = (int) ($response['content-length'] ?? 0);
         $contentType = $response['content-type'] ?? '';
@@ -386,7 +326,7 @@ class S3 extends Device
         unset($this->amzHeaders['x-amz-content-sha256']);
         $this->headers['content-type'] = $contentType;
         $this->amzHeaders['x-amz-acl'] = $this->acl;
-        $response = $this->call(self::METHOD_POST, $uri, '', ['uploads' => '']);
+        $response = $this->call('s3:createMultipartUpload', self::METHOD_POST, $uri, '', ['uploads' => '']);
 
         return $response->body['UploadId'];
     }
@@ -411,7 +351,7 @@ class S3 extends Device
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
         unset($this->amzHeaders['x-amz-acl']); // ACL header is not allowed in parts, only createMultipartUpload accepts this header.
 
-        $response = $this->call(self::METHOD_PUT, $uri, $data, [
+        $response = $this->call('s3:uploadPart', self::METHOD_PUT, $uri, $data, [
             'partNumber' => $chunk,
             'uploadId' => $uploadId,
         ]);
@@ -441,7 +381,7 @@ class S3 extends Device
 
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
         $this->headers['content-md5'] = \base64_encode(md5($body, true));
-        $this->call(self::METHOD_POST, $uri, $body, ['uploadId' => $uploadId]);
+        $this->call('s3:completeMultipartUpload', self::METHOD_POST, $uri, $body, ['uploadId' => $uploadId]);
 
         return true;
     }
@@ -460,7 +400,7 @@ class S3 extends Device
         $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
         unset($this->headers['content-type']);
         $this->headers['content-md5'] = \base64_encode(md5('', true));
-        $this->call(self::METHOD_DELETE, $uri, '', ['uploadId' => $extra]);
+        $this->call('s3:abort', self::METHOD_DELETE, $uri, '', ['uploadId' => $extra]);
 
         return true;
     }
@@ -470,12 +410,12 @@ class S3 extends Device
      *
      * @param  string  $path
      * @param int offset
-     * @param int length
+     * @param int|null length
      * @return string
      *
      * @throws \Exception
      */
-    public function read(string $path, int $offset = 0, int $length = null): string
+    public function read(string $path, int $offset = 0, ?int $length = null): string
     {
         unset($this->amzHeaders['x-amz-acl']);
         unset($this->amzHeaders['x-amz-content-sha256']);
@@ -486,7 +426,7 @@ class S3 extends Device
             $end = $offset + $length - 1;
             $this->headers['range'] = "bytes=$offset-$end";
         }
-        $response = $this->call(self::METHOD_GET, $uri, decode: false);
+        $response = $this->call('s3:read', self::METHOD_GET, $uri, decode: false);
 
         return $response->body;
     }
@@ -509,7 +449,7 @@ class S3 extends Device
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
         $this->amzHeaders['x-amz-acl'] = $this->acl;
 
-        $this->call(self::METHOD_PUT, $uri, $data);
+        $this->call('s3:write', self::METHOD_PUT, $uri, $data);
 
         return true;
     }
@@ -532,7 +472,7 @@ class S3 extends Device
         unset($this->amzHeaders['x-amz-acl']);
         unset($this->amzHeaders['x-amz-content-sha256']);
         $this->headers['content-md5'] = \base64_encode(md5('', true));
-        $this->call(self::METHOD_DELETE, $uri);
+        $this->call('s3:delete', self::METHOD_DELETE, $uri);
 
         return true;
     }
@@ -571,7 +511,7 @@ class S3 extends Device
             $parameters['continuation-token'] = $continuationToken;
         }
 
-        $response = $this->call(self::METHOD_GET, $uri, '', $parameters);
+        $response = $this->call('s3:list', self::METHOD_GET, $uri, '', $parameters);
 
         return $response->body;
     }
@@ -609,7 +549,7 @@ class S3 extends Device
             $body .= '</Delete>';
             $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
             $this->headers['content-md5'] = \base64_encode(md5($body, true));
-            $this->call(self::METHOD_POST, $uri, $body, ['delete' => '']);
+            $this->call('s3:deletePath', self::METHOD_POST, $uri, $body, ['delete' => '']);
         } while (! empty($continuationToken));
 
         return true;
@@ -771,7 +711,7 @@ class S3 extends Device
         unset($this->amzHeaders['x-amz-content-sha256']);
         $this->headers['content-md5'] = \base64_encode(md5('', true));
         $uri = $path !== '' ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
-        $response = $this->call(self::METHOD_HEAD, $uri);
+        $response = $this->call('s3:info', self::METHOD_HEAD, $uri);
 
         return $response->headers;
     }
@@ -857,6 +797,7 @@ class S3 extends Device
     /**
      * Get the S3 response
      *
+     * @param  string  $operation
      * @param  string  $method
      * @param  string  $uri
      * @param  string  $data
@@ -866,10 +807,12 @@ class S3 extends Device
      *
      * @throws \Exception
      */
-    protected function call(string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
+    protected function call(string $operation, string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
     {
+        $startTime = microtime(true);
+
         $uri = $this->getAbsolutePath($uri);
-        $url = 'https://'.$this->headers['host'].$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
+        $url = $this->fqdn.$uri.'?'.\http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
         $response = new \stdClass;
         $response->body = '';
         $response->headers = [];
@@ -948,30 +891,71 @@ class S3 extends Device
         $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
         $attempt = 0;
-        while ($attempt < self::$retryAttempts && $response->code === 503) {
+        while ($attempt < self::$retryAttempts && $response->code >= 500) {
             usleep(self::$retryDelay * 1000);
             $attempt++;
             $result = \curl_exec($curl);
             $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
         }
 
-        if (! $result) {
-            throw new Exception(\curl_error($curl));
+        try {
+            if (! $result) {
+                throw new Exception(\curl_error($curl));
+            }
+
+            if ($response->code >= 400) {
+                $this->parseAndThrowS3Error($response->body, $response->code);
+            }
+
+            // Parse body into XML
+            if ($decode && ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml'))) {
+                $response->body = \simplexml_load_string($response->body);
+                $response->body = json_decode(json_encode($response->body), true);
+            }
+
+            return $response;
+        } finally {
+            \curl_close($curl);
+
+            $this->storageOperationTelemetry->record(
+                microtime(true) - $startTime,
+                [
+                    'storage' => $this->getType(),
+                    'operation' => $operation,
+                    'attempts' => $attempt,
+                ]
+            );
+        }
+    }
+
+    /**
+     * Parse S3 XML error response and throw appropriate exception
+     *
+     * @param  string  $errorBody The error response body
+     * @param  int  $statusCode The HTTP status code
+     *
+     * @throws NotFoundException When the error is NoSuchKey
+     * @throws Exception For other S3 errors
+     */
+    private function parseAndThrowS3Error(string $errorBody, int $statusCode): void
+    {
+        if (str_starts_with($errorBody, '<?xml')) {
+            try {
+                $xml = \simplexml_load_string($errorBody);
+                $errorCode = (string) ($xml->Code ?? '');
+                $errorMessage = (string) ($xml->Message ?? '');
+
+                if ($errorCode === 'NoSuchKey') {
+                    throw new NotFoundException($errorMessage ?: 'File not found', $statusCode);
+                }
+            } catch (NotFoundException $e) {
+                throw $e;
+            } catch (\Throwable $e) {
+                // If XML parsing fails, fall through to original error
+            }
         }
 
-        if ($response->code >= 400) {
-            throw new Exception($response->body, $response->code);
-        }
-
-        \curl_close($curl);
-
-        // Parse body into XML
-        if ($decode && ((isset($response->headers['content-type']) && $response->headers['content-type'] == 'application/xml') || (str_starts_with($response->body, '<?xml') && ($response->headers['content-type'] ?? '') !== 'image/svg+xml'))) {
-            $response->body = \simplexml_load_string($response->body);
-            $response->body = json_decode(json_encode($response->body), true);
-        }
-
-        return $response;
+        throw new Exception($errorBody, $statusCode);
     }
 
     /**
@@ -983,7 +967,7 @@ class S3 extends Device
      * @param  string  $b String B
      * @return int
      */
-    private function sortMetaHeadersCmp($a, $b)
+    protected function sortMetaHeadersCmp(string $a, string $b): int
     {
         $lenA = \strlen($a);
         $lenB = \strlen($b);

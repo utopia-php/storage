@@ -4,6 +4,7 @@ namespace Utopia\Storage\Device;
 
 use Exception;
 use Utopia\Storage\Device;
+use Utopia\Storage\Exception\NotFoundException;
 use Utopia\Storage\Storage;
 
 class Local extends Device
@@ -20,6 +21,7 @@ class Local extends Device
      */
     public function __construct(string $root = '')
     {
+        parent::__construct();
         $this->root = $root;
     }
 
@@ -60,7 +62,7 @@ class Local extends Device
      * @param  string|null  $prefix
      * @return string
      */
-    public function getPath(string $filename, string $prefix = null): string
+    public function getPath(string $filename, ?string $prefix = null): string
     {
         return $this->getAbsolutePath($this->getRoot().DIRECTORY_SEPARATOR.$filename);
     }
@@ -268,10 +270,10 @@ class Local extends Device
      *
      * @throws Exception
      */
-    public function read(string $path, int $offset = 0, int $length = null): string
+    public function read(string $path, int $offset = 0, ?int $length = null): string
     {
         if (! $this->exists($path)) {
-            throw new Exception('File Not Found');
+            throw new NotFoundException('File not found');
         }
 
         return \file_get_contents($path, use_include_path: false, context: null, offset: $offset, length: $length);

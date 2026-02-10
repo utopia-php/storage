@@ -21,16 +21,24 @@
         "ext-zstd": "*",
         "ext-xz": "*",
         "ext-brotli": "*",
+        "ext-curl": "*",
         "ext-lz4": "*",
+        "ext-simplexml": "*",
         "ext-snappy": "*",
-        "php": ">=8.0",
-        "utopia-php/validators": "0.0.*",
-        "utopia-php/system": "0.9.*"
+        "php": ">=8.1",
+        "utopia-php/system": "0.*.*",
+        "utopia-php/telemetry": "0.2.*",
+        "utopia-php/validators": "0.1.*"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.3",
         "vimeo/psalm": "4.0.1",
         "laravel/pint": "1.2.*"
     },
-    "minimum-stability": "stable"
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": false,
+            "tbachert/spi": false
+        }
+    }
 }

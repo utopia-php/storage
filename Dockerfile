@@ -15,7 +15,7 @@ RUN composer update \
   --no-scripts \
   --prefer-dist
 
-FROM php:8.0-cli-alpine as compile
+FROM php:8.1-cli-alpine as compile
 
 ENV PHP_ZSTD_VERSION="master"
 ENV PHP_BROTLI_VERSION="7ae4fcd8b81a65d7521c298cae49af386d1ea4e3"
@@ -104,11 +104,11 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
   && echo "memory_limit=1024M" >> $PHP_INI_DIR/php.ini
 
 COPY --from=composer /usr/local/src/vendor /usr/src/code/vendor
-COPY --from=zstd /usr/local/lib/php/extensions/no-debug-non-zts-20200930/zstd.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
-COPY --from=brotli /usr/local/lib/php/extensions/no-debug-non-zts-20200930/brotli.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
-COPY --from=lz4 /usr/local/lib/php/extensions/no-debug-non-zts-20200930/lz4.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
-COPY --from=snappy /usr/local/lib/php/extensions/no-debug-non-zts-20200930/snappy.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
-COPY --from=xz /usr/local/lib/php/extensions/no-debug-non-zts-20200930/xz.so /usr/local/lib/php/extensions/no-debug-non-zts-20200930/
+COPY --from=zstd /usr/local/lib/php/extensions/no-debug-non-zts-20210902/zstd.so /usr/local/lib/php/extensions/no-debug-non-zts-20210902/
+COPY --from=brotli /usr/local/lib/php/extensions/no-debug-non-zts-20210902/brotli.so /usr/local/lib/php/extensions/no-debug-non-zts-20210902/
+COPY --from=lz4 /usr/local/lib/php/extensions/no-debug-non-zts-20210902/lz4.so /usr/local/lib/php/extensions/no-debug-non-zts-20210902/
+COPY --from=snappy /usr/local/lib/php/extensions/no-debug-non-zts-20210902/snappy.so /usr/local/lib/php/extensions/no-debug-non-zts-20210902/
+COPY --from=xz /usr/local/lib/php/extensions/no-debug-non-zts-20210902/xz.so /usr/local/lib/php/extensions/no-debug-non-zts-20210902/
 
 # Add Source Code
 COPY . /usr/src/code

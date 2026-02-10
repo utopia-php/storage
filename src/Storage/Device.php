@@ -3,6 +3,9 @@
 namespace Utopia\Storage;
 
 use Exception;
+use Utopia\Telemetry\Adapter as Telemetry;
+use Utopia\Telemetry\Adapter\None as NoTelemetry;
+use Utopia\Telemetry\Histogram;
 
 abstract class Device
 {
@@ -15,6 +18,13 @@ abstract class Device
      * Sets the maximum number of keys returned to the response. By default, the action returns up to 1,000 key names.
      */
     protected const MAX_PAGE_SIZE = PHP_INT_MAX;
+
+    protected Histogram $storageOperationTelemetry;
+
+    public function __construct(Telemetry $telemetry = new NoTelemetry())
+    {
+        $this->setTelemetry($telemetry);
+    }
 
     /**
      * Set Transfer Chunk Size
@@ -64,6 +74,15 @@ abstract class Device
      */
     abstract public function getDescription(): string;
 
+    public function setTelemetry(Telemetry $telemetry): void
+    {
+        $this->storageOperationTelemetry = $telemetry->createHistogram(
+            'storage.operation',
+            's',
+            advisory: ['ExplicitBucketBoundaries' => [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10]]
+        );
+    }
+
     /**
      * Get Root.
      *
@@ -82,7 +101,7 @@ abstract class Device
      * @param  string  $prefix
      * @return string
      */
-    abstract public function getPath(string $filename, string $prefix = null): string;
+    abstract public function getPath(string $filename, ?string $prefix = null): string;
 
     /**
      * Upload.
@@ -136,7 +155,7 @@ abstract class Device
      * @param  int  $length
      * @return string
      */
-    abstract public function read(string $path, int $offset = 0, int $length = null): string;
+    abstract public function read(string $path, int $offset = 0, ?int $length = null): string;
 
     /**
      * Transfer
