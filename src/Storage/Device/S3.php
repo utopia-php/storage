@@ -167,7 +167,7 @@ class S3 extends Device
      * @param  string|null  $prefix
      * @return string
      */
-    public function getPath(string $filename, string $prefix = null): string
+    public function getPath(string $filename, ?string $prefix = null): string
     {
         return $this->getRoot().DIRECTORY_SEPARATOR.$filename;
     }
@@ -410,12 +410,12 @@ class S3 extends Device
      *
      * @param  string  $path
      * @param int offset
-     * @param int length
+     * @param int|null length
      * @return string
      *
      * @throws \Exception
      */
-    public function read(string $path, int $offset = 0, int $length = null): string
+    public function read(string $path, int $offset = 0, ?int $length = null): string
     {
         unset($this->amzHeaders['x-amz-acl']);
         unset($this->amzHeaders['x-amz-content-sha256']);
