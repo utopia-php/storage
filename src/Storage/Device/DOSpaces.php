@@ -33,8 +33,8 @@ class DOSpaces extends S3
      */
     public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::NYC3, string $acl = self::ACL_PRIVATE)
     {
-        parent::__construct($root, $accessKey, $secretKey, $bucket, $region, $acl);
-        $this->headers['host'] = $bucket.'.'.$region.'.digitaloceanspaces.com';
+        $host = $bucket.'.'.$region.'.digitaloceanspaces.com';
+        parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl);
     }
 
     /**

@@ -3,8 +3,9 @@
 namespace Utopia\Tests\Storage\Device;
 
 use PHPUnit\Framework\TestCase;
+use Utopia\Storage\Device\AWS;
 use Utopia\Storage\Device\Local;
-use Utopia\Storage\Device\S3;
+use Utopia\Storage\Exception\NotFoundException;
 
 class LocalTest extends TestCase
 {
@@ -73,6 +74,12 @@ class LocalTest extends TestCase
         $this->assertEquals($this->object->read($this->object->getPath('text-for-read.txt')), 'Hello World');
 
         $this->object->delete($this->object->getPath('text-for-read.txt'));
+    }
+
+    public function testReadNonExistentFile()
+    {
+        $this->expectException(NotFoundException::class);
+        $this->object->read($this->object->getPath('non-existent-file.txt'));
     }
 
     public function testFileExists()
@@ -325,7 +332,7 @@ class LocalTest extends TestCase
         $secret = $_SERVER['S3_SECRET'] ?? '';
         $bucket = 'utopia-storage-test';
 
-        $device = new S3('/root', $key, $secret, $bucket, S3::EU_CENTRAL_1, S3::ACL_PRIVATE);
+        $device = new AWS('/root', $key, $secret, $bucket, AWS::EU_CENTRAL_1, AWS::ACL_PRIVATE);
         $destination = $device->getPath('largefile.mp4');
 
         $this->assertTrue($this->object->transfer($path, $destination, $device));
@@ -344,7 +351,7 @@ class LocalTest extends TestCase
         $secret = $_SERVER['S3_SECRET'] ?? '';
         $bucket = 'utopia-storage-test';
 
-        $device = new S3('/root', $key, $secret, $bucket, S3::EU_CENTRAL_1, S3::ACL_PRIVATE);
+        $device = new AWS('/root', $key, $secret, $bucket, AWS::EU_CENTRAL_1, AWS::ACL_PRIVATE);
 
         $path = $this->object->getPath('text-for-read.txt');
         $this->object->write($path, 'Hello World');

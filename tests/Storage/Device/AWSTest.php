@@ -2,10 +2,10 @@
 
 namespace Utopia\Tests\Storage\Device;
 
-use Utopia\Storage\Device\S3;
+use Utopia\Storage\Device\AWS;
 use Utopia\Tests\Storage\S3Base;
 
-class S3Test extends S3Base
+class AWSTest extends S3Base
 {
     protected function init(): void
     {
@@ -14,7 +14,7 @@ class S3Test extends S3Base
         $secret = $_SERVER['S3_SECRET'] ?? '';
         $bucket = 'utopia-storage-test';
 
-        $this->object = new S3($this->root, $key, $secret, $bucket, S3::EU_CENTRAL_1, S3::ACL_PRIVATE);
+        $this->object = new AWS($this->root, $key, $secret, $bucket, AWS::EU_CENTRAL_1, AWS::ACL_PRIVATE);
     }
 
     /**
@@ -22,7 +22,7 @@ class S3Test extends S3Base
      */
     protected function getAdapterName(): string
     {
-        return 'S3 Storage';
+        return 'AWS S3 Storage';
     }
 
     protected function getAdapterType(): string
@@ -32,6 +32,6 @@ class S3Test extends S3Base
 
     protected function getAdapterDescription(): string
     {
-        return 'S3 Bucket Storage drive for AWS or on premise solution';
+        return 'S3 Bucket Storage drive for AWS';
     }
 }

@@ -13,6 +13,8 @@ class Storage
 
     const DEVICE_S3 = 's3';
 
+    const DEVICE_AWS_S3 = 'awss3';
+
     const DEVICE_DO_SPACES = 'dospaces';
 
     const DEVICE_WASABI = 'wasabi';
