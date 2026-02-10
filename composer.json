@@ -18,13 +18,8 @@
     "require": {
         "ext-fileinfo": "*",
         "ext-zlib": "*",
-        "ext-zstd": "*",
-        "ext-xz": "*",
-        "ext-brotli": "*",
         "ext-curl": "*",
-        "ext-lz4": "*",
         "ext-simplexml": "*",
-        "ext-snappy": "*",
         "php": ">=8.1",
         "utopia-php/system": "0.*.*",
         "utopia-php/telemetry": "0.2.*",
