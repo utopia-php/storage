@@ -54,7 +54,7 @@ class Telemetry extends Device
         return $this->underlying->getRoot();
     }
 
-    public function getPath(string $filename, string $prefix = null): string
+    public function getPath(string $filename, ?string $prefix = null): string
     {
         return $this->measure(__FUNCTION__, $filename, $prefix);
     }
@@ -74,7 +74,7 @@ class Telemetry extends Device
         return $this->measure(__FUNCTION__, $path, $extra);
     }
 
-    public function read(string $path, int $offset = 0, int $length = null): string
+    public function read(string $path, int $offset = 0, ?int $length = null): string
     {
         return $this->measure(__FUNCTION__, $path, $offset, $length);
     }

@@ -62,7 +62,7 @@ class Local extends Device
      * @param  string|null  $prefix
      * @return string
      */
-    public function getPath(string $filename, string $prefix = null): string
+    public function getPath(string $filename, ?string $prefix = null): string
     {
         return $this->getAbsolutePath($this->getRoot().DIRECTORY_SEPARATOR.$filename);
     }
@@ -270,7 +270,7 @@ class Local extends Device
      *
      * @throws Exception
      */
-    public function read(string $path, int $offset = 0, int $length = null): string
+    public function read(string $path, int $offset = 0, ?int $length = null): string
     {
         if (! $this->exists($path)) {
             throw new NotFoundException('File not found');
