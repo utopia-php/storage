@@ -181,36 +181,56 @@ class Local extends Device
         return $chunksReceived;
     }
 
-    private function joinChunks(string $path, int $chunks)
+    private function joinChunks(string $path, int $chunks): void
     {
-        $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path).DIRECTORY_SEPARATOR.\basename($path).'_chunks.log';
+        $tmpDir = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path);
+        $tmp = $tmpDir.DIRECTORY_SEPARATOR.\basename($path).'_chunks.log';
+        $tmpAssemble = \dirname($path).DIRECTORY_SEPARATOR.'tmp_assemble_'.\basename($path);
 
-        $dest = \fopen($path, 'wb');
+        $dest = \fopen($tmpAssemble, 'wb');
         if ($dest === false) {
-            throw new Exception('Failed to open destination file '.$path);
+            throw new Exception('Failed to open temporary assembly file '.$tmpAssemble);
         }
 
+        $partsToUnlink = [];
         for ($i = 1; $i <= $chunks; $i++) {
-            $part = dirname($tmp).DIRECTORY_SEPARATOR.pathinfo($path, PATHINFO_FILENAME).'.part.'.$i;
-            $src = \fopen($part, 'rb');
+            $part = $tmpDir.DIRECTORY_SEPARATOR.\pathinfo($path, PATHINFO_FILENAME).'.part.'.$i;
+            $src = @\fopen($part, 'rb');
             if ($src === false) {
                 \fclose($dest);
-                throw new Exception('Failed to read chunk '.$part);
+                \unlink($tmpAssemble);
+                throw new Exception('Failed to open chunk '.$part);
             }
 
             if (\stream_copy_to_stream($src, $dest) === false) {
                 \fclose($src);
                 \fclose($dest);
-                throw new Exception('Failed to append chunk '.$part);
+                \unlink($tmpAssemble);
+                throw new Exception('Failed to copy chunk '.$part);
             }
             \fclose($src);
-            \unlink($part);
+            $partsToUnlink[] = $part;
         }
 
         \fclose($dest);
-        \unlink($tmp);
-        if (! \rmdir(\dirname($tmp))) {
-            \trigger_error('Failed to remove temporary chunk directory '.dirname($tmp).' (chunk log: '.$tmp.')', E_USER_WARNING);
+
+        if (!\rename($tmpAssemble, $path)) {
+            \unlink($tmpAssemble);
+            throw new Exception('Failed to finalize assembled file '.$path);
+        }
+
+        foreach ($partsToUnlink as $part) {
+            if (!\unlink($part)) {
+                \trigger_error('Failed to remove chunk part '.$part, E_USER_WARNING);
+            }
+        }
+
+        if (!\unlink($tmp)) {
+            \trigger_error('Failed to remove chunk log '.$tmp, E_USER_WARNING);
+        }
+
+        if (!\rmdir($tmpDir)) {
+            \trigger_error('Failed to remove temporary chunk directory '.$tmpDir, E_USER_WARNING);
         }
     }
 
