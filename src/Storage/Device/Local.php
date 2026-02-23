@@ -185,7 +185,7 @@ class Local extends Device
     {
         $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path).DIRECTORY_SEPARATOR.\basename($path).'_chunks.log';
 
-        $dest = \fopen($path, 'ab');
+        $dest = \fopen($path, 'wb');
         if ($dest === false) {
             throw new Exception('Failed to open destination file '.$path);
         }
@@ -209,7 +209,9 @@ class Local extends Device
 
         \fclose($dest);
         \unlink($tmp);
-        \rmdir(dirname($tmp));
+        if (! \rmdir(\dirname($tmp))) {
+            \trigger_error('Failed to remove temporary chunk directory '.dirname($tmp).' (chunk log: '.$tmp.')', E_USER_WARNING);
+        }
     }
 
     /**
