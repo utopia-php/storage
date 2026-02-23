@@ -214,22 +214,22 @@ class Local extends Device
 
         \fclose($dest);
 
-        if (!\rename($tmpAssemble, $path)) {
+        if (! \rename($tmpAssemble, $path)) {
             \unlink($tmpAssemble);
             throw new Exception('Failed to finalize assembled file '.$path);
         }
 
         foreach ($partsToUnlink as $part) {
-            if (!\unlink($part)) {
+            if (! \unlink($part)) {
                 \trigger_error('Failed to remove chunk part '.$part, E_USER_WARNING);
             }
         }
 
-        if (!\unlink($tmp)) {
+        if (! \unlink($tmp)) {
             \trigger_error('Failed to remove chunk log '.$tmp, E_USER_WARNING);
         }
 
-        if (!\rmdir($tmpDir)) {
+        if (! \rmdir($tmpDir)) {
             \trigger_error('Failed to remove temporary chunk directory '.$tmpDir, E_USER_WARNING);
         }
     }
