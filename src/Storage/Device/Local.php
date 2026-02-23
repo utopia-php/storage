@@ -184,18 +184,30 @@ class Local extends Device
     private function joinChunks(string $path, int $chunks)
     {
         $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path).DIRECTORY_SEPARATOR.\basename($path).'_chunks.log';
+
+        $dest = \fopen($path, 'ab');
+        if ($dest === false) {
+            throw new Exception('Failed to open destination file '.$path);
+        }
+
         for ($i = 1; $i <= $chunks; $i++) {
             $part = dirname($tmp).DIRECTORY_SEPARATOR.pathinfo($path, PATHINFO_FILENAME).'.part.'.$i;
-            $data = file_get_contents($part);
-            if (! $data) {
+            $src = \fopen($part, 'rb');
+            if ($src === false) {
+                \fclose($dest);
                 throw new Exception('Failed to read chunk '.$part);
             }
 
-            if (! file_put_contents($path, $data, FILE_APPEND)) {
+            if (\stream_copy_to_stream($src, $dest) === false) {
+                \fclose($src);
+                \fclose($dest);
                 throw new Exception('Failed to append chunk '.$part);
             }
+            \fclose($src);
             \unlink($part);
         }
+
+        \fclose($dest);
         \unlink($tmp);
         \rmdir(dirname($tmp));
     }
