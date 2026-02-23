@@ -2,6 +2,7 @@
 
 namespace Utopia\Tests\Storage\Device;
 
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Device\AWS;
 use Utopia\Storage\Device\Local;
@@ -428,5 +429,118 @@ class LocalTest extends TestCase
 
         $this->assertTrue($this->object->deletePath('nested-delete-path-test'));
         $this->assertFalse($this->object->exists($dir));
+    }
+
+    // -------------------------------------------------------------------------
+    // joinChunks tests
+    // -------------------------------------------------------------------------
+
+    /**
+     * Create a self-contained Local storage instance in a fresh temp directory.
+     * The caller is responsible for deleting the root after the test.
+     */
+    private function makeJoinTestStorage(): Local
+    {
+        $dir = \sys_get_temp_dir().DIRECTORY_SEPARATOR.'utopia-join-test-'.uniqid();
+        \mkdir($dir, 0755, true);
+
+        return new Local($dir);
+    }
+
+    public function testJoinChunksAssemblesContentCorrectly(): void
+    {
+        $storage = $this->makeJoinTestStorage();
+        $dest = $storage->getRoot().DIRECTORY_SEPARATOR.'test.dat';
+
+        $storage->uploadData('AAAA', $dest, 'application/octet-stream', 1, 3);
+        $storage->uploadData('BBBB', $dest, 'application/octet-stream', 2, 3);
+        $storage->uploadData('CCCC', $dest, 'application/octet-stream', 3, 3);
+
+        $this->assertTrue(\file_exists($dest));
+        $this->assertSame('AAAABBBBCCCC', \file_get_contents($dest));
+
+        $storage->delete($storage->getRoot(), true);
+    }
+
+    public function testJoinChunksCleansUpTempFilesOnSuccess(): void
+    {
+        $storage = $this->makeJoinTestStorage();
+        $dest = $storage->getRoot().DIRECTORY_SEPARATOR.'test.dat';
+        $tmpDir = $storage->getRoot().DIRECTORY_SEPARATOR.'tmp_test.dat';
+        $tmpAssemble = $storage->getRoot().DIRECTORY_SEPARATOR.'tmp_assemble_test.dat';
+
+        $storage->uploadData('AAAA', $dest, 'application/octet-stream', 1, 3);
+        $storage->uploadData('BBBB', $dest, 'application/octet-stream', 2, 3);
+        $storage->uploadData('CCCC', $dest, 'application/octet-stream', 3, 3);
+
+        $this->assertFalse(\is_dir($tmpDir), 'Temp chunk directory should be removed after assembly');
+        $this->assertFalse(\file_exists($tmpAssemble), 'Temp assembly file should be removed after rename');
+        for ($i = 1; $i <= 3; $i++) {
+            $this->assertFalse(
+                \file_exists($tmpDir.DIRECTORY_SEPARATOR.'test.part.'.$i),
+                "Part file $i should be removed after assembly"
+            );
+        }
+
+        $storage->delete($storage->getRoot(), true);
+    }
+
+    public function testJoinChunksMissingPartThrowsAndPreservesState(): void
+    {
+        $storage = $this->makeJoinTestStorage();
+        $dest = $storage->getRoot().DIRECTORY_SEPARATOR.'test.dat';
+        $tmpDir = $storage->getRoot().DIRECTORY_SEPARATOR.'tmp_test.dat';
+        $tmpAssemble = $storage->getRoot().DIRECTORY_SEPARATOR.'tmp_assemble_test.dat';
+
+        $storage->uploadData('AAAA', $dest, 'application/octet-stream', 1, 3);
+        $storage->uploadData('BBBB', $dest, 'application/octet-stream', 2, 3);
+
+        // Simulate a missing/corrupted chunk by deleting part 1 before the
+        // final upload triggers assembly.
+        \unlink($tmpDir.DIRECTORY_SEPARATOR.'test.part.1');
+
+        $exceptionThrown = false;
+        try {
+            $storage->uploadData('CCCC', $dest, 'application/octet-stream', 3, 3);
+        } catch (Exception $e) {
+            $exceptionThrown = true;
+            $this->assertStringContainsString('Failed to open chunk', $e->getMessage());
+        }
+
+        $this->assertTrue($exceptionThrown, 'Exception should be thrown when a chunk is missing');
+        $this->assertFalse(\file_exists($dest), 'Final file must not be created on assembly failure');
+        $this->assertFalse(\file_exists($tmpAssemble), 'Temp assembly file must be cleaned up on failure');
+        // Surviving parts must remain so the upload can be retried.
+        $this->assertTrue(
+            \file_exists($tmpDir.DIRECTORY_SEPARATOR.'test.part.2'),
+            'Part 2 must be preserved for retry'
+        );
+        $this->assertTrue(
+            \file_exists($tmpDir.DIRECTORY_SEPARATOR.'test.part.3'),
+            'Part 3 must be preserved for retry'
+        );
+
+        $storage->delete($storage->getRoot(), true);
+    }
+
+    public function testJoinChunksStaleAssemblyFileIsOverwritten(): void
+    {
+        $storage = $this->makeJoinTestStorage();
+        $dest = $storage->getRoot().DIRECTORY_SEPARATOR.'test.dat';
+        $tmpAssemble = $storage->getRoot().DIRECTORY_SEPARATOR.'tmp_assemble_test.dat';
+
+        $storage->uploadData('AAAA', $dest, 'application/octet-stream', 1, 3);
+        $storage->uploadData('BBBB', $dest, 'application/octet-stream', 2, 3);
+
+        // Simulate a stale assembly file left by a previously crashed attempt.
+        \file_put_contents($tmpAssemble, 'STALE_GARBAGE_DATA');
+
+        $storage->uploadData('CCCC', $dest, 'application/octet-stream', 3, 3);
+
+        $this->assertTrue(\file_exists($dest));
+        $this->assertSame('AAAABBBBCCCC', \file_get_contents($dest), 'Stale assembly file must not corrupt output');
+        $this->assertFalse(\file_exists($tmpAssemble), 'Temp assembly file should be removed after successful rename');
+
+        $storage->delete($storage->getRoot(), true);
     }
 }
