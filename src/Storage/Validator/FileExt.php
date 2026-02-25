@@ -23,9 +23,6 @@ class FileExt extends Validator
      */
     protected $allowed;
 
-    /**
-     * @param  array  $allowed
-     */
     public function __construct(array $allowed)
     {
         $this->allowed = $allowed;
@@ -43,7 +40,6 @@ class FileExt extends Validator
      * Check if file extenstion is allowed
      *
      * @param  mixed  $filename
-     * @return bool
      */
     public function isValid($filename): bool
     {
@@ -61,8 +57,6 @@ class FileExt extends Validator
      * Is array
      *
      * Function will return true if object is array.
-     *
-     * @return bool
      */
     public function isArray(): bool
     {
@@ -73,8 +67,6 @@ class FileExt extends Validator
      * Get Type
      *
      * Returns validator type.
-     *
-     * @return string
      */
     public function getType(): string
     {

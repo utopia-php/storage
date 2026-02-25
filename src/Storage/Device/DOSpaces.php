@@ -23,13 +23,6 @@ class DOSpaces extends S3
 
     /**
      * DOSpaces Constructor
-     *
-     * @param  string  $root
-     * @param  string  $accessKey
-     * @param  string  $secretKey
-     * @param  string  $bucket
-     * @param  string  $region
-     * @param  string  $acl
      */
     public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::NYC3, string $acl = self::ACL_PRIVATE)
     {
@@ -37,25 +30,16 @@ class DOSpaces extends S3
         parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl);
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return 'Digitalocean Spaces Storage';
     }
 
-    /**
-     * @return string
-     */
     public function getDescription(): string
     {
         return 'Digitalocean Spaces Storage';
     }
 
-    /**
-     * @return string
-     */
     public function getType(): string
     {
         return Storage::DEVICE_DO_SPACES;

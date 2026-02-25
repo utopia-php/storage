@@ -12,14 +12,12 @@ class FileExtTest extends TestCase
      */
     protected $object = null;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         $this->object = new FileExt([FileExt::TYPE_GIF, FileExt::TYPE_GZIP, FileExt::TYPE_ZIP]);
     }
 
-    public function tearDown(): void
-    {
-    }
+    protected function tearDown(): void {}
 
     public function testValues()
     {

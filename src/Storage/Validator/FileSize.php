@@ -33,7 +33,6 @@ class FileSize extends Validator
      * Finds whether a file size is smaller than required limit.
      *
      * @param  mixed  $fileSize
-     * @return bool
      */
     public function isValid($fileSize): bool
     {
@@ -52,8 +51,6 @@ class FileSize extends Validator
      * Is array
      *
      * Function will return true if object is array.
-     *
-     * @return bool
      */
     public function isArray(): bool
     {
@@ -64,8 +61,6 @@ class FileSize extends Validator
      * Get Type
      *
      * Returns validator type.
-     *
-     * @return string
      */
     public function getType(): string
     {

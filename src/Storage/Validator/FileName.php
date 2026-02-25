@@ -18,7 +18,6 @@ class FileName extends Validator
      * The file name can only contain "a-z", "A-Z", "0-9", ".", "-", and "_", and not empty.
      *
      * @param  mixed  $name
-     * @return bool
      */
     public function isValid($name): bool
     {
@@ -41,8 +40,6 @@ class FileName extends Validator
      * Is array
      *
      * Function will return true if object is array.
-     *
-     * @return bool
      */
     public function isArray(): bool
     {
@@ -53,8 +50,6 @@ class FileName extends Validator
      * Get Type
      *
      * Returns validator type.
-     *
-     * @return string
      */
     public function getType(): string
     {

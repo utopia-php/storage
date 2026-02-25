@@ -12,7 +12,7 @@ abstract class Device
     /**
      * Max chunk size while transferring file from one device to another
      */
-    protected int $transferChunkSize = 20000000; //20 MB
+    protected int $transferChunkSize = 20000000; // 20 MB
 
     /**
      * Sets the maximum number of keys returned to the response. By default, the action returns up to 1,000 key names.
@@ -28,9 +28,6 @@ abstract class Device
 
     /**
      * Set Transfer Chunk Size
-     *
-     * @param  int  $chunkSize
-     * @return void
      */
     public function setTransferChunkSize(int $chunkSize): void
     {
@@ -39,8 +36,6 @@ abstract class Device
 
     /**
      * Get Transfer Chunk Size
-     *
-     * @return int
      */
     public function getTransferChunkSize(): int
     {
@@ -51,8 +46,6 @@ abstract class Device
      * Get Name.
      *
      * Get storage device name
-     *
-     * @return string
      */
     abstract public function getName(): string;
 
@@ -60,8 +53,6 @@ abstract class Device
      * Get Type.
      *
      * Get storage device type
-     *
-     * @return string
      */
     abstract public function getType(): string;
 
@@ -69,8 +60,6 @@ abstract class Device
      * Get Description.
      *
      * Get storage device description and purpose.
-     *
-     * @return string
      */
     abstract public function getDescription(): string;
 
@@ -87,8 +76,6 @@ abstract class Device
      * Get Root.
      *
      * Get storage device root path
-     *
-     * @return string
      */
     abstract public function getRoot(): string;
 
@@ -96,10 +83,6 @@ abstract class Device
      * Get Path.
      *
      * Each device hold a complex directory structure that is being build in this method.
-     *
-     * @param  string  $filename
-     * @param  string  $prefix
-     * @return string
      */
     abstract public function getPath(string $filename, ?string $prefix = null): string;
 
@@ -109,12 +92,6 @@ abstract class Device
      * Upload a file to desired destination in the selected disk
      * return number of chunks uploaded or 0 if it fails.
      *
-     * @param  string  $source
-     * @param  string  $path
-     * @param  int  $chunk
-     * @param  int  $chunks
-     * @param  array  $metadata
-     * @return int
      *
      * @throws Exception
      */
@@ -126,13 +103,8 @@ abstract class Device
      * Upload file contents to desired destination in the selected disk.
      * return number of chunks uploaded or 0 if it fails.
      *
-     * @param  string  $data
-     * @param  string  $path
-     * @param  string  $contentType
      * @param int chunk
      * @param int chunks
-     * @param  array  $metadata
-     * @return int
      *
      * @throws Exception
      */
@@ -140,40 +112,22 @@ abstract class Device
 
     /**
      * Abort Chunked Upload
-     *
-     * @param  string  $path
-     * @param  string  $extra
-     * @return bool
      */
     abstract public function abort(string $path, string $extra = ''): bool;
 
     /**
      * Read file by given path.
-     *
-     * @param  string  $path
-     * @param  int  $offset
-     * @param  int  $length
-     * @return string
      */
     abstract public function read(string $path, int $offset = 0, ?int $length = null): string;
 
     /**
      * Transfer
      * Transfer a file from current device to destination device.
-     *
-     * @param  string  $path
-     * @param  string  $destination
-     * @param  Device  $device
-     * @return bool
      */
     abstract public function transfer(string $path, string $destination, Device $device): bool;
 
     /**
      * Write file by given path.
-     *
-     * @param  string  $path
-     * @param  string  $data
-     * @return bool
      */
     abstract public function write(string $path, string $data, string $contentType): bool;
 
@@ -181,10 +135,6 @@ abstract class Device
      * Move file from given source to given path, return true on success and false on failure.
      *
      * @see http://php.net/manual/en/function.filesize.php
-     *
-     * @param  string  $source
-     * @param  string  $target
-     * @return bool
      */
     public function move(string $source, string $target): bool
     {
@@ -203,27 +153,16 @@ abstract class Device
      * Delete file in given path return true on success and false on failure.
      *
      * @see http://php.net/manual/en/function.filesize.php
-     *
-     * @param  string  $path
-     * @param  bool  $recursive
-     * @return bool
      */
     abstract public function delete(string $path, bool $recursive = false): bool;
 
     /**
      * Delete files in given path, path must be a directory. return true on success and false on failure.
-     *
-     *
-     * @param  string  $path
-     * @return bool
      */
     abstract public function deletePath(string $path): bool;
 
     /**
      * Check if file exists
-     *
-     * @param  string  $path
-     * @return bool
      */
     abstract public function exists(string $path): bool;
 
@@ -231,9 +170,6 @@ abstract class Device
      * Returns given file path its size.
      *
      * @see http://php.net/manual/en/function.filesize.php
-     *
-     * @param $path
-     * @return int
      */
     abstract public function getFileSize(string $path): int;
 
@@ -241,9 +177,6 @@ abstract class Device
      * Returns given file path its mime type.
      *
      * @see http://php.net/manual/en/function.mime-content-type.php
-     *
-     * @param $path
-     * @return string
      */
     abstract public function getFileMimeType(string $path): string;
 
@@ -251,9 +184,6 @@ abstract class Device
      * Returns given file path its MD5 hash value.
      *
      * @see http://php.net/manual/en/function.md5-file.php
-     *
-     * @param $path
-     * @return string
      */
     abstract public function getFileHash(string $path): string;
 
@@ -261,9 +191,6 @@ abstract class Device
      * Create a directory at the specified path.
      *
      * Returns true on success or if the directory already exists and false on error
-     *
-     * @param $path
-     * @return bool
      */
     abstract public function createDirectory(string $path): bool;
 
@@ -273,9 +200,6 @@ abstract class Device
      * Return -1 on error
      *
      * Based on http://www.jonasjohn.de/snippets/php/dir-size.htm
-     *
-     * @param $path
-     * @return int
      */
     abstract public function getDirectorySize(string $path): int;
 
@@ -283,8 +207,6 @@ abstract class Device
      * Get Partition Free Space.
      *
      * disk_free_space — Returns available space on filesystem or disk partition
-     *
-     * @return float
      */
     abstract public function getPartitionFreeSpace(): float;
 
@@ -292,17 +214,13 @@ abstract class Device
      * Get Partition Total Space.
      *
      * disk_total_space — Returns the total size of a filesystem or disk partition
-     *
-     * @return float
      */
     abstract public function getPartitionTotalSpace(): float;
 
     /**
      * Get all files and directories inside a directory.
      *
-     * @param  string  $dir Directory to scan
-     * @param  int  $max
-     * @param  string  $continuationToken
+     * @param  string  $dir  Directory to scan
      * @return array<mixed>
      */
     abstract public function getFiles(string $dir, int $max = self::MAX_PAGE_SIZE, string $continuationToken = ''): array;
@@ -313,9 +231,6 @@ abstract class Device
      * Works like the realpath function but works on files that does not exist
      *
      * Reference https://www.php.net/manual/en/function.realpath.php#84012
-     *
-     * @param  string  $path
-     * @return string
      */
     public function getAbsolutePath(string $path): string
     {
@@ -324,10 +239,10 @@ abstract class Device
 
         $absolutes = [];
         foreach ($parts as $part) {
-            if ('.' == $part) {
+            if ($part == '.') {
                 continue;
             }
-            if ('..' == $part) {
+            if ($part == '..') {
                 array_pop($absolutes);
             } else {
                 $absolutes[] = $part;

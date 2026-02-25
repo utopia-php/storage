@@ -17,7 +17,6 @@ class File extends Validator
      * TODO think what to do here, currently only used for parameter to be present in SDKs
      *
      * @param  mixed  $name
-     * @return bool
      */
     public function isValid($name): bool
     {
@@ -28,8 +27,6 @@ class File extends Validator
      * Is array
      *
      * Function will return true if object is array.
-     *
-     * @return bool
      */
     public function isArray(): bool
     {
@@ -40,8 +37,6 @@ class File extends Validator
      * Get Type
      *
      * Returns validator type.
-     *
-     * @return string
      */
     public function getType(): string
     {

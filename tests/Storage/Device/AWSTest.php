@@ -17,9 +17,6 @@ class AWSTest extends S3Base
         $this->object = new AWS($this->root, $key, $secret, $bucket, AWS::EU_CENTRAL_1, AWS::ACL_PRIVATE);
     }
 
-    /**
-     * @return string
-     */
     protected function getAdapterName(): string
     {
         return 'AWS S3 Storage';

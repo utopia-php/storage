@@ -38,8 +38,6 @@ class Storage
      * Add device by name
      *
      * @param  string  $name
-     * @param  Device  $device
-     * @return void
      *
      * @throws Exception
      */
@@ -85,7 +83,6 @@ class Storage
      *
      * Based on: https://stackoverflow.com/a/38659168/2299554
      *
-     * @param  int  $bytes
      * @param  int  $decimals
      * @param  string  $system
      * @return string

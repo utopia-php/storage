@@ -52,34 +52,16 @@ class S3 extends Device
 
     protected static int $retryDelay = 500; // milliseconds
 
-    /**
-     * @var string
-     */
     protected string $accessKey;
 
-    /**
-     * @var string
-     */
     protected string $secretKey;
 
-    /**
-     * @var string
-     */
     protected string $region;
 
-    /**
-     * @var string
-     */
     protected string $acl = self::ACL_PRIVATE;
 
-    /**
-     * @var string
-     */
     protected string $root = 'temp';
 
-    /**
-     * @var array
-     */
     protected array $headers = [
         'host' => '',
         'date' => '',
@@ -89,26 +71,15 @@ class S3 extends Device
 
     protected string $fqdn;
 
-    /**
-     * @var array
-     */
     protected array $amzHeaders;
 
     /**
      * Http version
-     *
-     * @var int|null
      */
     protected ?int $curlHttpVersion = null;
 
     /**
      * S3 Constructor
-     *
-     * @param  string  $root
-     * @param  string  $accessKey
-     * @param  string  $secretKey
-     * @param  string  $region
-     * @param  string  $acl
      */
     public function __construct(string $root, string $accessKey, string $secretKey, string $host, string $region, string $acl = self::ACL_PRIVATE)
     {
@@ -130,43 +101,26 @@ class S3 extends Device
         }
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return 'S3 Storage';
     }
 
-    /**
-     * @return string
-     */
     public function getType(): string
     {
         return Storage::DEVICE_S3;
     }
 
-    /**
-     * @return string
-     */
     public function getDescription(): string
     {
         return 'S3 Storage drive for generic S3-compatible provider';
     }
 
-    /**
-     * @return string
-     */
     public function getRoot(): string
     {
         return $this->root;
     }
 
-    /**
-     * @param  string  $filename
-     * @param  string|null  $prefix
-     * @return string
-     */
     public function getPath(string $filename, ?string $prefix = null): string
     {
         return $this->getRoot().DIRECTORY_SEPARATOR.$filename;
@@ -174,10 +128,6 @@ class S3 extends Device
 
     /**
      * Set http version
-     *
-     *
-     * @param  int|null  $httpVersion
-     * @return self
      */
     public function setHttpVersion(?int $httpVersion): self
     {
@@ -189,7 +139,6 @@ class S3 extends Device
     /**
      * Set retry attempts
      *
-     * @param  int  $attempts
      * @return void
      */
     public static function setRetryAttempts(int $attempts)
@@ -199,9 +148,6 @@ class S3 extends Device
 
     /**
      * Set retry delay in milliseconds
-     *
-     * @param  int  $delay
-     * @return void
      */
     public static function setRetryDelay(int $delay): void
     {
@@ -214,12 +160,8 @@ class S3 extends Device
      * Upload a file to desired destination in the selected disk.
      * return number of chunks uploaded or 0 if it fails.
      *
-     * @param  string  $source
-     * @param  string  $path
      * @param int chunk
      * @param int chunks
-     * @param  array  $metadata
-     * @return int
      *
      * @throws \Exception
      */
@@ -235,12 +177,8 @@ class S3 extends Device
      * return number of chunks uploaded or 0 if it fails.
      *
      * @param  string  $source
-     * @param  string  $path
-     * @param  string  $contentType
      * @param int chunk
      * @param int chunks
-     * @param  array  $metadata
-     * @return int
      *
      * @throws \Exception
      */
@@ -274,9 +212,6 @@ class S3 extends Device
     /**
      * Transfer
      *
-     * @param  string  $path
-     * @param  string  $destination
-     * @param  Device  $device
      * @return string
      */
     public function transfer(string $path, string $destination, Device $device): bool
@@ -312,9 +247,6 @@ class S3 extends Device
      *
      * Initiate a multipart upload and return an upload ID.
      *
-     * @param  string  $path
-     * @param  string  $contentType
-     * @return string
      *
      * @throws \Exception
      */
@@ -335,10 +267,6 @@ class S3 extends Device
      * Upload Part
      *
      * @param  string  $source
-     * @param  string  $path
-     * @param  int  $chunk
-     * @param  string  $uploadId
-     * @return string
      *
      * @throws \Exception
      */
@@ -362,10 +290,6 @@ class S3 extends Device
     /**
      * Complete Multipart Upload
      *
-     * @param  string  $path
-     * @param  string  $uploadId
-     * @param  array  $parts
-     * @return bool
      *
      * @throws \Exception
      */
@@ -389,9 +313,6 @@ class S3 extends Device
     /**
      * Abort Chunked Upload
      *
-     * @param  string  $path
-     * @param  string  $extra
-     * @return bool
      *
      * @throws \Exception
      */
@@ -408,10 +329,8 @@ class S3 extends Device
     /**
      * Read file or part of file by given path, offset and length.
      *
-     * @param  string  $path
      * @param int offset
      * @param int|null length
-     * @return string
      *
      * @throws \Exception
      */
@@ -434,9 +353,6 @@ class S3 extends Device
     /**
      * Write file by given path.
      *
-     * @param  string  $path
-     * @param  string  $data
-     * @return bool
      *
      * @throws \Exception
      */
@@ -445,7 +361,7 @@ class S3 extends Device
         $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
 
         $this->headers['content-type'] = $contentType;
-        $this->headers['content-md5'] = \base64_encode(md5($data, true)); //TODO whould this work well with big file? can we skip it?
+        $this->headers['content-md5'] = \base64_encode(md5($data, true)); // TODO whould this work well with big file? can we skip it?
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $data);
         $this->amzHeaders['x-amz-acl'] = $this->acl;
 
@@ -458,9 +374,6 @@ class S3 extends Device
      * Delete file in given path, Return true on success and false on failure.
      *
      * @see http://php.net/manual/en/function.filesize.php
-     *
-     * @param  string  $path
-     * @return bool
      *
      * @throws \Exception
      */
@@ -480,10 +393,6 @@ class S3 extends Device
     /**
      * Get list of objects in the given path.
      *
-     * @param  string  $prefix
-     * @param  int  $maxKeys
-     * @param  string  $continuationToken
-     * @return array
      *
      * @throws Exception
      */
@@ -519,8 +428,6 @@ class S3 extends Device
     /**
      * Delete files in given path, path must be a directory. Return true on success and false on failure.
      *
-     * @param  string  $path
-     * @return bool
      *
      * @throws \Exception
      */
@@ -557,9 +464,6 @@ class S3 extends Device
 
     /**
      * Check if file exists
-     *
-     * @param  string  $path
-     * @return bool
      */
     public function exists(string $path): bool
     {
@@ -576,9 +480,6 @@ class S3 extends Device
      * Returns given file path its size.
      *
      * @see http://php.net/manual/en/function.filesize.php
-     *
-     * @param  string  $path
-     * @return int
      */
     public function getFileSize(string $path): int
     {
@@ -591,9 +492,6 @@ class S3 extends Device
      * Returns given file path its mime type.
      *
      * @see http://php.net/manual/en/function.mime-content-type.php
-     *
-     * @param  string  $path
-     * @return string
      */
     public function getFileMimeType(string $path): string
     {
@@ -606,9 +504,6 @@ class S3 extends Device
      * Returns given file path its MD5 hash value.
      *
      * @see http://php.net/manual/en/function.md5-file.php
-     *
-     * @param  string  $path
-     * @return string
      */
     public function getFileHash(string $path): string
     {
@@ -621,9 +516,6 @@ class S3 extends Device
      * Create a directory at the specified path.
      *
      * Returns true on success or if the directory already exists and false on error
-     *
-     * @param $path
-     * @return bool
      */
     public function createDirectory(string $path): bool
     {
@@ -637,9 +529,6 @@ class S3 extends Device
      * Return -1 on error
      *
      * Based on http://www.jonasjohn.de/snippets/php/dir-size.htm
-     *
-     * @param  string  $path
-     * @return int
      */
     public function getDirectorySize(string $path): int
     {
@@ -650,8 +539,6 @@ class S3 extends Device
      * Get Partition Free Space.
      *
      * disk_free_space — Returns available space on filesystem or disk partition
-     *
-     * @return float
      */
     public function getPartitionFreeSpace(): float
     {
@@ -662,8 +549,6 @@ class S3 extends Device
      * Get Partition Total Space.
      *
      * disk_total_space — Returns the total size of a filesystem or disk partition
-     *
-     * @return float
      */
     public function getPartitionTotalSpace(): float
     {
@@ -673,9 +558,7 @@ class S3 extends Device
     /**
      * Get all files and directories inside a directory.
      *
-     * @param  string  $dir Directory to scan
-     * @param  int  $max
-     * @param  string  $continuationToken
+     * @param  string  $dir  Directory to scan
      * @return array<mixed>
      *
      * @throws Exception
@@ -699,8 +582,6 @@ class S3 extends Device
     /**
      * Get file info
      *
-     * @param  string  $path
-     * @return array
      *
      * @throws Exception
      */
@@ -719,10 +600,7 @@ class S3 extends Device
     /**
      * Generate the headers for AWS Signature V4
      *
-     * @param  string  $method
-     * @param  string  $uri
      * @param array parameters
-     * @return string
      */
     private function getSignatureV4(string $method, string $uri, array $parameters = []): string
     {
@@ -797,13 +675,7 @@ class S3 extends Device
     /**
      * Get the S3 response
      *
-     * @param  string  $operation
-     * @param  string  $method
-     * @param  string  $uri
-     * @param  string  $data
-     * @param  array  $parameters
-     * @param  bool  $decode
-     * @return  object
+     * @return object
      *
      * @throws \Exception
      */
@@ -931,8 +803,8 @@ class S3 extends Device
     /**
      * Parse S3 XML error response and throw appropriate exception
      *
-     * @param  string  $errorBody The error response body
-     * @param  int  $statusCode The HTTP status code
+     * @param  string  $errorBody  The error response body
+     * @param  int  $statusCode  The HTTP status code
      *
      * @throws NotFoundException When the error is NoSuchKey
      * @throws Exception For other S3 errors
@@ -963,9 +835,8 @@ class S3 extends Device
      *
      * @internal Used to sort x-amz meta headers
      *
-     * @param  string  $a String A
-     * @param  string  $b String B
-     * @return int
+     * @param  string  $a  String A
+     * @param  string  $b  String B
      */
     protected function sortMetaHeadersCmp(string $a, string $b): int
     {
@@ -977,7 +848,7 @@ class S3 extends Device
             return $ncmp;
         }
 
-        if (0 == $ncmp) {
+        if ($ncmp == 0) {
             return $lenA < $lenB ? -1 : 1;
         }
 
