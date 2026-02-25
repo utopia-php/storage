@@ -841,9 +841,8 @@ class S3 extends Device
      * of HTTP status. A 503/429 with a parseable but non-transient error code is NOT retried.
      * Unparseable 429/503 responses fall back to status-code detection.
      *
-     * @param  int  $statusCode HTTP response status code
-     * @param  string  $body    Response body
-     * @return bool
+     * @param  int  $statusCode  HTTP response status code
+     * @param  string  $body  Response body
      */
     protected function isTransientError(int $statusCode, string $body): bool
     {
