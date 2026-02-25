@@ -891,8 +891,11 @@ class S3 extends Device
         $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
         $attempt = 0;
-        while ($attempt < self::$retryAttempts && $response->code >= 500) {
-            usleep(self::$retryDelay * 1000);
+        while (
+            $attempt < self::$retryAttempts &&
+            $this->isTransientError($response->code, $response->body)
+        ) {
+            \usleep(self::$retryDelay * 1000);
             $attempt++;
             $result = \curl_exec($curl);
             $response->code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -956,6 +959,39 @@ class S3 extends Device
         }
 
         throw new Exception($errorBody, $statusCode);
+    }
+
+    /**
+     * Determine whether an S3 response indicates a transient rate-limiting error
+     * (e.g. SlowDown, ServiceUnavailable) that should be retried with exponential backoff.
+     *
+     * The XML body is parsed first so that specific S3 error codes are detected regardless
+     * of HTTP status. A 503/429 with a parseable but non-transient error code is NOT retried.
+     * Unparseable 429/503 responses fall back to status-code detection.
+     *
+     * @param  int  $statusCode HTTP response status code
+     * @param  string  $body    Response body
+     * @return bool
+     */
+    protected function isTransientError(int $statusCode, string $body): bool
+    {
+        $trimmed = \ltrim($body);
+        if (\str_starts_with($trimmed, '<?xml') || \str_starts_with($trimmed, '<Error')) {
+            $xml = @\simplexml_load_string($body);
+            if ($xml !== false) {
+                $code = (string) ($xml->Code ?? '');
+                if (\in_array($code, ['SlowDown', 'ServiceUnavailable', 'Throttling', 'RequestThrottled'], true)) {
+                    return true;
+                }
+                // Successfully parsed XML with a non-transient error code — do not retry.
+                if ($code !== '') {
+                    return false;
+                }
+            }
+        }
+
+        // Fall back to HTTP status code for responses that cannot be parsed as XML.
+        return $statusCode === 429 || $statusCode === 503;
     }
 
     /**
