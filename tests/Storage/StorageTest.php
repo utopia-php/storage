@@ -12,13 +12,9 @@ Storage::setDevice('disk-b', new Local(__DIR__.'/../resources/disk-b'));
 
 class StorageTest extends TestCase
 {
-    public function setUp(): void
-    {
-    }
+    protected function setUp(): void {}
 
-    public function tearDown(): void
-    {
-    }
+    protected function tearDown(): void {}
 
     public function testGetters()
     {

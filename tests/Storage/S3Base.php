@@ -11,14 +11,8 @@ abstract class S3Base extends TestCase
 {
     abstract protected function init(): void;
 
-    /**
-     * @return string
-     */
     abstract protected function getAdapterName(): string;
 
-    /**
-     * @return string
-     */
     abstract protected function getAdapterDescription(): string;
 
     /**
@@ -31,7 +25,7 @@ abstract class S3Base extends TestCase
      */
     protected $root = '/root';
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         $this->init();
         $this->uploadTestFiles();
@@ -53,7 +47,7 @@ abstract class S3Base extends TestCase
         $this->object->delete($this->object->getPath('testing/kitten-2.png'));
     }
 
-    public function tearDown(): void
+    protected function tearDown(): void
     {
         $this->removeTestFiles();
     }
@@ -387,7 +381,7 @@ abstract class S3Base extends TestCase
     public function testTransferLarge($path)
     {
         // chunked file
-        $this->object->setTransferChunkSize(10000000); //10 mb
+        $this->object->setTransferChunkSize(10000000); // 10 mb
 
         $device = new Local(__DIR__.'/../resources/disk-a');
         $destination = $device->getPath('largefile.mp4');
@@ -402,7 +396,7 @@ abstract class S3Base extends TestCase
 
     public function testTransferSmall()
     {
-        $this->object->setTransferChunkSize(10000000); //10 mb
+        $this->object->setTransferChunkSize(10000000); // 10 mb
 
         $device = new Local(__DIR__.'/../resources/disk-a');
 

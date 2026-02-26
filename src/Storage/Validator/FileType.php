@@ -36,8 +36,6 @@ class FileType extends Validator
     protected $allowed;
 
     /**
-     * @param  array  $allowed
-     *
      * @throws Exception
      */
     public function __construct(array $allowed)
@@ -67,7 +65,6 @@ class FileType extends Validator
      * @see http://stackoverflow.com/a/3313196
      *
      * @param  mixed  $path
-     * @return bool
      */
     public function isValid($path): bool
     {
@@ -100,8 +97,6 @@ class FileType extends Validator
      * Is array
      *
      * Function will return true if object is array.
-     *
-     * @return bool
      */
     public function isArray(): bool
     {
@@ -112,8 +107,6 @@ class FileType extends Validator
      * Get Type
      *
      * Returns validator type.
-     *
-     * @return string
      */
     public function getType(): string
     {

@@ -15,14 +15,12 @@ class LocalTest extends TestCase
      */
     protected $object = null;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         $this->object = new Local(realpath(__DIR__.'/../../resources/disk-a'));
     }
 
-    public function tearDown(): void
-    {
-    }
+    protected function tearDown(): void {}
 
     public function testPaths()
     {
@@ -327,7 +325,7 @@ class LocalTest extends TestCase
     public function testTransferLarge($path)
     {
         // chunked file
-        $this->object->setTransferChunkSize(10000000); //10 mb
+        $this->object->setTransferChunkSize(10000000); // 10 mb
 
         $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['S3_SECRET'] ?? '';
@@ -346,7 +344,7 @@ class LocalTest extends TestCase
 
     public function testTransferSmall()
     {
-        $this->object->setTransferChunkSize(10000000); //10 mb
+        $this->object->setTransferChunkSize(10000000); // 10 mb
 
         $key = $_SERVER['S3_ACCESS_KEY'] ?? '';
         $secret = $_SERVER['S3_SECRET'] ?? '';

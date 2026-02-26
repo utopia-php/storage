@@ -63,13 +63,6 @@ class AWS extends S3
 
     /**
      * S3 Constructor
-     *
-     * @param  string  $root
-     * @param  string  $accessKey
-     * @param  string  $secretKey
-     * @param  string  $bucket
-     * @param  string  $region
-     * @param  string  $acl
      */
     public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_EAST_1, string $acl = self::ACL_PRIVATE)
     {
@@ -80,25 +73,16 @@ class AWS extends S3
         parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl);
     }
 
-    /**
-     * @return string
-     */
     public function getName(): string
     {
         return 'AWS S3 Storage';
     }
 
-    /**
-     * @return string
-     */
     public function getType(): string
     {
         return Storage::DEVICE_AWS_S3;
     }
 
-    /**
-     * @return string
-     */
     public function getDescription(): string
     {
         return 'S3 Bucket Storage drive for AWS';

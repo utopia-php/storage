@@ -12,14 +12,12 @@ class FileSizeTest extends TestCase
      */
     protected $object = null;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         $this->object = new FileSize(1000);
     }
 
-    public function tearDown(): void
-    {
-    }
+    protected function tearDown(): void {}
 
     public function testValues()
     {

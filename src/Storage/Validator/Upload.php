@@ -18,7 +18,6 @@ class Upload extends Validator
      * Check if a file is a valid upload file
      *
      * @param  mixed  $path
-     * @return bool
      */
     public function isValid($path): bool
     {
@@ -37,8 +36,6 @@ class Upload extends Validator
      * Is array
      *
      * Function will return true if object is array.
-     *
-     * @return bool
      */
     public function isArray(): bool
     {
@@ -49,8 +46,6 @@ class Upload extends Validator
      * Get Type
      *
      * Returns validator type.
-     *
-     * @return string
      */
     public function getType(): string
     {
