@@ -39,6 +39,8 @@ jobs:
         WASABI_SECRET: ${{ secrets.WASABI_SECRET }}
         BACKBLAZE_ACCESS_KEY: ${{ secrets.BACKBLAZE_ACCESS_KEY }}
         BACKBLAZE_SECRET: ${{ secrets.BACKBLAZE_SECRET }}
+        CLOUDIAN_ACCESS_KEY: ${{ secrets.CLOUDIAN_ACCESS_KEY }}
+        CLOUDIAN_SECRET: ${{ secrets.CLOUDIAN_SECRET }}
       run: |
         docker compose up -d
         sleep 10
