@@ -412,6 +412,114 @@ abstract class S3Base extends TestCase
         $device->delete($destination);
     }
 
+    public function testReadStream()
+    {
+        $path = $this->object->getPath('text-for-stream.txt');
+        $this->object->write($path, 'Hello World', 'text/plain');
+
+        $chunks = [];
+        foreach ($this->object->readStream($path) as $chunk) {
+            $chunks[] = $chunk;
+        }
+
+        $this->assertEquals('Hello World', implode('', $chunks));
+
+        $this->object->delete($path);
+    }
+
+    public function testReadStreamWithOffset()
+    {
+        $path = $this->object->getPath('text-for-stream-offset.txt');
+        $this->object->write($path, 'Hello World', 'text/plain');
+
+        $chunks = [];
+        foreach ($this->object->readStream($path, offset: 6) as $chunk) {
+            $chunks[] = $chunk;
+        }
+
+        $this->assertEquals('World', implode('', $chunks));
+
+        $this->object->delete($path);
+    }
+
+    public function testReadStreamWithLength()
+    {
+        $path = $this->object->getPath('text-for-stream-length.txt');
+        $this->object->write($path, 'Hello World', 'text/plain');
+
+        $chunks = [];
+        foreach ($this->object->readStream($path, offset: 0, length: 5) as $chunk) {
+            $chunks[] = $chunk;
+        }
+
+        $this->assertEquals('Hello', implode('', $chunks));
+
+        $this->object->delete($path);
+    }
+
+    public function testReadStreamWithOffsetAndLength()
+    {
+        $path = $this->object->getPath('text-for-stream-off-len.txt');
+        $this->object->write($path, 'Hello World', 'text/plain');
+
+        $chunks = [];
+        foreach ($this->object->readStream($path, offset: 3, length: 5) as $chunk) {
+            $chunks[] = $chunk;
+        }
+
+        $this->assertEquals('lo Wo', implode('', $chunks));
+
+        $this->object->delete($path);
+    }
+
+    public function testReadStreamMatchesRead()
+    {
+        $path = $this->object->getPath('testing/kitten-1.jpg');
+
+        $readContent = $this->object->read($path);
+
+        $streamContent = '';
+        foreach ($this->object->readStream($path) as $chunk) {
+            $streamContent .= $chunk;
+        }
+
+        $this->assertEquals($readContent, $streamContent);
+    }
+
+    public function testReadStreamPartialMatchesRead()
+    {
+        $path = $this->object->getPath('testing/kitten-1.jpg');
+
+        $offset = 1000;
+        $length = 5000;
+        $readContent = $this->object->read($path, $offset, $length);
+
+        $streamContent = '';
+        foreach ($this->object->readStream($path, offset: $offset, length: $length) as $chunk) {
+            $streamContent .= $chunk;
+        }
+
+        $this->assertEquals($readContent, $streamContent);
+    }
+
+    /**
+     * @depends testPartUpload
+     */
+    public function testReadStreamLargeFile($path)
+    {
+        $source = __DIR__.'/../resources/disk-a/large_file.mp4';
+        $expectedSize = \filesize($source);
+
+        $totalRead = 0;
+        foreach ($this->object->readStream($path) as $chunk) {
+            $totalRead += strlen($chunk);
+            // Each chunk should be <= 2MB
+            $this->assertLessThanOrEqual(2 * 1024 * 1024, strlen($chunk));
+        }
+
+        $this->assertEquals($expectedSize, $totalRead);
+    }
+
     public function testTransferNonExistentFile()
     {
         $device = new Local(__DIR__.'/../resources/disk-a');

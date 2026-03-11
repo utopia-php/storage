@@ -351,6 +351,131 @@ class S3 extends Device
     }
 
     /**
+     * Read file as a stream, yielding chunks.
+     *
+     * Makes a single HTTP request and yields data as it arrives from the network.
+     */
+    public function readStream(string $path, int $offset = 0, int $length = -1): \Generator
+    {
+        $startTime = microtime(true);
+
+        unset($this->amzHeaders['x-amz-acl']);
+        unset($this->amzHeaders['x-amz-content-sha256']);
+        unset($this->headers['content-type']);
+        $this->headers['content-md5'] = \base64_encode(md5('', true));
+
+        $uri = ($path !== '') ? '/'.\str_replace('%2F', '/', \rawurlencode($path)) : '/';
+
+        if ($length > 0) {
+            $end = $offset + $length - 1;
+            $this->headers['range'] = "bytes=$offset-$end";
+        } elseif ($offset > 0) {
+            $this->headers['range'] = "bytes=$offset-";
+        } else {
+            unset($this->headers['range']);
+        }
+
+        $uri = $this->getAbsolutePath($uri);
+        $url = $this->fqdn.$uri.'?'.\http_build_query([], '', '&', PHP_QUERY_RFC3986);
+
+        $buffer = '';
+        $chunkSize = 2 * 1024 * 1024; // 2MB
+
+        $curl = \curl_init();
+        \curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
+        \curl_setopt($curl, CURLOPT_URL, $url);
+
+        $httpHeaders = [];
+        $this->amzHeaders['x-amz-date'] = \gmdate('Ymd\THis\Z');
+        $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', '');
+
+        foreach ($this->amzHeaders as $header => $value) {
+            if (\strlen($value) > 0) {
+                $httpHeaders[] = $header.': '.$value;
+            }
+        }
+
+        $this->headers['date'] = \gmdate('D, d M Y H:i:s T');
+
+        foreach ($this->headers as $header => $value) {
+            if (\strlen($value) > 0) {
+                $httpHeaders[] = $header.': '.$value;
+            }
+        }
+
+        $httpHeaders[] = 'Authorization: '.$this->getSignatureV4(self::METHOD_GET, $uri);
+
+        \curl_setopt($curl, CURLOPT_HTTPHEADER, $httpHeaders);
+        \curl_setopt($curl, CURLOPT_HEADER, false);
+        \curl_setopt($curl, CURLOPT_RETURNTRANSFER, false);
+        \curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+        \curl_setopt($curl, CURLOPT_CUSTOMREQUEST, self::METHOD_GET);
+
+        if ($this->curlHttpVersion != null) {
+            \curl_setopt($curl, CURLOPT_HTTP_VERSION, $this->curlHttpVersion);
+        }
+
+        \curl_setopt($curl, CURLOPT_WRITEFUNCTION, function ($curl, string $data) use (&$buffer) {
+            $buffer .= $data;
+
+            return \strlen($data);
+        });
+
+        $responseHeaders = [];
+        \curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $header) use (&$responseHeaders) {
+            $len = \strlen($header);
+            $parts = \explode(':', $header, 2);
+            if (\count($parts) >= 2) {
+                $responseHeaders[\strtolower(\trim($parts[0]))] = \trim($parts[1]);
+            }
+
+            return $len;
+        });
+
+        $mh = \curl_multi_init();
+        \curl_multi_add_handle($mh, $curl);
+
+        try {
+            do {
+                $status = \curl_multi_exec($mh, $active);
+
+                while (\strlen($buffer) >= $chunkSize) {
+                    yield \substr($buffer, 0, $chunkSize);
+                    $buffer = \substr($buffer, $chunkSize);
+                }
+
+                if ($active) {
+                    \curl_multi_select($mh, 1.0);
+                }
+            } while ($active && $status === CURLM_OK);
+
+            $code = \curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+            if ($code >= 400) {
+                $this->parseAndThrowS3Error($buffer, $code);
+            }
+
+            if (\strlen($buffer) > 0) {
+                yield $buffer;
+                $buffer = '';
+            }
+        } finally {
+            \curl_multi_remove_handle($mh, $curl);
+            \curl_close($curl);
+            \curl_multi_close($mh);
+
+            $this->storageOperationTelemetry->record(
+                microtime(true) - $startTime,
+                [
+                    'storage' => $this->getType(),
+                    'operation' => 's3:readStream',
+                    'attempts' => 0,
+                ]
+            );
+        }
+    }
+
+    /**
      * Write file by given path.
      *
      *

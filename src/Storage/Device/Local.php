@@ -272,6 +272,52 @@ class Local extends Device
     }
 
     /**
+     * Read file as a stream, yielding chunks.
+     */
+    public function readStream(string $path, int $offset = 0, int $length = -1): \Generator
+    {
+        if (! $this->exists($path)) {
+            throw new NotFoundException('File not found');
+        }
+
+        $handle = \fopen($path, 'rb');
+        if ($handle === false) {
+            throw new Exception('Failed to open file: '.$path);
+        }
+
+        try {
+            if ($offset > 0) {
+                \fseek($handle, $offset);
+            }
+
+            $chunkSize = 2 * 1024 * 1024; // 2MB
+            $bytesRead = 0;
+
+            while (! \feof($handle)) {
+                if ($length >= 0) {
+                    $remaining = $length - $bytesRead;
+                    if ($remaining <= 0) {
+                        break;
+                    }
+                    $readSize = \min($chunkSize, $remaining);
+                } else {
+                    $readSize = $chunkSize;
+                }
+
+                $chunk = \fread($handle, $readSize);
+                if ($chunk === false || $chunk === '') {
+                    break;
+                }
+
+                $bytesRead += \strlen($chunk);
+                yield $chunk;
+            }
+        } finally {
+            \fclose($handle);
+        }
+    }
+
+    /**
      * Write file by given path.
      */
     public function write(string $path, string $data, string $contentType = ''): bool

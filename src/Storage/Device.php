@@ -121,6 +121,16 @@ abstract class Device
     abstract public function read(string $path, int $offset = 0, ?int $length = null): string;
 
     /**
+     * Read file as a stream, yielding chunks.
+     *
+     * @param  string  $path  File path to read
+     * @param  int  $offset  Byte offset to start from (0 = beginning)
+     * @param  int  $length  Total bytes to read (-1 = read to end)
+     * @return \Generator<string> Yields string chunks
+     */
+    abstract public function readStream(string $path, int $offset = 0, int $length = -1): \Generator;
+
+    /**
      * Transfer
      * Transfer a file from current device to destination device.
      */

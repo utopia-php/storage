@@ -430,6 +430,142 @@ class LocalTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // readStream tests
+    // -------------------------------------------------------------------------
+
+    public function testReadStream()
+    {
+        $path = $this->object->getPath('text-for-stream.txt');
+        $this->object->write($path, 'Hello World');
+
+        $chunks = [];
+        foreach ($this->object->readStream($path) as $chunk) {
+            $chunks[] = $chunk;
+        }
+
+        $this->assertCount(1, $chunks);
+        $this->assertEquals('Hello World', $chunks[0]);
+
+        $this->object->delete($path);
+    }
+
+    public function testReadStreamWithOffset()
+    {
+        $path = $this->object->getPath('text-for-stream-offset.txt');
+        $this->object->write($path, 'Hello World');
+
+        $chunks = [];
+        foreach ($this->object->readStream($path, offset: 6) as $chunk) {
+            $chunks[] = $chunk;
+        }
+
+        $this->assertEquals('World', implode('', $chunks));
+
+        $this->object->delete($path);
+    }
+
+    public function testReadStreamWithLength()
+    {
+        $path = $this->object->getPath('text-for-stream-length.txt');
+        $this->object->write($path, 'Hello World');
+
+        $chunks = [];
+        foreach ($this->object->readStream($path, offset: 0, length: 5) as $chunk) {
+            $chunks[] = $chunk;
+        }
+
+        $this->assertEquals('Hello', implode('', $chunks));
+
+        $this->object->delete($path);
+    }
+
+    public function testReadStreamWithOffsetAndLength()
+    {
+        $path = $this->object->getPath('text-for-stream-off-len.txt');
+        $this->object->write($path, 'Hello World');
+
+        $chunks = [];
+        foreach ($this->object->readStream($path, offset: 3, length: 5) as $chunk) {
+            $chunks[] = $chunk;
+        }
+
+        $this->assertEquals('lo Wo', implode('', $chunks));
+
+        $this->object->delete($path);
+    }
+
+    public function testReadStreamNonExistentFile()
+    {
+        $this->expectException(NotFoundException::class);
+        // Must iterate to trigger the generator
+        foreach ($this->object->readStream($this->object->getPath('non-existent-stream.txt')) as $chunk) {
+            // should not reach here
+        }
+    }
+
+    public function testReadStreamLargeFile()
+    {
+        $path = $this->object->getPath('large-stream-test.bin');
+        // Create a 5MB file
+        $size = 5 * 1024 * 1024;
+        $data = str_repeat('A', $size);
+        $this->object->write($path, $data);
+
+        $totalRead = 0;
+        $chunkCount = 0;
+        foreach ($this->object->readStream($path) as $chunk) {
+            $totalRead += strlen($chunk);
+            $chunkCount++;
+            // Each chunk should be <= 2MB
+            $this->assertLessThanOrEqual(2 * 1024 * 1024, strlen($chunk));
+        }
+
+        $this->assertEquals($size, $totalRead);
+        // 5MB file with 2MB chunks = 3 chunks
+        $this->assertEquals(3, $chunkCount);
+
+        $this->object->delete($path);
+    }
+
+    public function testReadStreamMatchesRead()
+    {
+        $source = __DIR__.'/../../resources/disk-a/kitten-1.jpg';
+        $path = $this->object->getPath('kitten-stream-test.jpg');
+        copy($source, $path);
+
+        $readContent = $this->object->read($path);
+
+        $streamContent = '';
+        foreach ($this->object->readStream($path) as $chunk) {
+            $streamContent .= $chunk;
+        }
+
+        $this->assertEquals($readContent, $streamContent);
+
+        $this->object->delete($path);
+    }
+
+    public function testReadStreamPartialMatchesRead()
+    {
+        $source = __DIR__.'/../../resources/disk-a/kitten-1.jpg';
+        $path = $this->object->getPath('kitten-stream-partial.jpg');
+        copy($source, $path);
+
+        $offset = 1000;
+        $length = 5000;
+        $readContent = $this->object->read($path, $offset, $length);
+
+        $streamContent = '';
+        foreach ($this->object->readStream($path, offset: $offset, length: $length) as $chunk) {
+            $streamContent .= $chunk;
+        }
+
+        $this->assertEquals($readContent, $streamContent);
+
+        $this->object->delete($path);
+    }
+
+    // -------------------------------------------------------------------------
     // joinChunks tests
     // -------------------------------------------------------------------------
 
