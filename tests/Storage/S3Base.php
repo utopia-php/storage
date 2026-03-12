@@ -378,6 +378,24 @@ abstract class S3Base extends TestCase
     /**
      * @depends testPartUpload
      */
+    public function testReadStreamLargeFile($path)
+    {
+        $source = __DIR__.'/../resources/disk-a/large_file.mp4';
+        $expectedSize = \filesize($source);
+
+        $totalRead = 0;
+        foreach ($this->object->readStream($path) as $chunk) {
+            $totalRead += strlen($chunk);
+            // Each chunk should be <= 2MB
+            $this->assertLessThanOrEqual(2 * 1024 * 1024, strlen($chunk));
+        }
+
+        $this->assertEquals($expectedSize, $totalRead);
+    }
+
+    /**
+     * @depends testPartUpload
+     */
     public function testTransferLarge($path)
     {
         // chunked file
@@ -500,24 +518,6 @@ abstract class S3Base extends TestCase
         }
 
         $this->assertEquals($readContent, $streamContent);
-    }
-
-    /**
-     * @depends testPartUpload
-     */
-    public function testReadStreamLargeFile($path)
-    {
-        $source = __DIR__.'/../resources/disk-a/large_file.mp4';
-        $expectedSize = \filesize($source);
-
-        $totalRead = 0;
-        foreach ($this->object->readStream($path) as $chunk) {
-            $totalRead += strlen($chunk);
-            // Each chunk should be <= 2MB
-            $this->assertLessThanOrEqual(2 * 1024 * 1024, strlen($chunk));
-        }
-
-        $this->assertEquals($expectedSize, $totalRead);
     }
 
     public function testTransferNonExistentFile()
