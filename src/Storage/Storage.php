@@ -23,6 +23,8 @@ class Storage
 
     const DEVICE_LINODE = 'linode';
 
+    const DEVICE_NETAPP_STORAGE_GRID = 'netappstorage';
+
     /**
      * Devices.
      *
