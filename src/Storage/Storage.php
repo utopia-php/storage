@@ -23,6 +23,8 @@ class Storage
 
     const DEVICE_LINODE = 'linode';
 
+    const DEVICE_ALIBABA_CLOUD = 'alibabacloud';
+
     /**
      * Devices.
      *
