@@ -2,7 +2,6 @@
 
 namespace Utopia\Tests\Storage\Device;
 
-use Exception;
 use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Device\AWS;
 use Utopia\Storage\Device\Local;
@@ -483,7 +482,7 @@ class LocalTest extends TestCase
         $storage->delete($storage->getRoot(), true);
     }
 
-    public function testJoinChunksMissingPartThrowsAndPreservesState(): void
+    public function testJoinChunksMissingPartDoesNotFinalize(): void
     {
         $storage = $this->makeJoinTestStorage();
         $dest = $storage->getRoot().DIRECTORY_SEPARATOR.'test.dat';
@@ -497,17 +496,12 @@ class LocalTest extends TestCase
         // final upload triggers assembly.
         \unlink($tmpDir.DIRECTORY_SEPARATOR.'test.part.1');
 
-        $exceptionThrown = false;
-        try {
-            $storage->uploadData('CCCC', $dest, 'application/octet-stream', 3, 3);
-        } catch (Exception $e) {
-            $exceptionThrown = true;
-            $this->assertStringContainsString('Failed to open chunk', $e->getMessage());
-        }
+        // Uploading the final chunk should NOT throw or finalize,
+        // because part 1 is missing and the part-file count is only 2.
+        $storage->uploadData('CCCC', $dest, 'application/octet-stream', 3, 3);
 
-        $this->assertTrue($exceptionThrown, 'Exception should be thrown when a chunk is missing');
-        $this->assertFalse(\file_exists($dest), 'Final file must not be created on assembly failure');
-        $this->assertFalse(\file_exists($tmpAssemble), 'Temp assembly file must be cleaned up on failure');
+        $this->assertFalse(\file_exists($dest), 'Final file must not be created when a chunk is missing');
+        $this->assertFalse(\file_exists($tmpAssemble), 'Temp assembly file must not be created');
         // Surviving parts must remain so the upload can be retried.
         $this->assertTrue(
             \file_exists($tmpDir.DIRECTORY_SEPARATOR.'test.part.2'),
@@ -517,6 +511,11 @@ class LocalTest extends TestCase
             \file_exists($tmpDir.DIRECTORY_SEPARATOR.'test.part.3'),
             'Part 3 must be preserved for retry'
         );
+
+        // Re-upload the missing chunk — assembly should now succeed.
+        $storage->uploadData('AAAA', $dest, 'application/octet-stream', 1, 3);
+        $this->assertTrue(\file_exists($dest), 'Final file should be created after missing chunk is re-uploaded');
+        $this->assertSame('AAAABBBBCCCC', \file_get_contents($dest), 'Re-uploaded chunk must allow correct assembly');
 
         $storage->delete($storage->getRoot(), true);
     }
@@ -538,6 +537,43 @@ class LocalTest extends TestCase
         $this->assertTrue(\file_exists($dest));
         $this->assertSame('AAAABBBBCCCC', \file_get_contents($dest), 'Stale assembly file must not corrupt output');
         $this->assertFalse(\file_exists($tmpAssemble), 'Temp assembly file should be removed after successful rename');
+
+        $storage->delete($storage->getRoot(), true);
+    }
+
+    public function testOutOfOrderUpload(): void
+    {
+        $storage = $this->makeJoinTestStorage();
+        $dest = $storage->getRoot().DIRECTORY_SEPARATOR.'out-of-order.dat';
+
+        $storage->uploadData('CCCC', $dest, 'application/octet-stream', 3, 3);
+        $this->assertFalse(\file_exists($dest), 'File should not be assembled after chunk 3');
+
+        $storage->uploadData('AAAA', $dest, 'application/octet-stream', 1, 3);
+        $this->assertFalse(\file_exists($dest), 'File should not be assembled after chunk 1');
+
+        $storage->uploadData('BBBB', $dest, 'application/octet-stream', 2, 3);
+        $this->assertTrue(\file_exists($dest), 'File should be assembled after final chunk');
+        $this->assertSame('AAAABBBBCCCC', \file_get_contents($dest), 'Chunks must be assembled in correct order');
+
+        $storage->delete($storage->getRoot(), true);
+    }
+
+    public function testOutOfOrderUploadWithRetry(): void
+    {
+        $storage = $this->makeJoinTestStorage();
+        $dest = $storage->getRoot().DIRECTORY_SEPARATOR.'out-of-order-retry.dat';
+
+        $storage->uploadData('BBBB', $dest, 'application/octet-stream', 2, 3);
+        $storage->uploadData('AAAA', $dest, 'application/octet-stream', 1, 3);
+
+        // Re-upload chunk 2 (duplicate) — should be silently ignored
+        $storage->uploadData('BBBB', $dest, 'application/octet-stream', 2, 3);
+        $this->assertFalse(\file_exists($dest), 'File should not be assembled after duplicate retry');
+
+        $storage->uploadData('CCCC', $dest, 'application/octet-stream', 3, 3);
+        $this->assertTrue(\file_exists($dest), 'File should be assembled after final chunk');
+        $this->assertSame('AAAABBBBCCCC', \file_get_contents($dest), 'Duplicate retry must not corrupt final file');
 
         $storage->delete($storage->getRoot(), true);
     }

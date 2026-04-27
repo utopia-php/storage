@@ -52,7 +52,7 @@ class Local extends Device
      * return number of chunks uploaded or 0 if it fails.
      *
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
@@ -66,29 +66,24 @@ class Local extends Device
 
             return $chunks;
         }
-        $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path).DIRECTORY_SEPARATOR.\basename($path).'_chunks.log';
 
-        $this->createDirectory(\dirname($tmp));
+        $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path);
+        $this->createDirectory($tmp);
 
-        $chunkFilePath = dirname($tmp).DIRECTORY_SEPARATOR.pathinfo($path, PATHINFO_FILENAME).'.part.'.$chunk;
+        $chunkFilePath = $tmp.DIRECTORY_SEPARATOR.pathinfo($path, PATHINFO_FILENAME).'.part.'.$chunk;
 
         // skip writing chunk if the chunk was re-uploaded
         if (! file_exists($chunkFilePath)) {
-            if (! file_put_contents($tmp, "$chunk\n", FILE_APPEND)) {
-                throw new Exception('Can\'t write chunk log '.$tmp);
+            if (! \rename($source, $chunkFilePath)) {
+                throw new Exception('Failed to write chunk '.$chunk);
+            }
+        } else {
+            if (\file_exists($source)) {
+                \unlink($source);
             }
         }
 
-        $chunkLogs = file($tmp);
-        if (! $chunkLogs) {
-            throw new Exception('Unable to read chunk log '.$tmp);
-        }
-
-        $chunksReceived = count(file($tmp));
-
-        if (! \rename($source, $chunkFilePath)) {
-            throw new Exception('Failed to write chunk '.$chunk);
-        }
+        $chunksReceived = $this->countChunks($tmp, $path);
 
         if ($chunks === $chunksReceived) {
             $this->joinChunks($path, $chunks);
@@ -109,7 +104,7 @@ class Local extends Device
      * @param int chunk
      * @param int chunks
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
@@ -122,23 +117,20 @@ class Local extends Device
 
             return $chunks;
         }
-        $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path).DIRECTORY_SEPARATOR.\basename($path).'_chunks.log';
 
-        $this->createDirectory(\dirname($tmp));
-        if (! file_put_contents($tmp, "$chunk\n", FILE_APPEND)) {
-            throw new Exception('Can\'t write chunk log '.$tmp);
+        $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path);
+        $this->createDirectory($tmp);
+
+        $chunkFilePath = $tmp.DIRECTORY_SEPARATOR.pathinfo($path, PATHINFO_FILENAME).'.part.'.$chunk;
+
+        // skip writing chunk if the chunk was re-uploaded
+        if (! file_exists($chunkFilePath)) {
+            if (! \file_put_contents($chunkFilePath, $data)) {
+                throw new Exception('Failed to write chunk '.$chunk);
+            }
         }
 
-        $chunkLogs = file($tmp);
-        if (! $chunkLogs) {
-            throw new Exception('Unable to read chunk log '.$tmp);
-        }
-
-        $chunksReceived = count(file($tmp));
-
-        if (! \file_put_contents(dirname($tmp).DIRECTORY_SEPARATOR.pathinfo($path, PATHINFO_FILENAME).'.part.'.$chunk, $data)) {
-            throw new Exception('Failed to write chunk '.$chunk);
-        }
+        $chunksReceived = $this->countChunks($tmp, $path);
 
         if ($chunks === $chunksReceived) {
             $this->joinChunks($path, $chunks);
@@ -149,10 +141,30 @@ class Local extends Device
         return $chunksReceived;
     }
 
+    private function countChunks(string $tmp, string $path): int
+    {
+        $escaped = function (string $literal): string {
+            return \str_replace(['\\', '*', '?', '[', ']', '{', '}'], ['\\\\', '\\*', '\\?', '\\[', '\\]', '\\{', '\\}'], $literal);
+        };
+        $pattern = $escaped($tmp).DIRECTORY_SEPARATOR.$escaped(\pathinfo($path, PATHINFO_FILENAME)).'.part.*';
+        $files = \glob($pattern);
+        if ($files === false) {
+            return 0;
+        }
+
+        $count = 0;
+        foreach ($files as $file) {
+            if (\preg_match('/\.part\.\d+$/', $file)) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
     private function joinChunks(string $path, int $chunks): void
     {
-        $tmpDir = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path);
-        $tmp = $tmpDir.DIRECTORY_SEPARATOR.\basename($path).'_chunks.log';
+        $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path);
         $tmpAssemble = \dirname($path).DIRECTORY_SEPARATOR.'tmp_assemble_'.\basename($path);
 
         $dest = \fopen($tmpAssemble, 'wb');
@@ -162,7 +174,7 @@ class Local extends Device
 
         $partsToUnlink = [];
         for ($i = 1; $i <= $chunks; $i++) {
-            $part = $tmpDir.DIRECTORY_SEPARATOR.\pathinfo($path, PATHINFO_FILENAME).'.part.'.$i;
+            $part = $tmp.DIRECTORY_SEPARATOR.\pathinfo($path, PATHINFO_FILENAME).'.part.'.$i;
             $src = @\fopen($part, 'rb');
             if ($src === false) {
                 \fclose($dest);
@@ -193,12 +205,8 @@ class Local extends Device
             }
         }
 
-        if (! \unlink($tmp)) {
-            \trigger_error('Failed to remove chunk log '.$tmp, E_USER_WARNING);
-        }
-
-        if (! \rmdir($tmpDir)) {
-            \trigger_error('Failed to remove temporary chunk directory '.$tmpDir, E_USER_WARNING);
+        if (! \rmdir($tmp)) {
+            \trigger_error('Failed to remove temporary chunk directory '.$tmp, E_USER_WARNING);
         }
     }
 

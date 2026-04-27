@@ -1,4 +1,4 @@
-FROM composer:2.0 as composer
+FROM composer:2.0 AS composer
 
 ARG TESTING=false
 ENV TESTING=$TESTING
@@ -8,14 +8,14 @@ WORKDIR /usr/local/src/
 COPY composer.lock /usr/local/src/
 COPY composer.json /usr/local/src/
 
-RUN composer update \
+RUN composer install \
   --ignore-platform-reqs \
   --optimize-autoloader \
   --no-plugins  \
   --no-scripts \
   --prefer-dist
 
-FROM php:8.1-cli-alpine as compile
+FROM php:8.3-cli-alpine AS compile
 
 ENV PHP_ZSTD_VERSION="master"
 ENV PHP_BROTLI_VERSION="7ae4fcd8b81a65d7521c298cae49af386d1ea4e3"
@@ -39,16 +39,20 @@ RUN git clone --recursive --depth 1 --branch $PHP_ZSTD_VERSION https://github.co
   && cd php-ext-zstd \
   && phpize \
   && ./configure --with-libzstd \
-  && make && make install
+  && make && make install \
+  && mkdir -p /ext \
+  && cp $(php-config --extension-dir)/zstd.so /ext/zstd.so
 
 ## Brotli Extension
-FROM compile as brotli
+FROM compile AS brotli
 RUN git clone https://github.com/kjdev/php-ext-brotli.git \
   && cd php-ext-brotli \
   && git reset --hard $PHP_BROTLI_VERSION \
   && phpize \
   && ./configure --with-libbrotli \
-  && make && make install
+  && make && make install \
+  && mkdir -p /ext \
+  && cp $(php-config --extension-dir)/brotli.so /ext/brotli.so
 
 ## LZ4 Extension
 FROM compile AS lz4
@@ -57,7 +61,9 @@ RUN git clone --recursive https://github.com/kjdev/php-ext-lz4.git \
   && git reset --hard $PHP_LZ4_VERSION \
   && phpize \
   && ./configure --with-lz4-includedir=/usr \ 
-  && make && make install
+  && make && make install \
+  && mkdir -p /ext \
+  && cp $(php-config --extension-dir)/lz4.so /ext/lz4.so
 
 ## Snappy Extension
 FROM compile AS snappy
@@ -66,10 +72,12 @@ RUN git clone --recursive https://github.com/kjdev/php-ext-snappy.git \
   && git reset --hard $PHP_SNAPPY_VERSION \
   && phpize \
   && ./configure \
-  && make && make install
+  && make && make install \
+  && mkdir -p /ext \
+  && cp $(php-config --extension-dir)/snappy.so /ext/snappy.so
 
 ## Xz Extension
-FROM compile as xz
+FROM compile AS xz
 RUN wget https://tukaani.org/xz/xz-${PHP_XZ_VERSION}.tar.xz -O xz.tar.xz \
   && tar -xJf xz.tar.xz \
   && rm xz.tar.xz \
@@ -85,30 +93,35 @@ RUN git clone https://github.com/codemasher/php-ext-xz.git --branch ${PHP_EXT_XZ
   && cd php-ext-xz \
   && phpize \
   && ./configure \
-  && make && make install
+  && make && make install \
+  && mkdir -p /ext \
+  && cp $(php-config --extension-dir)/xz.so /ext/xz.so
 
-FROM compile as final
+FROM compile AS final
 
 LABEL maintainer="team@appwrite.io"
 
 WORKDIR /usr/src/code
-
-RUN echo extension=zstd.so >> /usr/local/etc/php/conf.d/zstd.ini
-RUN echo extension=brotli.so >> /usr/local/etc/php/conf.d/brotli.ini
-RUN echo extension=lz4.so >> /usr/local/etc/php/conf.d/lz4.ini
-RUN echo extension=snappy.so >> /usr/local/etc/php/conf.d/snappy.ini
-RUN echo extension=xz.so >> /usr/local/etc/php/conf.d/xz.ini
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
   && echo "opcache.enable_cli=1" >> $PHP_INI_DIR/php.ini \
   && echo "memory_limit=1024M" >> $PHP_INI_DIR/php.ini
 
 COPY --from=composer /usr/local/src/vendor /usr/src/code/vendor
-COPY --from=zstd /usr/local/lib/php/extensions/no-debug-non-zts-20210902/zstd.so /usr/local/lib/php/extensions/no-debug-non-zts-20210902/
-COPY --from=brotli /usr/local/lib/php/extensions/no-debug-non-zts-20210902/brotli.so /usr/local/lib/php/extensions/no-debug-non-zts-20210902/
-COPY --from=lz4 /usr/local/lib/php/extensions/no-debug-non-zts-20210902/lz4.so /usr/local/lib/php/extensions/no-debug-non-zts-20210902/
-COPY --from=snappy /usr/local/lib/php/extensions/no-debug-non-zts-20210902/snappy.so /usr/local/lib/php/extensions/no-debug-non-zts-20210902/
-COPY --from=xz /usr/local/lib/php/extensions/no-debug-non-zts-20210902/xz.so /usr/local/lib/php/extensions/no-debug-non-zts-20210902/
+COPY --from=zstd /ext/zstd.so /ext/
+COPY --from=brotli /ext/brotli.so /ext/
+COPY --from=lz4 /ext/lz4.so /ext/
+COPY --from=snappy /ext/snappy.so /ext/
+COPY --from=xz /ext/xz.so /ext/
+
+RUN EXT_DIR=$(php-config --extension-dir) \
+  && mkdir -p $EXT_DIR \
+  && mv /ext/*.so $EXT_DIR/ \
+  && echo extension=zstd.so >> /usr/local/etc/php/conf.d/zstd.ini \
+  && echo extension=brotli.so >> /usr/local/etc/php/conf.d/brotli.ini \
+  && echo extension=lz4.so >> /usr/local/etc/php/conf.d/lz4.ini \
+  && echo extension=snappy.so >> /usr/local/etc/php/conf.d/snappy.ini \
+  && echo extension=xz.so >> /usr/local/etc/php/conf.d/xz.ini
 
 # Add Source Code
 COPY . /usr/src/code

@@ -364,6 +364,53 @@ abstract class S3Base extends TestCase
         return $dest;
     }
 
+    public function testOutOfOrderPartUpload()
+    {
+        $source = __DIR__.'/../resources/disk-a/large_file.mp4';
+        $dest = $this->object->getPath('uploaded-out-of-order.mp4');
+        $totalSize = \filesize($source);
+        // AWS S3 requires each part to be at least 5MB except for last part
+        $chunkSize = 5 * 1024 * 1024;
+
+        $chunks = ceil($totalSize / $chunkSize);
+
+        // Read all chunk contents into memory so we can upload out of order
+        $parts = [];
+        $handle = @fopen($source, 'rb');
+        $chunkNum = 1;
+        while ($chunkNum <= $chunks) {
+            $contents = fread($handle, $chunkSize);
+            $parts[$chunkNum] = $contents;
+            $chunkNum++;
+        }
+        @fclose($handle);
+
+        $metadata = [
+            'parts' => [],
+            'chunks' => 0,
+            'uploadId' => null,
+            'content_type' => \mime_content_type($source),
+        ];
+
+        // Upload chunks in reverse order
+        for ($i = $chunks; $i >= 1; $i--) {
+            $op = __DIR__.'/chunk.part';
+            $cc = fopen($op, 'wb');
+            fwrite($cc, $parts[$i]);
+            fclose($cc);
+            $this->object->upload($op, $dest, $i, $chunks, $metadata);
+            unlink($op);
+        }
+
+        $this->assertEquals(\filesize($source), $this->object->getFileSize($dest));
+
+        // S3 doesnt provide a method to get a proper MD5-hash of a file created using multipart upload
+        // TODO
+        // $this->assertEquals(\md5_file($source), $this->object->getFileHash($dest));
+        // $this->object->delete($dest);
+        return $dest;
+    }
+
     /**
      * @depends testPartUpload
      */
