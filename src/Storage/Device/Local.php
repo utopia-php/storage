@@ -52,7 +52,7 @@ class Local extends Device
      * return number of chunks uploaded or 0 if it fails.
      *
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
@@ -104,7 +104,7 @@ class Local extends Device
      * @param int chunk
      * @param int chunks
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {

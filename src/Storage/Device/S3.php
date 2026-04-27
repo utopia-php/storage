@@ -163,7 +163,7 @@ class S3 extends Device
      * @param int chunk
      * @param int chunks
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
@@ -180,7 +180,7 @@ class S3 extends Device
      * @param int chunk
      * @param int chunks
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
@@ -248,7 +248,7 @@ class S3 extends Device
      * Initiate a multipart upload and return an upload ID.
      *
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function createMultipartUpload(string $path, string $contentType): string
     {
@@ -268,7 +268,7 @@ class S3 extends Device
      *
      * @param  string  $source
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function uploadPart(string $data, string $path, string $contentType, int $chunk, string $uploadId): string
     {
@@ -291,7 +291,7 @@ class S3 extends Device
      * Complete Multipart Upload
      *
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function completeMultipartUpload(string $path, string $uploadId, array $parts): bool
     {
@@ -314,7 +314,7 @@ class S3 extends Device
      * Abort Chunked Upload
      *
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function abort(string $path, string $extra = ''): bool
     {
@@ -332,7 +332,7 @@ class S3 extends Device
      * @param int offset
      * @param int|null length
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function read(string $path, int $offset = 0, ?int $length = null): string
     {
@@ -354,7 +354,7 @@ class S3 extends Device
      * Write file by given path.
      *
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function write(string $path, string $data, string $contentType = ''): bool
     {
@@ -375,7 +375,7 @@ class S3 extends Device
      *
      * @see http://php.net/manual/en/function.filesize.php
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function delete(string $path, bool $recursive = false): bool
     {
@@ -429,7 +429,7 @@ class S3 extends Device
      * Delete files in given path, path must be a directory. Return true on success and false on failure.
      *
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function deletePath(string $path): bool
     {
@@ -677,7 +677,7 @@ class S3 extends Device
      *
      * @return object
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function call(string $operation, string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
     {
