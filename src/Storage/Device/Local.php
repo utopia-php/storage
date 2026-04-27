@@ -143,7 +143,8 @@ class Local extends Device
 
     private function countChunks(string $tmp, string $path): int
     {
-        $pattern = $tmp.DIRECTORY_SEPARATOR.pathinfo($path, PATHINFO_FILENAME).'.part.*';
+        $filename = \str_replace(['\\', '*', '?', '[', ']', '{', '}'], ['\\\\', '\\*', '\\?', '\\[', '\\]', '\\{', '\\}'], \pathinfo($path, PATHINFO_FILENAME));
+        $pattern = $tmp.DIRECTORY_SEPARATOR.$filename.'.part.*';
         $files = \glob($pattern);
         if ($files === false) {
             return 0;
