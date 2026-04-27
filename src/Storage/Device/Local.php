@@ -77,6 +77,10 @@ class Local extends Device
             if (! \rename($source, $chunkFilePath)) {
                 throw new Exception('Failed to write chunk '.$chunk);
             }
+        } else {
+            if (\file_exists($source)) {
+                \unlink($source);
+            }
         }
 
         $chunksReceived = $this->countChunks($tmp, $path);
@@ -141,8 +145,18 @@ class Local extends Device
     {
         $pattern = $tmp.DIRECTORY_SEPARATOR.pathinfo($path, PATHINFO_FILENAME).'.part.*';
         $files = \glob($pattern);
+        if ($files === false) {
+            return 0;
+        }
 
-        return $files === false ? 0 : \count($files);
+        $count = 0;
+        foreach ($files as $file) {
+            if (\preg_match('/\.part\.\d+$/', $file)) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     private function joinChunks(string $path, int $chunks): void
