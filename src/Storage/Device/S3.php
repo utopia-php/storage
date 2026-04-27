@@ -297,6 +297,8 @@ class S3 extends Device
     {
         $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
 
+        \ksort($parts);
+
         $body = '<CompleteMultipartUpload>';
         foreach ($parts as $key => $etag) {
             $body .= "<Part><ETag>{$etag}</ETag><PartNumber>{$key}</PartNumber></Part>";
