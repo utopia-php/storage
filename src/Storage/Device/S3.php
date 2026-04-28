@@ -203,6 +203,16 @@ class S3 extends Device
         }
         $metadata['parts'][$chunk] = $etag;
         if ($metadata['chunks'] == $chunks) {
+            $headers = $this->headers;
+            $amzHeaders = $this->amzHeaders;
+
+            if ($this->exists($path)) {
+                return $metadata['chunks'];
+            }
+
+            $this->headers = $headers;
+            $this->amzHeaders = $amzHeaders;
+
             $this->completeMultipartUpload($path, $uploadId, $metadata['parts']);
         }
 

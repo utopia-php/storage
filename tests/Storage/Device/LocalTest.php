@@ -524,19 +524,20 @@ class LocalTest extends TestCase
     {
         $storage = $this->makeJoinTestStorage();
         $dest = $storage->getRoot().DIRECTORY_SEPARATOR.'test.dat';
-        $tmpAssemble = $storage->getRoot().DIRECTORY_SEPARATOR.'tmp_assemble_test.dat';
 
         $storage->uploadData('AAAA', $dest, 'application/octet-stream', 1, 3);
         $storage->uploadData('BBBB', $dest, 'application/octet-stream', 2, 3);
 
         // Simulate a stale assembly file left by a previously crashed attempt.
-        \file_put_contents($tmpAssemble, 'STALE_GARBAGE_DATA');
+        // With unique temp paths (tempnam), stale files at old hardcoded paths
+        // are naturally bypassed rather than overwritten.
+        $staleFile = $storage->getRoot().DIRECTORY_SEPARATOR.'tmp_assemble_test.dat';
+        \file_put_contents($staleFile, 'STALE_GARBAGE_DATA');
 
         $storage->uploadData('CCCC', $dest, 'application/octet-stream', 3, 3);
 
         $this->assertTrue(\file_exists($dest));
         $this->assertSame('AAAABBBBCCCC', \file_get_contents($dest), 'Stale assembly file must not corrupt output');
-        $this->assertFalse(\file_exists($tmpAssemble), 'Temp assembly file should be removed after successful rename');
 
         $storage->delete($storage->getRoot(), true);
     }
@@ -574,6 +575,39 @@ class LocalTest extends TestCase
         $storage->uploadData('CCCC', $dest, 'application/octet-stream', 3, 3);
         $this->assertTrue(\file_exists($dest), 'File should be assembled after final chunk');
         $this->assertSame('AAAABBBBCCCC', \file_get_contents($dest), 'Duplicate retry must not corrupt final file');
+
+        $storage->delete($storage->getRoot(), true);
+    }
+
+    public function testParallelChunkUpload(): void
+    {
+        $storage = $this->makeJoinTestStorage();
+        $dest = $storage->getRoot().DIRECTORY_SEPARATOR.'parallel.dat';
+
+        // Upload chunk 1 (creates temp directory)
+        $storage->uploadData('AAAA', $dest, 'application/octet-stream', 1, 2);
+
+        // Upload chunk 2 (assembles the file)
+        $storage->uploadData('BBBB', $dest, 'application/octet-stream', 2, 2);
+
+        // Verify file exists and is correct
+        $this->assertTrue(\file_exists($dest));
+        $this->assertSame('AAAABBBB', \file_get_contents($dest));
+
+        // Simulate the race where another request already assembled the file
+        // by calling joinChunks directly when the file already exists
+        $reflection = new \ReflectionClass($storage);
+        $method = $reflection->getMethod('joinChunks');
+        $method->setAccessible(true);
+
+        try {
+            $method->invoke($storage, $dest, 2);
+        } catch (\Exception $e) {
+            $this->fail('Duplicate assembly should not throw: '.$e->getMessage());
+        }
+
+        $this->assertTrue(\file_exists($dest), 'File should still exist after duplicate assembly attempt');
+        $this->assertSame('AAAABBBB', \file_get_contents($dest), 'File content must not be corrupted');
 
         $storage->delete($storage->getRoot(), true);
     }
