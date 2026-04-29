@@ -4,3 +4,4 @@
 tests/chunk.php
 .idea/
 .env
+.DS_Store

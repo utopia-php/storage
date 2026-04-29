@@ -164,8 +164,12 @@ class Local extends Device
 
     private function joinChunks(string $path, int $chunks): void
     {
+        if (\file_exists($path)) {
+            return;
+        }
+
         $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path);
-        $tmpAssemble = \dirname($path).DIRECTORY_SEPARATOR.'tmp_assemble_'.\basename($path);
+        $tmpAssemble = \tempnam(\dirname($path), 'tmp_assemble_'.\basename($path).'_');
 
         $dest = \fopen($tmpAssemble, 'wb');
         if ($dest === false) {
@@ -195,6 +199,11 @@ class Local extends Device
         \fclose($dest);
 
         if (! \rename($tmpAssemble, $path)) {
+            if (\file_exists($path)) {
+                \unlink($tmpAssemble);
+
+                return;
+            }
             \unlink($tmpAssemble);
             throw new Exception('Failed to finalize assembled file '.$path);
         }
