@@ -861,7 +861,6 @@ class S3 extends Device
 
             return $response;
         } finally {
-            \curl_close($curl);
 
             $this->storageOperationTelemetry->record(
                 microtime(true) - $startTime,
