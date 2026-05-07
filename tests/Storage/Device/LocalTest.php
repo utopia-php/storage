@@ -190,6 +190,51 @@ class LocalTest extends TestCase
         return $dest;
     }
 
+    public function testUploadChunkDoesNotFinalizeUntilFinalizeUpload(): void
+    {
+        $dest = $this->object->getPath('chunked-phase-upload.txt');
+        $metadata = [];
+        $parts = [
+            2 => 'bbb',
+            1 => 'aaa',
+            3 => 'ccc',
+        ];
+
+        foreach ($parts as $chunk => $data) {
+            $source = __DIR__.'/chunk-'.$chunk.'.part';
+            file_put_contents($source, $data);
+
+            $this->object->uploadChunk($source, $dest, $chunk, 3, $metadata);
+            $this->assertFalse($this->object->exists($dest));
+        }
+
+        $this->assertSame(3, $metadata['chunks']);
+        $this->assertTrue($this->object->finalizeUpload($dest, 3, $metadata));
+        $this->assertSame('aaabbbccc', $this->object->read($dest));
+        $this->assertTrue($this->object->finalizeUpload($dest, 3, $metadata));
+
+        $this->object->delete($dest);
+    }
+
+    public function testFinalizeUploadRequiresAllLocalChunks(): void
+    {
+        $dest = $this->object->getPath('chunked-phase-missing.txt');
+        $metadata = [];
+        $source = __DIR__.'/chunk-missing.part';
+        file_put_contents($source, 'aaa');
+
+        $this->object->uploadChunk($source, $dest, 1, 2, $metadata);
+
+        try {
+            $this->object->finalizeUpload($dest, 2, $metadata);
+            $this->fail('Expected missing chunk exception');
+        } catch (\Exception $e) {
+            $this->assertSame('Missing chunk 2', $e->getMessage());
+        } finally {
+            $this->object->abort($dest);
+        }
+    }
+
     public function testPartUploadRetry()
     {
         $source = __DIR__.'/../../resources/disk-a/large_file.mp4';

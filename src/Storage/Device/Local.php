@@ -56,15 +56,36 @@ class Local extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        $this->createDirectory(\dirname($path));
+        $this->prepareUpload($path, '', $chunks, $metadata);
+        $chunksReceived = $this->uploadChunk($source, $path, $chunk, $chunks, $metadata);
 
-        // move_uploaded_file() verifies the file is not tampered with
+        if ($chunks === $chunksReceived) {
+            $this->finalizeUpload($path, $chunks, $metadata);
+        }
+
+        return $chunksReceived;
+    }
+
+    public function prepareUpload(string $path, string $contentType, int $chunks = 1, array &$metadata = []): void
+    {
+        $this->createDirectory(\dirname($path));
+        $metadata['parts'] ??= [];
+        $metadata['chunks'] ??= 0;
+    }
+
+    public function uploadChunk(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    {
+        $this->prepareUpload($path, '', $chunks, $metadata);
+
         if ($chunks === 1) {
-            if (! \move_uploaded_file($source, $path)) {
+            if (! \move_uploaded_file($source, $path) && ! \rename($source, $path)) {
                 throw new Exception('Can\'t upload file '.$path);
             }
 
-            return $chunks;
+            $metadata['parts'][$chunk] = true;
+            $metadata['chunks'] = 1;
+
+            return 1;
         }
 
         $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path);
@@ -84,14 +105,33 @@ class Local extends Device
         }
 
         $chunksReceived = $this->countChunks($tmp, $path);
-
-        if ($chunks === $chunksReceived) {
-            $this->joinChunks($path, $chunks);
-
-            return $chunksReceived;
-        }
+        $metadata['parts'][$chunk] = true;
+        $metadata['chunks'] = $chunksReceived;
 
         return $chunksReceived;
+    }
+
+    public function finalizeUpload(string $path, int $chunks = 1, array &$metadata = []): bool
+    {
+        if (\file_exists($path)) {
+            return true;
+        }
+
+        if ($chunks === 1) {
+            return false;
+        }
+
+        $tmp = \dirname($path).DIRECTORY_SEPARATOR.'tmp_'.\basename($path);
+        for ($i = 1; $i <= $chunks; $i++) {
+            $part = $tmp.DIRECTORY_SEPARATOR.\pathinfo($path, PATHINFO_FILENAME).'.part.'.$i;
+            if (! \file_exists($part)) {
+                throw new Exception('Missing chunk '.$i);
+            }
+        }
+
+        $this->joinChunks($path, $chunks);
+
+        return true;
     }
 
     /**
@@ -108,7 +148,7 @@ class Local extends Device
      */
     public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        $this->createDirectory(\dirname($path));
+        $this->prepareUpload($path, $contentType, $chunks, $metadata);
 
         if ($chunks === 1) {
             if (! \file_put_contents($path, $data)) {
@@ -131,9 +171,11 @@ class Local extends Device
         }
 
         $chunksReceived = $this->countChunks($tmp, $path);
+        $metadata['parts'][$chunk] = true;
+        $metadata['chunks'] = $chunksReceived;
 
         if ($chunks === $chunksReceived) {
-            $this->joinChunks($path, $chunks);
+            $this->finalizeUpload($path, $chunks, $metadata);
 
             return $chunksReceived;
         }

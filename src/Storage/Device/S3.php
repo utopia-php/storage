@@ -167,7 +167,64 @@ class S3 extends Device
      */
     public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        return $this->uploadData(\file_get_contents($source), $path, \mime_content_type($source), $chunk, $chunks, $metadata);
+        $contentType = \mime_content_type($source) ?: '';
+        $this->prepareUpload($path, $contentType, $chunks, $metadata);
+        $chunksReceived = $this->uploadChunk($source, $path, $chunk, $chunks, $metadata);
+
+        if ($chunks === $chunksReceived) {
+            $this->finalizeUpload($path, $chunks, $metadata);
+        }
+
+        return $chunksReceived;
+    }
+
+    public function prepareUpload(string $path, string $contentType, int $chunks = 1, array &$metadata = []): void
+    {
+        $metadata['parts'] ??= [];
+        $metadata['chunks'] ??= 0;
+        $metadata['content_type'] ??= $contentType;
+
+        if ($chunks === 1 || ! empty($metadata['uploadId'])) {
+            return;
+        }
+
+        $metadata['uploadId'] = $this->createMultipartUpload($path, $contentType);
+    }
+
+    public function uploadChunk(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    {
+        $data = \file_get_contents($source);
+        if ($data === false) {
+            throw new Exception('Can\'t read file '.$source);
+        }
+
+        return $this->uploadChunkData($data, $path, $metadata['content_type'] ?? (\mime_content_type($source) ?: ''), $chunk, $chunks, $metadata);
+    }
+
+    public function finalizeUpload(string $path, int $chunks = 1, array &$metadata = []): bool
+    {
+        if ($this->exists($path)) {
+            return true;
+        }
+
+        if ($chunks === 1) {
+            return false;
+        }
+
+        if (empty($metadata['uploadId'])) {
+            throw new Exception('Missing multipart upload ID');
+        }
+
+        $metadata['parts'] ??= [];
+        for ($i = 1; $i <= $chunks; $i++) {
+            if (! array_key_exists($i, $metadata['parts'])) {
+                throw new Exception('Missing chunk '.$i);
+            }
+        }
+
+        $this->completeMultipartUpload($path, $metadata['uploadId'], $metadata['parts']);
+
+        return true;
     }
 
     /**
@@ -184,37 +241,39 @@ class S3 extends Device
      */
     public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        if ($chunk == 1 && $chunks == 1) {
-            return $this->write($path, $data, $contentType);
+        $this->prepareUpload($path, $contentType, $chunks, $metadata);
+        $chunksReceived = $this->uploadChunkData($data, $path, $contentType, $chunk, $chunks, $metadata);
+
+        if ($chunks === $chunksReceived) {
+            $this->finalizeUpload($path, $chunks, $metadata);
         }
-        $uploadId = $metadata['uploadId'] ?? null;
-        if (empty($uploadId)) {
-            $uploadId = $this->createMultipartUpload($path, $contentType);
-            $metadata['uploadId'] = $uploadId;
+
+        return $chunksReceived;
+    }
+
+    private function uploadChunkData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    {
+        if ($chunk == 1 && $chunks == 1) {
+            $this->write($path, $data, $contentType);
+            $metadata['parts'][$chunk] = true;
+            $metadata['chunks'] = 1;
+
+            return 1;
+        }
+
+        if (empty($metadata['uploadId'])) {
+            throw new Exception('Missing multipart upload ID');
         }
 
         $metadata['parts'] ??= [];
         $metadata['chunks'] ??= 0;
 
-        $etag = $this->uploadPart($data, $path, $contentType, $chunk, $uploadId);
+        $etag = $this->uploadPart($data, $path, $contentType, $chunk, $metadata['uploadId']);
         // skip incrementing if the chunk was re-uploaded
         if (! array_key_exists($chunk, $metadata['parts'])) {
             $metadata['chunks']++;
         }
         $metadata['parts'][$chunk] = $etag;
-        if ($metadata['chunks'] == $chunks) {
-            $headers = $this->headers;
-            $amzHeaders = $this->amzHeaders;
-
-            if ($this->exists($path)) {
-                return $metadata['chunks'];
-            }
-
-            $this->headers = $headers;
-            $this->amzHeaders = $amzHeaders;
-
-            $this->completeMultipartUpload($path, $uploadId, $metadata['parts']);
-        }
 
         return $metadata['chunks'];
     }
@@ -307,7 +366,7 @@ class S3 extends Device
     {
         $uri = $path !== '' ? '/'.\str_replace(['%2F', '%3F'], ['/', '?'], \rawurlencode($path)) : '/';
 
-        \ksort($parts);
+        \ksort($parts, SORT_NUMERIC);
 
         $body = '<CompleteMultipartUpload>';
         foreach ($parts as $key => $etag) {

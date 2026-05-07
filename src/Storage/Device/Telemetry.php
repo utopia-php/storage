@@ -64,6 +64,21 @@ class Telemetry extends Device
         return $this->measure(__FUNCTION__, $source, $path, $chunk, $chunks, $metadata);
     }
 
+    public function prepareUpload(string $path, string $contentType, int $chunks = 1, array &$metadata = []): void
+    {
+        $this->measure(__FUNCTION__, $path, $contentType, $chunks, $metadata);
+    }
+
+    public function uploadChunk(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    {
+        return $this->measure(__FUNCTION__, $source, $path, $chunk, $chunks, $metadata);
+    }
+
+    public function finalizeUpload(string $path, int $chunks = 1, array &$metadata = []): bool
+    {
+        return $this->measure(__FUNCTION__, $path, $chunks, $metadata);
+    }
+
     public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
         return $this->measure(__FUNCTION__, $data, $path, $contentType, $chunk, $chunks, $metadata);
