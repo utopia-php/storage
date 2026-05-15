@@ -136,6 +136,16 @@ class S3SlowDownTest extends TestCase
         unlink($source);
     }
 
+    public function testSingleChunkUploadDataDoesNotFinalizeOrCheckExists(): void
+    {
+        $metadata = [];
+
+        $this->assertSame(1, $this->s3->uploadData('aaa', '/root/file.txt', 'text/plain', 1, 1, $metadata));
+        $this->assertSame(['s3:write'], $this->s3->calls);
+        $this->assertSame([1 => true], $metadata['parts']);
+        $this->assertSame(1, $metadata['chunks']);
+    }
+
     public function testFinalizeUploadRequiresAllS3Parts(): void
     {
         $metadata = [

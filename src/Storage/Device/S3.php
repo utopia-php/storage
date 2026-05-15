@@ -171,8 +171,8 @@ class S3 extends Device
         $this->prepareUpload($path, $contentType, $chunks, $metadata);
         $chunksReceived = $this->uploadChunk($source, $path, $chunk, $chunks, $metadata);
 
-        if ($chunks === $chunksReceived) {
-            $this->finalizeUpload($path, $chunks, $metadata);
+        if ($chunks > 1 && $chunks === $chunksReceived && ! $this->finalizeUpload($path, $chunks, $metadata)) {
+            throw new Exception('Failed to finalize upload '.$path);
         }
 
         return $chunksReceived;
@@ -244,8 +244,8 @@ class S3 extends Device
         $this->prepareUpload($path, $contentType, $chunks, $metadata);
         $chunksReceived = $this->uploadChunkData($data, $path, $contentType, $chunk, $chunks, $metadata);
 
-        if ($chunks === $chunksReceived) {
-            $this->finalizeUpload($path, $chunks, $metadata);
+        if ($chunks > 1 && $chunks === $chunksReceived && ! $this->finalizeUpload($path, $chunks, $metadata)) {
+            throw new Exception('Failed to finalize upload '.$path);
         }
 
         return $chunksReceived;

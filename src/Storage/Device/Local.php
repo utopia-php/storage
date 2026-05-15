@@ -59,8 +59,8 @@ class Local extends Device
         $this->prepareUpload($path, '', $chunks, $metadata);
         $chunksReceived = $this->uploadChunk($source, $path, $chunk, $chunks, $metadata);
 
-        if ($chunks === $chunksReceived) {
-            $this->finalizeUpload($path, $chunks, $metadata);
+        if ($chunks > 1 && $chunks === $chunksReceived && ! $this->finalizeUpload($path, $chunks, $metadata)) {
+            throw new Exception('Failed to finalize upload '.$path);
         }
 
         return $chunksReceived;
@@ -75,7 +75,9 @@ class Local extends Device
 
     public function uploadChunk(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        $this->prepareUpload($path, '', $chunks, $metadata);
+        $this->createDirectory(\dirname($path));
+        $metadata['parts'] ??= [];
+        $metadata['chunks'] ??= 0;
 
         if ($chunks === 1) {
             if (! \move_uploaded_file($source, $path) && ! \rename($source, $path)) {
@@ -174,10 +176,8 @@ class Local extends Device
         $metadata['parts'][$chunk] = true;
         $metadata['chunks'] = $chunksReceived;
 
-        if ($chunks === $chunksReceived) {
-            $this->finalizeUpload($path, $chunks, $metadata);
-
-            return $chunksReceived;
+        if ($chunks > 1 && $chunks === $chunksReceived && ! $this->finalizeUpload($path, $chunks, $metadata)) {
+            throw new Exception('Failed to finalize upload '.$path);
         }
 
         return $chunksReceived;
