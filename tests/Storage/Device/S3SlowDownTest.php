@@ -14,6 +14,8 @@ class TestableS3 extends S3
 
     public string $completedBody = '';
 
+    public array $headersByOperation = [];
+
     private bool $objectExists = false;
 
     public function exposedIsTransientError(int $statusCode, string $body): bool
@@ -24,6 +26,7 @@ class TestableS3 extends S3
     protected function call(string $operation, string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
     {
         $this->calls[] = $operation;
+        $this->headersByOperation[$operation] = $this->headers;
 
         if ($operation === 's3:info') {
             if (! $this->objectExists) {
@@ -176,5 +179,17 @@ class S3SlowDownTest extends TestCase
         $this->assertNotFalse($part10);
         $this->assertLessThan($part2, $part1);
         $this->assertLessThan($part10, $part2);
+    }
+
+    public function testFinalizeUploadSendsCompleteBodyAsXml(): void
+    {
+        $metadata = [
+            'uploadId' => 'upload-123',
+            'parts' => [1 => 'etag-1', 2 => 'etag-2'],
+            'chunks' => 2,
+        ];
+
+        $this->assertTrue($this->s3->finalizeUpload('/root/file.txt', 2, $metadata));
+        $this->assertSame('application/xml', $this->s3->headersByOperation['s3:completeMultipartUpload']['content-type']);
     }
 }

@@ -374,6 +374,7 @@ class S3 extends Device
         }
         $body .= '</CompleteMultipartUpload>';
 
+        $this->headers['content-type'] = 'application/xml';
         $this->amzHeaders['x-amz-content-sha256'] = \hash('sha256', $body);
         $this->headers['content-md5'] = \base64_encode(md5($body, true));
         $this->call('s3:completeMultipartUpload', self::METHOD_POST, $uri, $body, ['uploadId' => $uploadId]);
