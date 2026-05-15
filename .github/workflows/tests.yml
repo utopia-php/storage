@@ -31,6 +31,8 @@ jobs:
       env:
         DO_ACCESS_KEY: ${{ secrets.DO_ACCESS_KEY }}
         DO_SECRET: ${{ secrets.DO_SECRET }}
+        IBM_CLOUD_ACCESS_KEY: ${{ secrets.IBM_CLOUD_ACCESS_KEY }}
+        IBM_CLOUD_SECRET: ${{ secrets.IBM_CLOUD_SECRET }}
         LINODE_ACCESS_KEY: ${{ secrets.LINODE_ACCESS_KEY }}
         LINODE_SECRET: ${{ secrets.LINODE_SECRET }}
         S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
@@ -67,6 +69,8 @@ jobs:
         env:
           DO_ACCESS_KEY: ${{ secrets.DO_ACCESS_KEY }}
           DO_SECRET: ${{ secrets.DO_SECRET }}
+          IBM_CLOUD_ACCESS_KEY: ${{ secrets.IBM_CLOUD_ACCESS_KEY }}
+          IBM_CLOUD_SECRET: ${{ secrets.IBM_CLOUD_SECRET }}
           LINODE_ACCESS_KEY: ${{ secrets.LINODE_ACCESS_KEY }}
           LINODE_SECRET: ${{ secrets.LINODE_SECRET }}
           S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
