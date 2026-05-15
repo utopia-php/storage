@@ -19,6 +19,8 @@ class Storage
 
     const DEVICE_WASABI = 'wasabi';
 
+    const DEVICE_YANDEX = 'yandex';
+
     const DEVICE_BACKBLAZE = 'backblaze';
 
     const DEVICE_LINODE = 'linode';
