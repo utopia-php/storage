@@ -98,6 +98,33 @@ abstract class Device
     abstract public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
 
     /**
+     * Prepare Upload.
+     *
+     * Initialize adapter-specific upload state without transferring a chunk body.
+     *
+     * @throws Exception
+     */
+    abstract public function prepareUpload(string $path, string $contentType, int $chunks = 1, array &$metadata = []): void;
+
+    /**
+     * Upload Chunk.
+     *
+     * Upload exactly one chunk without finalizing the full upload.
+     *
+     * @throws Exception
+     */
+    abstract public function uploadChunk(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
+
+    /**
+     * Finalize Upload.
+     *
+     * Complete a prepared upload once all chunks are known to be present.
+     *
+     * @throws Exception
+     */
+    abstract public function finalizeUpload(string $path, int $chunks = 1, array &$metadata = []): bool;
+
+    /**
      * Upload Data.
      *
      * Upload file contents to desired destination in the selected disk.
