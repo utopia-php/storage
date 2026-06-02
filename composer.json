@@ -22,7 +22,7 @@
         "ext-curl": "*",
         "ext-simplexml": "*",
         "utopia-php/system": "0.*.*",
-        "utopia-php/telemetry": "0.2.*",
+        "utopia-php/telemetry": "^0.4",
         "utopia-php/validators": "0.2.*"
     },
     "require-dev": {
