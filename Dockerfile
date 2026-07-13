@@ -15,7 +15,7 @@ RUN composer install \
   --no-scripts \
   --prefer-dist
 
-FROM php:8.3-cli-alpine AS compile
+FROM php:8.5-cli-alpine AS compile
 
 ENV PHP_ZSTD_VERSION="master"
 ENV PHP_BROTLI_VERSION="7ae4fcd8b81a65d7521c298cae49af386d1ea4e3"
