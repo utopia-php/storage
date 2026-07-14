@@ -250,7 +250,7 @@ For security issues, please email [security@appwrite.io](mailto:security@appwrit
 
 All code contributions - including those of people having commit access - must go through a pull request and be approved by a core developer before being merged. This is to ensure a proper review of all the code.
 
-We welcome you to contribute to the Utopia Storage library. For details on how to do this, please refer to our [Contributing Guide](https://github.com/utopia-php/storage/blob/master/CONTRIBUTING.md).
+We welcome you to contribute to the Utopia Storage library. For details on how to do this, please refer to our [Contributing Guide](https://github.com/utopia-php/monorepo/blob/main/CONTRIBUTING.md).
 
 ## License
 
