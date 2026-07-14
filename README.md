@@ -11,14 +11,14 @@ Utopia Storage is a simple and lightweight library for managing application stor
 
 This library is part of the [Utopia Framework](https://github.com/utopia-php/framework) project.
 
-## Getting Started
+## Getting started
 
-Install using composer:
+Install using Composer:
 ```bash
 composer require utopia-php/storage
 ```
 
-### Basic Usage
+### Basic usage
 
 ```php
 <?php
@@ -52,9 +52,9 @@ $contents = $device->read('destination/path/file.png');
 $device->delete('destination/path/file.png');
 ```
 
-## Available Adapters
+## Available adapters
 
-### Local Storage
+### Local storage
 
 Use the local filesystem for storing files.
 
@@ -161,7 +161,7 @@ Storage::setDevice('files', new Linode(
 // Linode::EU_CENTRAL_1, Linode::US_SOUTHEAST_1, Linode::US_EAST_1, Linode::AP_SOUTH_1
 ```
 
-### Wasabi Cloud Storage
+### Wasabi cloud storage
 
 Store files in Wasabi Cloud Storage.
 
@@ -185,7 +185,7 @@ Storage::setDevice('files', new Wasabi(
 // Wasabi::AP_NORTHEAST_1, Wasabi::AP_NORTHEAST_2
 ```
 
-## Common Operations
+## Common operations
 
 All storage adapters provide a consistent API for working with files:
 
@@ -236,11 +236,11 @@ $targetDevice = Storage::getDevice('target');
 $sourceDevice->transfer('source/path.jpg', 'target/path.jpg', $targetDevice);
 ```
 
-## Adding New Adapters
+## Adding new adapters
 
 For information on adding new storage adapters, see the [Adding New Storage Adapter](https://github.com/utopia-php/storage/blob/master/docs/adding-new-storage-adapter.md) guide.
 
-## System Requirements
+## System requirements
 
 Utopia Storage requires PHP 7.4 or later. We recommend using the latest PHP version whenever possible.
 

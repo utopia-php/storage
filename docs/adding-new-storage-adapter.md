@@ -2,11 +2,11 @@
 
 This document is a part of Utopia PHP contributors' guide. Before you continue reading this document make sure you have read the [Code of Conduct](../CODE_OF_CONDUCT.md) and the [Contributing Guide](../CONTRIBUTING.md).
 
-## Getting Started
+## Getting started
 
-Storage adapters help us use various storage services to store our data. As of writing this guide, we already support Local storage, [AWS S3](https://aws.amazon.com/s3/) storage and [Digitalocean Spaces](https://www.digitalocean.com/products/spaces/) storage.
+Storage adapters help us use various storage services to store our data. As of writing this guide, we already support Local storage, [AWS S3](https://aws.amazon.com/s3/) storage and [DigitalOcean Spaces](https://www.digitalocean.com/products/spaces/) storage.
 
-## 1. Prerequisities
+## 1. Prerequisites
 
 It's really easy to contribute to an open source project, but when using GitHub, there are a few steps we need to follow. This section will take you step-by-step through the process of preparing your own local version of `utopia-php/storage`, where you can make any changes without affecting the upstream repository right away.
 
@@ -26,7 +26,7 @@ $ git clone COPIED_URL
 
 Finally, you will need to create a `feat-XXX-YYY-storage-adapter` branch based on the `master` branch and switch to it. The `XXX` should represent the issue ID and `YYY` the Storage adapter name.
 
-## 2. Implement new Storage Adapter
+## 2. Implement new storage adapter
 
 ### 2.1 Add new adapter and implement it
 
