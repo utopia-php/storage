@@ -7,11 +7,12 @@ use Utopia\Telemetry\Adapter;
 
 class Telemetry extends Device
 {
-    public function __construct(Adapter $telemetry, private Device $underlying)
+    public function __construct(Adapter $telemetry, private readonly Device $underlying)
     {
         parent::__construct($telemetry);
     }
 
+    #[\Override]
     public function setTelemetry(Adapter $telemetry): void
     {
         parent::setTelemetry($telemetry);
@@ -29,7 +30,7 @@ class Telemetry extends Device
                 [
                     'storage' => $this->underlying->getType(),
                     'operation' => "device:$method",
-                ]
+                ],
             );
         }
     }

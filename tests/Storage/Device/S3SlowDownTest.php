@@ -23,7 +23,8 @@ class TestableS3 extends S3
         return $this->isTransientError($statusCode, $body);
     }
 
-    protected function call(string $operation, string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true)
+    #[\Override]
+    protected function call(string $operation, string $method, string $uri, string $data = '', array $parameters = [], bool $decode = true): \stdClass
     {
         $this->calls[] = $operation;
         $this->headersByOperation[$operation] = $this->headers;
@@ -41,7 +42,7 @@ class TestableS3 extends S3
         }
 
         if ($operation === 's3:uploadPart') {
-            return (object) ['headers' => ['etag' => 'etag-'.$parameters['partNumber']], 'body' => ''];
+            return (object) ['headers' => ['etag' => 'etag-' . $parameters['partNumber']], 'body' => ''];
         }
 
         if ($operation === 's3:completeMultipartUpload') {
@@ -55,7 +56,7 @@ class TestableS3 extends S3
     }
 }
 
-class S3SlowDownTest extends TestCase
+final class S3SlowDownTest extends TestCase
 {
     private TestableS3 $s3;
 
@@ -103,7 +104,7 @@ class S3SlowDownTest extends TestCase
 
     public function testDefaultRetrySettings(): void
     {
-        $prop = fn (string $name) => (new \ReflectionProperty(S3::class, $name))->getValue();
+        $prop = fn(string $name): mixed => new \ReflectionProperty(S3::class, $name)->getValue();
         $this->assertSame(3, $prop('retryAttempts'));
         $this->assertSame(500, $prop('retryDelay'));
     }
@@ -123,7 +124,7 @@ class S3SlowDownTest extends TestCase
     public function testUploadChunkRecordsPartWithoutCompleting(): void
     {
         $metadata = [];
-        $source = __DIR__.'/s3-chunk.part';
+        $source = __DIR__ . '/s3-chunk.part';
         file_put_contents($source, 'aaa');
 
         $this->s3->prepareUpload('/root/file.txt', 'text/plain', 2, $metadata);

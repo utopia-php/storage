@@ -6,27 +6,19 @@ use Utopia\Validator;
 
 class FileExt extends Validator
 {
-    const TYPE_JPEG = 'jpeg';
+    public const TYPE_JPEG = 'jpeg';
 
-    const TYPE_JPG = 'jpg';
+    public const TYPE_JPG = 'jpg';
 
-    const TYPE_GIF = 'gif';
+    public const TYPE_GIF = 'gif';
 
-    const TYPE_PNG = 'png';
+    public const TYPE_PNG = 'png';
 
-    const TYPE_GZIP = 'gz';
+    public const TYPE_GZIP = 'gz';
 
-    const TYPE_ZIP = 'zip';
+    public const TYPE_ZIP = 'zip';
 
-    /**
-     * @var array
-     */
-    protected $allowed;
-
-    public function __construct(array $allowed)
-    {
-        $this->allowed = $allowed;
-    }
+    public function __construct(protected array $allowed) {}
 
     /**
      * Get Description
@@ -43,14 +35,9 @@ class FileExt extends Validator
      */
     public function isValid($filename): bool
     {
-        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+        $ext = pathinfo((string) $filename, PATHINFO_EXTENSION);
         $ext = strtolower($ext);
-
-        if (! in_array($ext, $this->allowed)) {
-            return false;
-        }
-
-        return true;
+        return \in_array($ext, $this->allowed);
     }
 
     /**

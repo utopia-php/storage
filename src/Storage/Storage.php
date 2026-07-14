@@ -9,19 +9,19 @@ class Storage
     /**
      * Supported devices
      */
-    const DEVICE_LOCAL = 'local';
+    public const DEVICE_LOCAL = 'local';
 
-    const DEVICE_S3 = 's3';
+    public const DEVICE_S3 = 's3';
 
-    const DEVICE_AWS_S3 = 'awss3';
+    public const DEVICE_AWS_S3 = 'awss3';
 
-    const DEVICE_DO_SPACES = 'dospaces';
+    public const DEVICE_DO_SPACES = 'dospaces';
 
-    const DEVICE_WASABI = 'wasabi';
+    public const DEVICE_WASABI = 'wasabi';
 
-    const DEVICE_BACKBLAZE = 'backblaze';
+    public const DEVICE_BACKBLAZE = 'backblaze';
 
-    const DEVICE_LINODE = 'linode';
+    public const DEVICE_LINODE = 'linode';
 
     /**
      * Devices.
@@ -59,7 +59,7 @@ class Storage
     public static function getDevice($name)
     {
         if (! \array_key_exists($name, self::$devices)) {
-            throw new Exception('The device "'.$name.'" is not listed');
+            throw new Exception('The device "' . $name . '" is not listed');
         }
 
         return self::$devices[$name];
@@ -71,11 +71,10 @@ class Storage
      * Checks if given storage name is registered or not
      *
      * @param  string  $name
-     * @return bool
      */
-    public static function exists($name)
+    public static function exists($name): bool
     {
-        return (bool) \array_key_exists($name, self::$devices);
+        return \array_key_exists($name, self::$devices);
     }
 
     /**
@@ -85,9 +84,8 @@ class Storage
      *
      * @param  int  $decimals
      * @param  string  $system
-     * @return string
      */
-    public static function human(int $bytes, $decimals = 2, $system = 'metric')
+    public static function human(int $bytes, $decimals = 2, $system = 'metric'): string
     {
         $mod = ($system === 'binary') ? 1024 : 1000;
 
@@ -116,8 +114,8 @@ class Storage
             ],
         ];
 
-        $factor = (int) floor((strlen((string) $bytes) - 1) / 3);
+        $factor = (int) floor((\strlen((string) $bytes) - 1) / 3);
 
-        return sprintf("%.{$decimals}f%s", $bytes / pow($mod, $factor), $units[$system][$factor]);
+        return \sprintf("%.{$decimals}f%s", $bytes / $mod ** $factor, $units[$system][$factor]);
     }
 }

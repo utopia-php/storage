@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Storage\Validator;
 
 use Utopia\Validator;
@@ -21,15 +23,10 @@ class Upload extends Validator
      */
     public function isValid($path): bool
     {
-        if (! is_string($path)) {
+        if (! \is_string($path)) {
             return false;
         }
-
-        if (\is_uploaded_file($path)) {
-            return true;
-        }
-
-        return false;
+        return is_uploaded_file($path);
     }
 
     /**

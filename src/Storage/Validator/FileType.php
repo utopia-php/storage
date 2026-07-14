@@ -10,13 +10,13 @@ class FileType extends Validator
     /**
      * File Types Constants.
      */
-    const FILE_TYPE_JPEG = 'jpeg';
+    public const FILE_TYPE_JPEG = 'jpeg';
 
-    const FILE_TYPE_GIF = 'gif';
+    public const FILE_TYPE_GIF = 'gif';
 
-    const FILE_TYPE_PNG = 'png';
+    public const FILE_TYPE_PNG = 'png';
 
-    const FILE_TYPE_GZIP = 'gz';
+    public const FILE_TYPE_GZIP = 'gz';
 
     /**
      * File Type Binaries.
@@ -30,10 +30,7 @@ class FileType extends Validator
         self::FILE_TYPE_GZIP => 'application/x-gzip',
     ];
 
-    /**
-     * @var array
-     */
-    protected $allowed;
+    protected array $allowed;
 
     /**
      * @throws Exception
@@ -68,27 +65,27 @@ class FileType extends Validator
      */
     public function isValid($path): bool
     {
-        if (! \is_readable($path)) {
+        if (! is_readable($path)) {
             return false;
         }
 
-        $handle = \fopen($path, 'r');
+        $handle = fopen($path, 'r');
 
         if (! $handle) {
             return false;
         }
 
-        $bytes = \fgets($handle, 8);
+        $bytes = fgets($handle, 8);
 
         foreach ($this->allowed as $key) {
-            if (\strpos($bytes, $this->types[$key]) === 0) {
-                \fclose($handle);
+            if (str_starts_with($bytes, (string) $this->types[$key])) {
+                fclose($handle);
 
                 return true;
             }
         }
 
-        \fclose($handle);
+        fclose($handle);
 
         return false;
     }

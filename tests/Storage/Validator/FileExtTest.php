@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Tests\Storage\Validator;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Validator\FileExt;
 
-class FileExtTest extends TestCase
+final class FileExtTest extends TestCase
 {
     /**
      * @var FileExt
      */
-    protected $object = null;
+    protected $object;
 
     protected function setUp(): void
     {
@@ -19,22 +21,22 @@ class FileExtTest extends TestCase
 
     protected function tearDown(): void {}
 
-    public function testValues()
+    public function testValues(): void
     {
-        $this->assertEquals($this->object->isValid(''), false);
-        $this->assertEquals($this->object->isValid(null), false);
-        $this->assertEquals($this->object->isValid(false), false);
-        $this->assertEquals($this->object->isValid('test'), false);
-        $this->assertEquals($this->object->isValid('...test.png'), false);
-        $this->assertEquals($this->object->isValid('.gif'), true);
-        $this->assertEquals($this->object->isValid('x.gif'), true);
-        $this->assertEquals($this->object->isValid('gif'), false);
-        $this->assertEquals($this->object->isValid('file.tar'), false);
-        $this->assertEquals($this->object->isValid('file.tar.g'), false);
-        $this->assertEquals($this->object->isValid('file.tar.gz'), true);
-        $this->assertEquals($this->object->isValid('file.gz'), true);
-        $this->assertEquals($this->object->isValid('file.GIF'), true);
-        $this->assertEquals($this->object->isValid('file.zip'), true);
-        $this->assertEquals($this->object->isValid('file.7zip'), false);
+        $this->assertEquals(false, $this->object->isValid(''));
+        $this->assertEquals(false, $this->object->isValid(null));
+        $this->assertEquals(false, $this->object->isValid(false));
+        $this->assertEquals(false, $this->object->isValid('test'));
+        $this->assertEquals(false, $this->object->isValid('...test.png'));
+        $this->assertEquals(true, $this->object->isValid('.gif'));
+        $this->assertEquals(true, $this->object->isValid('x.gif'));
+        $this->assertEquals(false, $this->object->isValid('gif'));
+        $this->assertEquals(false, $this->object->isValid('file.tar'));
+        $this->assertEquals(false, $this->object->isValid('file.tar.g'));
+        $this->assertEquals(true, $this->object->isValid('file.tar.gz'));
+        $this->assertEquals(true, $this->object->isValid('file.gz'));
+        $this->assertEquals(true, $this->object->isValid('file.GIF'));
+        $this->assertEquals(true, $this->object->isValid('file.zip'));
+        $this->assertEquals(false, $this->object->isValid('file.7zip'));
     }
 }

@@ -69,7 +69,7 @@ abstract class Device
             telemetry: $telemetry,
             name: 'storage.operation',
             unit: 's',
-            advisory: ['ExplicitBucketBoundaries' => [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10]]
+            advisory: ['ExplicitBucketBoundaries' => [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10]],
         );
     }
 
@@ -131,8 +131,6 @@ abstract class Device
      * Upload file contents to desired destination in the selected disk.
      * return number of chunks uploaded or 0 if it fails.
      *
-     * @param int chunk
-     * @param int chunks
      *
      * @throws Exception
      */
@@ -263,7 +261,7 @@ abstract class Device
     public function getAbsolutePath(string $path): string
     {
         $path = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
-        $parts = array_filter(explode(DIRECTORY_SEPARATOR, $path), 'strlen');
+        $parts = array_filter(explode(DIRECTORY_SEPARATOR, $path), fn(string $part): bool => $part !== '');
 
         $absolutes = [];
         foreach ($parts as $part) {
@@ -277,6 +275,6 @@ abstract class Device
             }
         }
 
-        return DIRECTORY_SEPARATOR.implode(DIRECTORY_SEPARATOR, $absolutes);
+        return DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $absolutes);
     }
 }

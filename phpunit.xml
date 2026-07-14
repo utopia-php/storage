@@ -1,20 +1,23 @@
-<phpunit backupGlobals="false"
-         backupStaticAttributes="false"
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.5/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
-         convertErrorsToExceptions="true"
-         convertNoticesToExceptions="true"
-         convertWarningsToExceptions="true"
-         processIsolation="false"
-         stopOnFailure="false">
+         cacheDirectory=".phpunit.cache">
     <testsuites>
         <testsuite name="unit">
-            <file>./tests/Storage/Device/LocalTest.php</file>
-            <directory>./tests/Storage/Validator</directory>
-            <file>./tests/Storage/StorageTest.php</file>
+            <file>tests/Storage/Device/LocalTest.php</file>
+            <file>tests/Storage/Device/S3SlowDownTest.php</file>
+            <file>tests/Storage/StorageTest.php</file>
+            <directory>tests/Storage/Validator</directory>
         </testsuite>
         <testsuite name="e2e">
-            <directory>./tests/Storage/Device</directory>
+            <file>tests/Storage/Device/S3Test.php</file>
         </testsuite>
     </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
 </phpunit>

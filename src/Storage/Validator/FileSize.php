@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Storage\Validator;
 
 use Utopia\Validator;
@@ -7,26 +9,18 @@ use Utopia\Validator;
 class FileSize extends Validator
 {
     /**
-     * @var int
-     */
-    protected $max;
-
-    /**
      * Max size in bytes
      *
      * @param  int  $max
      */
-    public function __construct($max)
-    {
-        $this->max = $max;
-    }
+    public function __construct(protected $max) {}
 
     /**
      * Get Description
      */
     public function getDescription(): string
     {
-        return 'File size can\'t be bigger than '.$this->max;
+        return 'File size can\'t be bigger than ' . $this->max;
     }
 
     /**
@@ -36,15 +30,10 @@ class FileSize extends Validator
      */
     public function isValid($fileSize): bool
     {
-        if (! is_int($fileSize)) {
+        if (! \is_int($fileSize)) {
             return false;
         }
-
-        if ($fileSize > $this->max) {
-            return false;
-        }
-
-        return true;
+        return $fileSize <= $this->max;
     }
 
     /**

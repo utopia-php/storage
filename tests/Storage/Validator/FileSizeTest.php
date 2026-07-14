@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Tests\Storage\Validator;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Validator\FileSize;
 
-class FileSizeTest extends TestCase
+final class FileSizeTest extends TestCase
 {
     /**
      * @var FileSize
      */
-    protected $object = null;
+    protected $object;
 
     protected function setUp(): void
     {
@@ -19,10 +21,10 @@ class FileSizeTest extends TestCase
 
     protected function tearDown(): void {}
 
-    public function testValues()
+    public function testValues(): void
     {
-        $this->assertEquals($this->object->isValid(1001), false);
-        $this->assertEquals($this->object->isValid(1000), true);
-        $this->assertEquals($this->object->isValid(999), true);
+        $this->assertEquals(false, $this->object->isValid(1001));
+        $this->assertEquals(true, $this->object->isValid(1000));
+        $this->assertEquals(true, $this->object->isValid(999));
     }
 }

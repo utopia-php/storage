@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Storage\Validator;
 
 use Utopia\Validator;
@@ -25,15 +27,10 @@ class FileName extends Validator
             return false;
         }
 
-        if (! is_string($name)) {
+        if (! \is_string($name)) {
             return false;
         }
-
-        if (! \ctype_alnum(\str_replace(['.', '-', '_'], '', $name))) {
-            return false;
-        }
-
-        return true;
+        return ctype_alnum(str_replace(['.', '-', '_'], '', $name));
     }
 
     /**

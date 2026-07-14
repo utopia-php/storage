@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Tests\Storage\Validator;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Validator\FileType;
 
-class FileTypeTest extends TestCase
+final class FileTypeTest extends TestCase
 {
     /**
      * @var FileType
      */
-    protected $object = null;
+    protected $object;
 
     protected function setUp(): void
     {
@@ -19,11 +21,11 @@ class FileTypeTest extends TestCase
 
     protected function tearDown(): void {}
 
-    public function testValues()
+    public function testValues(): void
     {
-        $this->assertEquals($this->object->isValid(__DIR__.'/../../resources/disk-a/kitten-1.jpg'), true);
-        $this->assertEquals($this->object->isValid(__DIR__.'/../../resources/disk-a/kitten-2.jpg'), true);
-        $this->assertEquals($this->object->isValid(__DIR__.'/../../resources/disk-b/kitten-1.png'), false);
-        $this->assertEquals($this->object->isValid(__DIR__.'/../../resources/disk-b/kitten-2.png'), false);
+        $this->assertEquals(true, $this->object->isValid(__DIR__ . '/../../resources/disk-a/kitten-1.jpg'));
+        $this->assertEquals(true, $this->object->isValid(__DIR__ . '/../../resources/disk-a/kitten-2.jpg'));
+        $this->assertEquals(false, $this->object->isValid(__DIR__ . '/../../resources/disk-b/kitten-1.png'));
+        $this->assertEquals(false, $this->object->isValid(__DIR__ . '/../../resources/disk-b/kitten-2.png'));
     }
 }
