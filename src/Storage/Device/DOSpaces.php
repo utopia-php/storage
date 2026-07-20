@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Utopia\Storage\Device;
 
-use Utopia\Storage\Storage;
+use Psr\Http\Client\ClientInterface;
+use Utopia\Storage\Acl;
+use Utopia\Storage\DeviceType;
 
 class DOSpaces extends S3
 {
@@ -26,27 +28,23 @@ class DOSpaces extends S3
     /**
      * DOSpaces Constructor
      */
-    public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::NYC3, string $acl = self::ACL_PRIVATE)
-    {
+    public function __construct(
+        string $root,
+        string $accessKey,
+        #[\SensitiveParameter]
+        string $secretKey,
+        string $bucket,
+        string $region = self::NYC3,
+        Acl $acl = Acl::Private,
+        ?ClientInterface $client = null,
+    ) {
         $host = $bucket . '.' . $region . '.digitaloceanspaces.com';
-        parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl);
+        parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl, $client);
     }
 
     #[\Override]
-    public function getName(): string
+    public function getType(): DeviceType
     {
-        return 'Digitalocean Spaces Storage';
-    }
-
-    #[\Override]
-    public function getDescription(): string
-    {
-        return 'Digitalocean Spaces Storage';
-    }
-
-    #[\Override]
-    public function getType(): string
-    {
-        return Storage::DEVICE_DO_SPACES;
+        return DeviceType::DoSpaces;
     }
 }

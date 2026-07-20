@@ -1,10 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Storage\Validator;
 
 use Exception;
 use Utopia\Validator;
 
+/**
+ * @see \Utopia\Tests\Storage\Validator\FileTypeTest
+ */
 class FileType extends Validator
 {
     /**
@@ -21,7 +26,7 @@ class FileType extends Validator
     /**
      * File Type Binaries.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $types = [
         self::FILE_TYPE_JPEG => "\xFF\xD8\xFF",
@@ -30,16 +35,21 @@ class FileType extends Validator
         self::FILE_TYPE_GZIP => 'application/x-gzip',
     ];
 
+    /**
+     * @var array<string>
+     */
     protected array $allowed;
 
     /**
+     * @param  array<string>  $allowed
+     *
      * @throws Exception
      */
     public function __construct(array $allowed)
     {
         foreach ($allowed as $key) {
             if (! isset($this->types[$key])) {
-                throw new Exception('Unknown file mime type');
+                throw new \InvalidArgumentException('Unknown file mime type');
             }
         }
 
@@ -65,7 +75,7 @@ class FileType extends Validator
      */
     public function isValid($path): bool
     {
-        if (! is_readable($path)) {
+        if (! \is_string($path) || ! is_readable($path)) {
             return false;
         }
 
@@ -76,9 +86,14 @@ class FileType extends Validator
         }
 
         $bytes = fgets($handle, 8);
+        if ($bytes === false) {
+            fclose($handle);
+
+            return false;
+        }
 
         foreach ($this->allowed as $key) {
-            if (str_starts_with($bytes, (string) $this->types[$key])) {
+            if (str_starts_with($bytes, $this->types[$key])) {
                 fclose($handle);
 
                 return true;

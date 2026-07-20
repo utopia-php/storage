@@ -9,10 +9,7 @@ use Utopia\Storage\Validator\FileType;
 
 final class FileTypeTest extends TestCase
 {
-    /**
-     * @var FileType
-     */
-    protected $object;
+    private \Utopia\Storage\Validator\FileType $object;
 
     protected function setUp(): void
     {

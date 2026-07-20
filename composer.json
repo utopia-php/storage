@@ -22,18 +22,21 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Utopia\\Tests\\Storage\\": "tests/Storage"
+            "Utopia\\Tests\\Storage\\": "tests/Storage",
+            "Utopia\\Tests\\Storage\\E2E\\": "tests/E2E"
         }
     },
     "require": {
         "php": ">=8.5",
         "ext-fileinfo": "*",
-        "ext-zlib": "*",
         "ext-curl": "*",
         "ext-simplexml": "*",
-        "utopia-php/system": "0.*.*",
         "utopia-php/telemetry": "^0.4",
-        "utopia-php/validators": "0.3.*"
+        "utopia-php/validators": "0.3.*",
+        "psr/http-client": "^1.0",
+        "psr/http-message": "^1.1 || ^2.0",
+        "utopia-php/client": "0.2.*",
+        "utopia-php/psr7": "0.2.*"
     },
     "config": {
         "allow-plugins": {

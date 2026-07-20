@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Utopia\Storage\Device;
 
-use Utopia\Storage\Storage;
+use Psr\Http\Client\ClientInterface;
+use Utopia\Storage\Acl;
+use Utopia\Storage\DeviceType;
 
 class AWS extends S3
 {
@@ -64,32 +66,29 @@ class AWS extends S3
     public const US_GOV_WEST_1 = 'us-gov-west-1';
 
     /**
-     * S3 Constructor
+     * AWS Constructor
      */
-    public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::US_EAST_1, string $acl = self::ACL_PRIVATE)
-    {
+    public function __construct(
+        string $root,
+        string $accessKey,
+        #[\SensitiveParameter]
+        string $secretKey,
+        string $bucket,
+        string $region = self::US_EAST_1,
+        Acl $acl = Acl::Private,
+        ?ClientInterface $client = null,
+    ) {
         $host = match ($region) {
             self::CN_NORTH_1, self::CN_NORTH_4, self::CN_NORTHWEST_1 => $bucket . '.s3.' . $region . '.amazonaws.cn',
             default => $bucket . '.s3.' . $region . '.amazonaws.com'
         };
-        parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl);
+        parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl, $client);
     }
 
     #[\Override]
-    public function getName(): string
+    public function getType(): DeviceType
     {
-        return 'AWS S3 Storage';
+        return DeviceType::AwsS3;
     }
 
-    #[\Override]
-    public function getType(): string
-    {
-        return Storage::DEVICE_AWS_S3;
-    }
-
-    #[\Override]
-    public function getDescription(): string
-    {
-        return 'S3 Bucket Storage drive for AWS';
-    }
 }

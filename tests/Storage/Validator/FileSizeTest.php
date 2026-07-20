@@ -9,10 +9,7 @@ use Utopia\Storage\Validator\FileSize;
 
 final class FileSizeTest extends TestCase
 {
-    /**
-     * @var FileSize
-     */
-    protected $object;
+    private \Utopia\Storage\Validator\FileSize $object;
 
     protected function setUp(): void
     {

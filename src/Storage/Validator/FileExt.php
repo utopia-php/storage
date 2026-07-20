@@ -1,9 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Storage\Validator;
 
 use Utopia\Validator;
 
+/**
+ * @see \Utopia\Tests\Storage\Validator\FileExtTest
+ */
 class FileExt extends Validator
 {
     public const TYPE_JPEG = 'jpeg';
@@ -18,6 +23,9 @@ class FileExt extends Validator
 
     public const TYPE_ZIP = 'zip';
 
+    /**
+     * @param  array<string>  $allowed
+     */
     public function __construct(protected array $allowed) {}
 
     /**
@@ -35,8 +43,11 @@ class FileExt extends Validator
      */
     public function isValid($filename): bool
     {
-        $ext = pathinfo((string) $filename, PATHINFO_EXTENSION);
-        $ext = strtolower($ext);
+        if (! \is_string($filename)) {
+            return false;
+        }
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
         return \in_array($ext, $this->allowed);
     }
 

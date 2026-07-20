@@ -9,10 +9,7 @@ use Utopia\Storage\Validator\Upload;
 
 final class UploadTest extends TestCase
 {
-    /**
-     * @var Upload
-     */
-    protected $object;
+    private \Utopia\Storage\Validator\Upload $object;
 
     protected function setUp(): void
     {

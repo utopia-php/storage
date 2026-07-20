@@ -6,6 +6,9 @@ namespace Utopia\Storage\Validator;
 
 use Utopia\Validator;
 
+/**
+ * @see \Utopia\Tests\Storage\Validator\FileSizeTest
+ */
 class FileSize extends Validator
 {
     /**

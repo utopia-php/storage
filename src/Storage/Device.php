@@ -1,77 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Storage;
 
-use Exception;
-use Utopia\Telemetry\Adapter as Telemetry;
-use Utopia\Telemetry\Adapter\None as NoTelemetry;
-use Utopia\Telemetry\Histogram;
+use Utopia\Storage\Exception\StorageException;
+use Utopia\Storage\Exception\UploadException;
 
+/**
+ * @phpstan-type UploadMetadata array{parts?: array<int, bool|string>, chunks?: int, content_type?: string, uploadId?: string}
+ */
 abstract class Device
 {
     /**
-     * Max chunk size while transferring file from one device to another
+     * Default max chunk size while transferring file from one device to another
      */
-    protected int $transferChunkSize = 20000000; // 20 MB
-
-    /**
-     * Sets the maximum number of keys returned to the response. By default, the action returns up to 1,000 key names.
-     */
-    protected const MAX_PAGE_SIZE = PHP_INT_MAX;
-
-    protected Histogram $storageOperationTelemetry;
-
-    public function __construct(Telemetry $telemetry = new NoTelemetry())
-    {
-        $this->setTelemetry($telemetry);
-    }
-
-    /**
-     * Set Transfer Chunk Size
-     */
-    public function setTransferChunkSize(int $chunkSize): void
-    {
-        $this->transferChunkSize = $chunkSize;
-    }
-
-    /**
-     * Get Transfer Chunk Size
-     */
-    public function getTransferChunkSize(): int
-    {
-        return $this->transferChunkSize;
-    }
-
-    /**
-     * Get Name.
-     *
-     * Get storage device name
-     */
-    abstract public function getName(): string;
+    public const TRANSFER_CHUNK_SIZE = 20000000; // 20 MB
 
     /**
      * Get Type.
      *
      * Get storage device type
      */
-    abstract public function getType(): string;
-
-    /**
-     * Get Description.
-     *
-     * Get storage device description and purpose.
-     */
-    abstract public function getDescription(): string;
-
-    public function setTelemetry(Telemetry $telemetry): void
-    {
-        $this->storageOperationTelemetry = Histogram::lazy(
-            telemetry: $telemetry,
-            name: 'storage.operation',
-            unit: 's',
-            advisory: ['ExplicitBucketBoundaries' => [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10]],
-        );
-    }
+    abstract public function getType(): DeviceType;
 
     /**
      * Get Root.
@@ -85,43 +36,39 @@ abstract class Device
      *
      * Each device hold a complex directory structure that is being build in this method.
      */
-    abstract public function getPath(string $filename, ?string $prefix = null): string;
-
-    /**
-     * Upload.
-     *
-     * Upload a file to desired destination in the selected disk
-     * return number of chunks uploaded or 0 if it fails.
-     *
-     *
-     * @throws Exception
-     */
-    abstract public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
+    abstract public function getPath(string $filename): string;
 
     /**
      * Prepare Upload.
      *
      * Initialize adapter-specific upload state without transferring a chunk body.
      *
-     * @throws Exception
+     * @param  UploadMetadata  $metadata
+     *
+     * @throws StorageException
      */
     abstract public function prepareUpload(string $path, string $contentType, int $chunks = 1, array &$metadata = []): void;
 
     /**
      * Upload Chunk.
      *
-     * Upload exactly one chunk without finalizing the full upload.
+     * Upload exactly one chunk of file contents without finalizing the full upload.
+     * Returns the number of chunks received so far.
      *
-     * @throws Exception
+     * @param  UploadMetadata  $metadata
+     *
+     * @throws StorageException
      */
-    abstract public function uploadChunk(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
+    abstract public function uploadChunk(string $data, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
 
     /**
      * Finalize Upload.
      *
      * Complete a prepared upload once all chunks are known to be present.
      *
-     * @throws Exception
+     * @param  UploadMetadata  $metadata
+     *
+     * @throws StorageException
      */
     abstract public function finalizeUpload(string $path, int $chunks = 1, array &$metadata = []): bool;
 
@@ -129,28 +76,43 @@ abstract class Device
      * Upload Data.
      *
      * Upload file contents to desired destination in the selected disk.
-     * return number of chunks uploaded or 0 if it fails.
+     * Returns the number of chunks received so far.
      *
+     * @param  UploadMetadata  $metadata
      *
-     * @throws Exception
+     * @throws StorageException
      */
-    abstract public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
+    public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    {
+        $this->prepareUpload($path, $contentType, $chunks, $metadata);
+        $chunksReceived = $this->uploadChunk($data, $path, $chunk, $chunks, $metadata);
+
+        if ($chunks > 1 && $chunks === $chunksReceived && ! $this->finalizeUpload($path, $chunks, $metadata)) {
+            throw new UploadException('Failed to finalize upload ' . $path);
+        }
+
+        return $chunksReceived;
+    }
 
     /**
      * Abort Chunked Upload
      */
-    abstract public function abort(string $path, string $extra = ''): bool;
+    abstract public function abort(string $path, string $uploadId = ''): bool;
 
     /**
      * Read file by given path.
+     *
+     * @param  int<0, max>  $offset
+     * @param  int<0, max>|null  $length
      */
     abstract public function read(string $path, int $offset = 0, ?int $length = null): string;
 
     /**
      * Transfer
      * Transfer a file from current device to destination device.
+     *
      */
-    abstract public function transfer(string $path, string $destination, Device $device): bool;
+    abstract public function transfer(string $path, string $destination, Device $device, int $chunkSize = self::TRANSFER_CHUNK_SIZE): bool;
 
     /**
      * Write file by given path.
@@ -159,8 +121,6 @@ abstract class Device
 
     /**
      * Move file from given source to given path, return true on success and false on failure.
-     *
-     * @see http://php.net/manual/en/function.filesize.php
      */
     public function move(string $source, string $target): bool
     {
@@ -177,8 +137,6 @@ abstract class Device
 
     /**
      * Delete file in given path return true on success and false on failure.
-     *
-     * @see http://php.net/manual/en/function.filesize.php
      */
     abstract public function delete(string $path, bool $recursive = false): bool;
 
@@ -193,63 +151,26 @@ abstract class Device
     abstract public function exists(string $path): bool;
 
     /**
-     * Returns given file path its size.
+     * List files under the given prefix, one page at a time.
      *
-     * @see http://php.net/manual/en/function.filesize.php
+     * @param  int<1, max>  $max
+     */
+    abstract public function listFiles(string $prefix = '', int $max = 1000, ?string $cursor = null): FileList;
+
+    /**
+     * Returns given file path its size.
      */
     abstract public function getFileSize(string $path): int;
 
     /**
      * Returns given file path its mime type.
-     *
-     * @see http://php.net/manual/en/function.mime-content-type.php
      */
     abstract public function getFileMimeType(string $path): string;
 
     /**
      * Returns given file path its MD5 hash value.
-     *
-     * @see http://php.net/manual/en/function.md5-file.php
      */
     abstract public function getFileHash(string $path): string;
-
-    /**
-     * Create a directory at the specified path.
-     *
-     * Returns true on success or if the directory already exists and false on error
-     */
-    abstract public function createDirectory(string $path): bool;
-
-    /**
-     * Get directory size in bytes.
-     *
-     * Return -1 on error
-     *
-     * Based on http://www.jonasjohn.de/snippets/php/dir-size.htm
-     */
-    abstract public function getDirectorySize(string $path): int;
-
-    /**
-     * Get Partition Free Space.
-     *
-     * disk_free_space — Returns available space on filesystem or disk partition
-     */
-    abstract public function getPartitionFreeSpace(): float;
-
-    /**
-     * Get Partition Total Space.
-     *
-     * disk_total_space — Returns the total size of a filesystem or disk partition
-     */
-    abstract public function getPartitionTotalSpace(): float;
-
-    /**
-     * Get all files and directories inside a directory.
-     *
-     * @param  string  $dir  Directory to scan
-     * @return array<mixed>
-     */
-    abstract public function getFiles(string $dir, int $max = self::MAX_PAGE_SIZE, string $continuationToken = ''): array;
 
     /**
      * Get the absolute path by resolving strings like ../, .., //, /\ and so on.

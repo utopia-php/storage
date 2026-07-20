@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Utopia\Storage\Device;
 
-use Utopia\Storage\Storage;
+use Psr\Http\Client\ClientInterface;
+use Utopia\Storage\Acl;
+use Utopia\Storage\DeviceType;
 
 class Linode extends S3
 {
@@ -22,27 +24,23 @@ class Linode extends S3
     /**
      * Object Storage Constructor
      */
-    public function __construct(string $root, string $accessKey, string $secretKey, string $bucket, string $region = self::EU_CENTRAL_1, string $acl = self::ACL_PRIVATE)
-    {
+    public function __construct(
+        string $root,
+        string $accessKey,
+        #[\SensitiveParameter]
+        string $secretKey,
+        string $bucket,
+        string $region = self::EU_CENTRAL_1,
+        Acl $acl = Acl::Private,
+        ?ClientInterface $client = null,
+    ) {
         $host = $bucket . '.' . $region . '.' . 'linodeobjects.com';
-        parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl);
+        parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl, $client);
     }
 
     #[\Override]
-    public function getName(): string
+    public function getType(): DeviceType
     {
-        return 'Linode Object Storage';
-    }
-
-    #[\Override]
-    public function getDescription(): string
-    {
-        return 'Linode Object Storage';
-    }
-
-    #[\Override]
-    public function getType(): string
-    {
-        return Storage::DEVICE_LINODE;
+        return DeviceType::Linode;
     }
 }

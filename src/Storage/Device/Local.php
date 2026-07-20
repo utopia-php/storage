@@ -1,35 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Storage\Device;
 
-use Exception;
 use Utopia\Storage\Device;
+use Utopia\Storage\DeviceType;
 use Utopia\Storage\Exception\NotFoundException;
-use Utopia\Storage\Storage;
+use Utopia\Storage\Exception\StorageException;
+use Utopia\Storage\Exception\UploadException;
+use Utopia\Storage\FileInfo;
+use Utopia\Storage\FileList;
 
+/**
+ * @see \Utopia\Tests\Storage\Device\LocalTest
+ *
+ * @phpstan-import-type UploadMetadata from Device
+ */
 class Local extends Device
 {
     /**
      * Local constructor.
      */
-    public function __construct(protected string $root = '')
-    {
-        parent::__construct();
-    }
+    public function __construct(protected readonly string $root = '') {}
 
-    public function getName(): string
+    public function getType(): DeviceType
     {
-        return 'Local Storage';
-    }
-
-    public function getType(): string
-    {
-        return Storage::DEVICE_LOCAL;
-    }
-
-    public function getDescription(): string
-    {
-        return 'Adapter for Local storage that is in the physical or virtual machine or mounted to it.';
+        return DeviceType::Local;
     }
 
     public function getRoot(): string
@@ -37,32 +34,14 @@ class Local extends Device
         return $this->root;
     }
 
-    public function getPath(string $filename, ?string $prefix = null): string
+    public function getPath(string $filename): string
     {
         return $this->getAbsolutePath($this->getRoot() . DIRECTORY_SEPARATOR . $filename);
     }
 
     /**
-     * Upload.
-     *
-     * Upload a file to desired destination in the selected disk.
-     * return number of chunks uploaded or 0 if it fails.
-     *
-     *
-     * @throws Exception
+     * @param  UploadMetadata  $metadata
      */
-    public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
-    {
-        $this->prepareUpload($path, '', $chunks, $metadata);
-        $chunksReceived = $this->uploadChunk($source, $path, $chunk, $chunks, $metadata);
-
-        if ($chunks > 1 && $chunks === $chunksReceived && ! $this->finalizeUpload($path, $chunks, $metadata)) {
-            throw new Exception('Failed to finalize upload ' . $path);
-        }
-
-        return $chunksReceived;
-    }
-
     public function prepareUpload(string $path, string $contentType, int $chunks = 1, array &$metadata = []): void
     {
         $this->createDirectory(\dirname($path));
@@ -70,15 +49,15 @@ class Local extends Device
         $metadata['chunks'] ??= 0;
     }
 
-    public function uploadChunk(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    public function uploadChunk(string $data, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
         $this->createDirectory(\dirname($path));
         $metadata['parts'] ??= [];
         $metadata['chunks'] ??= 0;
 
         if ($chunks === 1) {
-            if (! move_uploaded_file($source, $path) && ! rename($source, $path)) {
-                throw new Exception('Can\'t upload file ' . $path);
+            if (file_put_contents($path, $data) === false) {
+                throw new StorageException('Can\'t write file ' . $path);
             }
 
             $metadata['parts'][$chunk] = true;
@@ -93,12 +72,8 @@ class Local extends Device
         $chunkFilePath = $tmp . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.' . $chunk;
 
         // skip writing chunk if the chunk was re-uploaded
-        if (! file_exists($chunkFilePath)) {
-            if (! rename($source, $chunkFilePath)) {
-                throw new Exception('Failed to write chunk ' . $chunk);
-            }
-        } elseif (file_exists($source)) {
-            unlink($source);
+        if (!file_exists($chunkFilePath) && file_put_contents($chunkFilePath, $data) === false) {
+            throw new StorageException('Failed to write chunk ' . $chunk);
         }
 
         $chunksReceived = $this->countChunks($tmp, $path);
@@ -119,58 +94,16 @@ class Local extends Device
         }
 
         $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . basename($path);
-        for ($i = 1; $i <= $chunks; $i++) {
+        for ($i = 1; $i <= $chunks; ++$i) {
             $part = $tmp . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.' . $i;
             if (! file_exists($part)) {
-                throw new Exception('Missing chunk ' . $i);
+                throw new UploadException('Missing chunk ' . $i);
             }
         }
 
         $this->joinChunks($path, $chunks);
 
         return true;
-    }
-
-    /**
-     * Upload Data.
-     *
-     * Upload file contents to desired destination in the selected disk.
-     * return number of chunks uploaded or 0 if it fails.
-     *
-     *
-     * @throws Exception
-     */
-    public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
-    {
-        $this->prepareUpload($path, $contentType, $chunks, $metadata);
-
-        if ($chunks === 1) {
-            if (! file_put_contents($path, $data)) {
-                throw new Exception('Can\'t write file ' . $path);
-            }
-
-            return $chunks;
-        }
-
-        $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . basename($path);
-        $this->createDirectory($tmp);
-
-        $chunkFilePath = $tmp . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.' . $chunk;
-
-        // skip writing chunk if the chunk was re-uploaded
-        if (!file_exists($chunkFilePath) && ! file_put_contents($chunkFilePath, $data)) {
-            throw new Exception('Failed to write chunk ' . $chunk);
-        }
-
-        $chunksReceived = $this->countChunks($tmp, $path);
-        $metadata['parts'][$chunk] = true;
-        $metadata['chunks'] = $chunksReceived;
-
-        if ($chunks > 1 && $chunks === $chunksReceived && ! $this->finalizeUpload($path, $chunks, $metadata)) {
-            throw new Exception('Failed to finalize upload ' . $path);
-        }
-
-        return $chunksReceived;
     }
 
     private function countChunks(string $tmp, string $path): int
@@ -185,7 +118,7 @@ class Local extends Device
         $count = 0;
         foreach ($files as $file) {
             if (preg_match('/\.part\.\d+$/', $file)) {
-                $count++;
+                ++$count;
             }
         }
 
@@ -203,24 +136,24 @@ class Local extends Device
 
         $dest = fopen($tmpAssemble, 'wb');
         if ($dest === false) {
-            throw new Exception('Failed to open temporary assembly file ' . $tmpAssemble);
+            throw new StorageException('Failed to open temporary assembly file ' . $tmpAssemble);
         }
 
         $partsToUnlink = [];
-        for ($i = 1; $i <= $chunks; $i++) {
+        for ($i = 1; $i <= $chunks; ++$i) {
             $part = $tmp . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.' . $i;
             $src = @fopen($part, 'rb');
             if ($src === false) {
                 fclose($dest);
                 unlink($tmpAssemble);
-                throw new Exception('Failed to open chunk ' . $part);
+                throw new StorageException('Failed to open chunk ' . $part);
             }
 
             if (stream_copy_to_stream($src, $dest) === false) {
                 fclose($src);
                 fclose($dest);
                 unlink($tmpAssemble);
-                throw new Exception('Failed to copy chunk ' . $part);
+                throw new StorageException('Failed to copy chunk ' . $part);
             }
             fclose($src);
             $partsToUnlink[] = $part;
@@ -235,7 +168,7 @@ class Local extends Device
                 return;
             }
             unlink($tmpAssemble);
-            throw new Exception('Failed to finalize assembled file ' . $path);
+            throw new StorageException('Failed to finalize assembled file ' . $path);
         }
 
         foreach ($partsToUnlink as $part) {
@@ -252,25 +185,29 @@ class Local extends Device
     /**
      * Transfer
      */
-    public function transfer(string $path, string $destination, Device $device): bool
+    public function transfer(string $path, string $destination, Device $device, int $chunkSize = self::TRANSFER_CHUNK_SIZE): bool
     {
+        if ($chunkSize <= 0) {
+            throw new \InvalidArgumentException('Chunk size must be greater than zero');
+        }
+
         if (! $this->exists($path)) {
-            throw new Exception('File Not Found');
+            throw new NotFoundException('File not found');
         }
         $size = $this->getFileSize($path);
         $contentType = $this->getFileMimeType($path);
 
-        if ($size <= $this->transferChunkSize) {
+        if ($size <= $chunkSize) {
             $source = $this->read($path);
 
             return $device->write($destination, $source, $contentType);
         }
 
-        $totalChunks = (int) ceil($size / $this->transferChunkSize);
+        $totalChunks = (int) ceil($size / $chunkSize);
         $metadata = ['content_type' => $contentType];
-        for ($counter = 0; $counter < $totalChunks; $counter++) {
-            $start = $counter * $this->transferChunkSize;
-            $data = $this->read($path, $start, $this->transferChunkSize);
+        for ($counter = 0; $counter < $totalChunks; ++$counter) {
+            $start = $counter * $chunkSize;
+            $data = $this->read($path, $start, $chunkSize);
             $device->uploadData($data, $destination, $contentType, $counter + 1, $totalChunks, $metadata);
         }
 
@@ -280,7 +217,7 @@ class Local extends Device
     /**
      * Abort Chunked Upload
      */
-    public function abort(string $path, string $extra = ''): bool
+    public function abort(string $path, string $uploadId = ''): bool
     {
         if (file_exists($path)) {
             unlink($path);
@@ -289,9 +226,9 @@ class Local extends Device
         $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . basename($path) . DIRECTORY_SEPARATOR;
 
         if (! file_exists(\dirname($tmp))) { // Checks if directory path to file exists
-            throw new Exception('File doesn\'t exist: ' . \dirname($path));
+            throw new NotFoundException('File doesn\'t exist: ' . \dirname($path));
         }
-        $files = $this->getFiles($tmp);
+        $files = $this->scanDirectory($tmp);
 
         foreach ($files as $file) {
             $this->delete($file, true);
@@ -304,7 +241,7 @@ class Local extends Device
      * Read file by given path.
      *
      *
-     * @throws Exception
+     * @throws StorageException
      */
     public function read(string $path, int $offset = 0, ?int $length = null): string
     {
@@ -312,7 +249,12 @@ class Local extends Device
             throw new NotFoundException('File not found');
         }
 
-        return file_get_contents($path, use_include_path: false, offset: $offset, length: $length);
+        $contents = file_get_contents($path, use_include_path: false, offset: $offset, length: $length);
+        if ($contents === false) {
+            throw new StorageException('Failed to read file ' . $path);
+        }
+
+        return $contents;
     }
 
     /**
@@ -322,7 +264,7 @@ class Local extends Device
     {
         // Checks if directory path to file exists
         if (!file_exists(\dirname($path)) && ! @mkdir(\dirname($path), 0755, true)) {
-            throw new Exception('Can\'t create directory ' . \dirname($path));
+            throw new StorageException('Can\'t create directory ' . \dirname($path));
         }
 
         return (bool) file_put_contents($path, $data);
@@ -333,7 +275,7 @@ class Local extends Device
      *
      * @see http://php.net/manual/en/function.filesize.php
      *
-     * @throws Exception
+     * @throws StorageException
      */
     #[\Override]
     public function move(string $source, string $target): bool
@@ -344,7 +286,7 @@ class Local extends Device
 
         // Checks if directory path to file exists
         if (!file_exists(\dirname($target)) && ! @mkdir(\dirname($target), 0755, true)) {
-            throw new Exception('Can\'t create directory ' . \dirname($target));
+            throw new StorageException('Can\'t create directory ' . \dirname($target));
         }
         return rename($source, $target);
     }
@@ -392,11 +334,11 @@ class Local extends Device
     {
         $path = realpath($this->getRoot() . DIRECTORY_SEPARATOR . $path);
 
-        if (! file_exists($path) || ! is_dir($path)) {
+        if ($path === false || ! is_dir($path)) {
             return false;
         }
 
-        $files = $this->getFiles($path);
+        $files = $this->scanDirectory($path);
 
         foreach ($files as $file) {
             if (is_dir($file)) {
@@ -424,7 +366,12 @@ class Local extends Device
      */
     public function getFileSize(string $path): int
     {
-        return filesize($path);
+        $size = $this->exists($path) ? filesize($path) : false;
+        if ($size === false) {
+            throw $this->exists($path) ? new StorageException('Failed to get size of file ' . $path) : new NotFoundException('File not found: ' . $path);
+        }
+
+        return $size;
     }
 
     /**
@@ -434,7 +381,12 @@ class Local extends Device
      */
     public function getFileMimeType(string $path): string
     {
-        return mime_content_type($path);
+        $mimeType = $this->exists($path) ? mime_content_type($path) : false;
+        if ($mimeType === false) {
+            throw $this->exists($path) ? new StorageException('Failed to get mime type of file ' . $path) : new NotFoundException('File not found: ' . $path);
+        }
+
+        return $mimeType;
     }
 
     /**
@@ -444,7 +396,12 @@ class Local extends Device
      */
     public function getFileHash(string $path): string
     {
-        return md5_file($path);
+        $hash = $this->exists($path) ? md5_file($path) : false;
+        if ($hash === false) {
+            throw $this->exists($path) ? new StorageException('Failed to hash file ' . $path) : new NotFoundException('File not found: ' . $path);
+        }
+
+        return $hash;
     }
 
     /**
@@ -504,7 +461,7 @@ class Local extends Device
      */
     public function getPartitionFreeSpace(): float
     {
-        return disk_free_space($this->getRoot());
+        return disk_free_space($this->getRoot()) ?: 0.0;
     }
 
     /**
@@ -514,27 +471,63 @@ class Local extends Device
      */
     public function getPartitionTotalSpace(): float
     {
-        return disk_total_space($this->getRoot());
+        return disk_total_space($this->getRoot()) ?: 0.0;
     }
 
     /**
-     * Get all files and directories inside a directory.
+     * List all files under the given directory, recursively, sorted by path.
+     *
+     * The cursor is a numeric offset into the sorted listing.
+     */
+    public function listFiles(string $prefix = '', int $max = 1000, ?string $cursor = null): FileList
+    {
+        $paths = [];
+        $pending = [rtrim($prefix, DIRECTORY_SEPARATOR)];
+        while ($pending !== []) {
+            $directory = array_pop($pending);
+            foreach ($this->scanDirectory($directory) as $entry) {
+                if (is_dir($entry)) {
+                    $pending[] = $entry;
+                } else {
+                    $paths[] = $entry;
+                }
+            }
+        }
+        sort($paths);
+
+        $offset = is_numeric($cursor) ? (int) $cursor : 0;
+        $page = \array_slice($paths, $offset, $max);
+
+        $files = [];
+        foreach ($page as $path) {
+            $modified = filemtime($path);
+            $files[] = new FileInfo(
+                path: $path,
+                size: filesize($path) ?: 0,
+                modifiedAt: $modified === false ? null : new \DateTimeImmutable('@' . $modified),
+            );
+        }
+
+        return new FileList(
+            files: $files,
+            cursor: $offset + \count($page) < \count($paths) ? (string) ($offset + \count($page)) : null,
+        );
+    }
+
+    /**
+     * Get all files and directories directly inside a directory, hidden entries included.
      *
      * @return string[]
      */
-    public function getFiles(string $dir, int $max = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
+    private function scanDirectory(string $dir): array
     {
         $dir = rtrim($dir, DIRECTORY_SEPARATOR);
-        $files = [];
-
-        foreach (glob($dir . DIRECTORY_SEPARATOR . '*') as $file) {
-            $files[] = $file;
-        }
+        $files = glob($dir . DIRECTORY_SEPARATOR . '*') ?: [];
 
         /**
          * Hidden files
          */
-        foreach (glob($dir . DIRECTORY_SEPARATOR . '.[!.]*') as $file) {
+        foreach (glob($dir . DIRECTORY_SEPARATOR . '.[!.]*') ?: [] as $file) {
             $files[] = $file;
         }
 

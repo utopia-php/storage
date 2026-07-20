@@ -1,162 +1,171 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Utopia\Storage\Device;
 
 use Utopia\Storage\Device;
+use Utopia\Storage\DeviceType;
+use Utopia\Storage\FileList;
 use Utopia\Telemetry\Adapter;
+use Utopia\Telemetry\Histogram;
 
+/**
+ * Decorator that records a `storage.operation` histogram around every call to the decorated device.
+ *
+ * @phpstan-import-type UploadMetadata from Device
+ * @see \Utopia\Tests\Storage\Device\TelemetryTest
+ */
 class Telemetry extends Device
 {
-    public function __construct(Adapter $telemetry, private readonly Device $underlying)
+    private readonly Histogram $telemetry;
+
+    public function __construct(Adapter $telemetry, private readonly Device $device)
     {
-        parent::__construct($telemetry);
+        $this->telemetry = Histogram::lazy(
+            telemetry: $telemetry,
+            name: 'storage.operation',
+            unit: 's',
+            advisory: ['ExplicitBucketBoundaries' => [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10]],
+        );
     }
 
-    #[\Override]
-    public function setTelemetry(Adapter $telemetry): void
+    /**
+     * The decorated device, for access to adapter-specific methods that are
+     * not part of the base contract (for example `Local` partition metrics or
+     * the `S3` object listing).
+     */
+    public function getDevice(): Device
     {
-        parent::setTelemetry($telemetry);
-        $this->underlying->setTelemetry($telemetry);
+        return $this->device;
     }
 
-    private function measure(string $method, &...$args): mixed
+    /**
+     * @template T
+     *
+     * @param  callable(): T  $operation
+     * @return T
+     */
+    private function measure(string $method, callable $operation): mixed
     {
         $start = microtime(true);
         try {
-            return $this->underlying->{$method}(...$args);
+            return $operation();
         } finally {
-            $this->storageOperationTelemetry->record(
+            $this->telemetry->record(
                 microtime(true) - $start,
                 [
-                    'storage' => $this->underlying->getType(),
+                    'storage' => $this->device->getType()->value,
                     'operation' => "device:$method",
                 ],
             );
         }
     }
 
-    public function getName(): string
+    public function getType(): DeviceType
     {
-        return $this->underlying->getName();
-    }
-
-    public function getType(): string
-    {
-        return $this->underlying->getType();
-    }
-
-    public function getDescription(): string
-    {
-        return $this->underlying->getDescription();
+        return $this->device->getType();
     }
 
     public function getRoot(): string
     {
-        return $this->underlying->getRoot();
+        return $this->device->getRoot();
     }
 
-    public function getPath(string $filename, ?string $prefix = null): string
+    public function getPath(string $filename): string
     {
-        return $this->measure(__FUNCTION__, $filename, $prefix);
+        return $this->measure(__FUNCTION__, fn(): string => $this->device->getPath($filename));
     }
 
-    public function upload(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
-    {
-        return $this->measure(__FUNCTION__, $source, $path, $chunk, $chunks, $metadata);
-    }
-
+    /**
+     * @param  UploadMetadata  $metadata
+     */
     public function prepareUpload(string $path, string $contentType, int $chunks = 1, array &$metadata = []): void
     {
-        $this->measure(__FUNCTION__, $path, $contentType, $chunks, $metadata);
+        $this->measure(__FUNCTION__, function () use ($path, $contentType, $chunks, &$metadata): void {
+            $this->device->prepareUpload($path, $contentType, $chunks, $metadata);
+        });
     }
 
-    public function uploadChunk(string $source, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    /**
+     * @param  UploadMetadata  $metadata
+     */
+    public function uploadChunk(string $data, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        return $this->measure(__FUNCTION__, $source, $path, $chunk, $chunks, $metadata);
+        return $this->measure(__FUNCTION__, function () use ($data, $path, $chunk, $chunks, &$metadata): int {
+            return $this->device->uploadChunk($data, $path, $chunk, $chunks, $metadata);
+        });
     }
 
+    /**
+     * @param  UploadMetadata  $metadata
+     */
     public function finalizeUpload(string $path, int $chunks = 1, array &$metadata = []): bool
     {
-        return $this->measure(__FUNCTION__, $path, $chunks, $metadata);
+        return $this->measure(__FUNCTION__, function () use ($path, $chunks, &$metadata): bool {
+            return $this->device->finalizeUpload($path, $chunks, $metadata);
+        });
     }
 
-    public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    public function abort(string $path, string $uploadId = ''): bool
     {
-        return $this->measure(__FUNCTION__, $data, $path, $contentType, $chunk, $chunks, $metadata);
+        return $this->measure(__FUNCTION__, fn(): bool => $this->device->abort($path, $uploadId));
     }
 
-    public function abort(string $path, string $extra = ''): bool
-    {
-        return $this->measure(__FUNCTION__, $path, $extra);
-    }
-
+    /**
+     * @param  int<0, max>  $offset
+     * @param  int<0, max>|null  $length
+     */
     public function read(string $path, int $offset = 0, ?int $length = null): string
     {
-        return $this->measure(__FUNCTION__, $path, $offset, $length);
+        return $this->measure(__FUNCTION__, fn(): string => $this->device->read($path, $offset, $length));
     }
 
-    public function transfer(string $path, string $destination, Device $device): bool
+    public function transfer(string $path, string $destination, Device $device, int $chunkSize = self::TRANSFER_CHUNK_SIZE): bool
     {
-        return $this->measure(__FUNCTION__, $path, $destination, $device);
+        return $this->measure(__FUNCTION__, fn(): bool => $this->device->transfer($path, $destination, $device, $chunkSize));
     }
 
     public function write(string $path, string $data, string $contentType): bool
     {
-        return $this->measure(__FUNCTION__, $path, $data, $contentType);
+        return $this->measure(__FUNCTION__, fn(): bool => $this->device->write($path, $data, $contentType));
     }
 
     public function delete(string $path, bool $recursive = false): bool
     {
-        return $this->measure(__FUNCTION__, $path, $recursive);
+        return $this->measure(__FUNCTION__, fn(): bool => $this->device->delete($path, $recursive));
     }
 
     public function deletePath(string $path): bool
     {
-        return $this->measure(__FUNCTION__, $path);
+        return $this->measure(__FUNCTION__, fn(): bool => $this->device->deletePath($path));
     }
 
     public function exists(string $path): bool
     {
-        return $this->measure(__FUNCTION__, $path);
+        return $this->measure(__FUNCTION__, fn(): bool => $this->device->exists($path));
+    }
+
+    /**
+     * @param  int<1, max>  $max
+     */
+    public function listFiles(string $prefix = '', int $max = 1000, ?string $cursor = null): FileList
+    {
+        return $this->measure(__FUNCTION__, fn(): FileList => $this->device->listFiles($prefix, $max, $cursor));
     }
 
     public function getFileSize(string $path): int
     {
-        return $this->measure(__FUNCTION__, $path);
+        return $this->measure(__FUNCTION__, fn(): int => $this->device->getFileSize($path));
     }
 
     public function getFileMimeType(string $path): string
     {
-        return $this->measure(__FUNCTION__, $path);
+        return $this->measure(__FUNCTION__, fn(): string => $this->device->getFileMimeType($path));
     }
 
     public function getFileHash(string $path): string
     {
-        return $this->measure(__FUNCTION__, $path);
-    }
-
-    public function createDirectory(string $path): bool
-    {
-        return $this->measure(__FUNCTION__, $path);
-    }
-
-    public function getDirectorySize(string $path): int
-    {
-        return $this->measure(__FUNCTION__, $path);
-    }
-
-    public function getPartitionFreeSpace(): float
-    {
-        return $this->measure(__FUNCTION__);
-    }
-
-    public function getPartitionTotalSpace(): float
-    {
-        return $this->measure(__FUNCTION__);
-    }
-
-    public function getFiles(string $dir, int $max = self::MAX_PAGE_SIZE, string $continuationToken = ''): array
-    {
-        return $this->measure(__FUNCTION__, $dir, $max, $continuationToken);
+        return $this->measure(__FUNCTION__, fn(): string => $this->device->getFileHash($path));
     }
 }

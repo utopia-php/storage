@@ -9,10 +9,7 @@ use Utopia\Storage\Validator\FileName;
 
 final class FileNameTest extends TestCase
 {
-    /**
-     * @var FileName
-     */
-    protected $object;
+    private \Utopia\Storage\Validator\FileName $object;
 
     protected function setUp(): void
     {

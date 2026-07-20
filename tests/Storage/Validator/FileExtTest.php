@@ -9,10 +9,7 @@ use Utopia\Storage\Validator\FileExt;
 
 final class FileExtTest extends TestCase
 {
-    /**
-     * @var FileExt
-     */
-    protected $object;
+    private \Utopia\Storage\Validator\FileExt $object;
 
     protected function setUp(): void
     {

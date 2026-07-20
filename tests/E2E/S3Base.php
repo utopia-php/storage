@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Utopia\Tests\Storage;
+namespace Utopia\Tests\Storage\E2E;
 
 use PHPUnit\Framework\TestCase;
 use Utopia\Storage\Device\Local;
@@ -11,13 +11,36 @@ use Utopia\Storage\Exception\NotFoundException;
 
 abstract class S3Base extends TestCase
 {
+    /**
+     * @return resource
+     */
+    private function openStream(string $path)
+    {
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            throw new \RuntimeException('Failed to open ' . $path);
+        }
+
+        return $handle;
+    }
+
+    /**
+     * @param  resource  $handle
+     * @param  int<1, max>  $length
+     */
+    private function readBytes($handle, int $length): string
+    {
+        $contents = fread($handle, $length);
+        if ($contents === false) {
+            throw new \RuntimeException('Failed to read stream');
+        }
+
+        return $contents;
+    }
+
     abstract protected function init(): void;
 
-    abstract protected function getAdapterName(): string;
-
-    abstract protected function getAdapterType(): string;
-
-    abstract protected function getAdapterDescription(): string;
+    abstract protected function getAdapterType(): \Utopia\Storage\DeviceType;
 
     /**
      * @var S3
@@ -35,12 +58,21 @@ abstract class S3Base extends TestCase
         $this->uploadTestFiles();
     }
 
+    private function uploadFile(string $source, string $path): void
+    {
+        $data = file_get_contents($source);
+        if ($data === false) {
+            throw new \RuntimeException('Failed to read ' . $source);
+        }
+        $this->object->uploadData($data, $path, mime_content_type($source) ?: '');
+    }
+
     private function uploadTestFiles(): void
     {
-        $this->object->upload(__DIR__ . '/../resources/disk-a/kitten-1.jpg', $this->object->getPath('testing/kitten-1.jpg'));
-        $this->object->upload(__DIR__ . '/../resources/disk-a/kitten-2.jpg', $this->object->getPath('testing/kitten-2.jpg'));
-        $this->object->upload(__DIR__ . '/../resources/disk-b/kitten-1.png', $this->object->getPath('testing/kitten-1.png'));
-        $this->object->upload(__DIR__ . '/../resources/disk-b/kitten-2.png', $this->object->getPath('testing/kitten-2.png'));
+        $this->uploadFile(__DIR__ . '/../resources/disk-a/kitten-1.jpg', $this->object->getPath('testing/kitten-1.jpg'));
+        $this->uploadFile(__DIR__ . '/../resources/disk-a/kitten-2.jpg', $this->object->getPath('testing/kitten-2.jpg'));
+        $this->uploadFile(__DIR__ . '/../resources/disk-b/kitten-1.png', $this->object->getPath('testing/kitten-1.png'));
+        $this->uploadFile(__DIR__ . '/../resources/disk-b/kitten-2.png', $this->object->getPath('testing/kitten-2.png'));
     }
 
     private function removeTestFiles(): void
@@ -56,55 +88,50 @@ abstract class S3Base extends TestCase
         $this->removeTestFiles();
     }
 
-    public function testGetFiles(): void
+    public function testListFiles(): void
     {
         $path = $this->object->getPath('testing/');
-        $files = $this->object->getFiles($path);
-        $this->assertEquals(4, $files['KeyCount']);
-        $this->assertEquals(false, $files['IsTruncated']);
-        $this->assertIsArray($files['Contents']);
+        $list = $this->object->listFiles($path);
 
-        $file = $files['Contents'][0];
+        $this->assertCount(4, $list->files);
+        $this->assertNull($list->cursor);
 
-        $this->assertArrayHasKey('Key', $file);
-        $this->assertArrayHasKey('LastModified', $file);
-        $this->assertArrayHasKey('ETag', $file);
-        $this->assertArrayHasKey('StorageClass', $file);
-        $this->assertArrayHasKey('Size', $file);
+        $file = $list->files[0];
+        $this->assertStringContainsString('testing/kitten', $file->path);
+        $this->assertGreaterThan(0, $file->size);
+        $this->assertInstanceOf(\DateTimeImmutable::class, $file->modifiedAt);
+        $this->assertNotNull($file->etag);
     }
 
-    public function testGetFilesPagination(): void
+    public function testListFilesPagination(): void
     {
         $path = $this->object->getPath('testing/');
 
-        $files = $this->object->getFiles($path, 3);
-        $this->assertEquals(3, $files['KeyCount']);
-        $this->assertEquals(3, $files['MaxKeys']);
-        $this->assertEquals(true, $files['IsTruncated']);
-        $this->assertIsArray($files['Contents']);
-        $this->assertArrayHasKey('NextContinuationToken', $files);
+        $list = $this->object->listFiles($path, 3);
+        $this->assertCount(3, $list->files);
+        $this->assertNotNull($list->cursor);
 
-        $files = $this->object->getFiles($path, 1000, $files['NextContinuationToken']);
-        $this->assertEquals(1, $files['KeyCount']);
-        $this->assertEquals(1000, $files['MaxKeys']);
-        $this->assertEquals(false, $files['IsTruncated']);
-        $this->assertIsArray($files['Contents']);
-        $this->assertArrayNotHasKey('NextContinuationToken', $files);
+        $list = $this->object->listFiles($path, 1000, $list->cursor);
+        $this->assertCount(1, $list->files);
+        $this->assertNull($list->cursor);
     }
 
-    public function testName(): void
+    public function testListFilesSingleObject(): void
     {
-        $this->assertEquals($this->getAdapterName(), $this->object->getName());
+        $path = $this->object->getPath('single/');
+        $this->object->write($path . 'only.txt', 'one', 'text/plain');
+
+        $list = $this->object->listFiles($path);
+        $this->assertCount(1, $list->files);
+        $this->assertSame(ltrim($path . 'only.txt', '/'), $list->files[0]->path);
+        $this->assertNull($list->cursor);
+
+        $this->object->delete($path . 'only.txt');
     }
 
     public function testType(): void
     {
         $this->assertEquals($this->getAdapterType(), $this->object->getType());
-    }
-
-    public function testDescription(): void
-    {
-        $this->assertEquals($this->getAdapterDescription(), $this->object->getDescription());
     }
 
     public function testRoot(): void
@@ -170,7 +197,7 @@ abstract class S3Base extends TestCase
 
     public function testSVGUpload(): void
     {
-        $this->assertEquals(true, $this->object->upload(__DIR__ . '/../resources/disk-b/appwrite.svg', $this->object->getPath('testing/appwrite.svg')));
+        $this->uploadFile(__DIR__ . '/../resources/disk-b/appwrite.svg', $this->object->getPath('testing/appwrite.svg'));
         $this->assertEquals(file_get_contents(__DIR__ . '/../resources/disk-b/appwrite.svg'), $this->object->read($this->object->getPath('testing/appwrite.svg')));
         $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/appwrite.svg')));
         $this->assertEquals(true, $this->object->delete($this->object->getPath('testing/appwrite.svg')));
@@ -178,7 +205,7 @@ abstract class S3Base extends TestCase
 
     public function testXMLUpload(): void
     {
-        $this->assertEquals(true, $this->object->upload(__DIR__ . '/../resources/disk-a/config.xml', $this->object->getPath('testing/config.xml')));
+        $this->uploadFile(__DIR__ . '/../resources/disk-a/config.xml', $this->object->getPath('testing/config.xml'));
         $this->assertEquals(file_get_contents(__DIR__ . '/../resources/disk-a/config.xml'), $this->object->read($this->object->getPath('testing/config.xml')));
         $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/config.xml')));
         $this->assertEquals(true, $this->object->delete($this->object->getPath('testing/config.xml')));
@@ -232,27 +259,7 @@ abstract class S3Base extends TestCase
         $this->assertEquals('8a9ed992b77e4b62b10e3a5c8ed72062', $this->object->getFileHash($this->object->getPath('testing/kitten-2.png')));
     }
 
-    public function testDirectoryCreate(): void
-    {
-        $this->assertTrue($this->object->createDirectory('temp'));
-    }
-
-    public function testDirectorySize(): void
-    {
-        $this->assertEquals(-1, $this->object->getDirectorySize('resources/disk-a/'));
-    }
-
-    public function testPartitionFreeSpace(): void
-    {
-        $this->assertEquals(-1, $this->object->getPartitionFreeSpace());
-    }
-
-    public function testPartitionTotalSpace(): void
-    {
-        $this->assertEquals(-1, $this->object->getPartitionTotalSpace());
-    }
-
-    public function testPartUpload()
+    public function testPartUpload(): string
     {
         $source = __DIR__ . '/../resources/disk-a/large_file.mp4';
         $dest = $this->object->getPath('uploaded.mp4');
@@ -268,24 +275,17 @@ abstract class S3Base extends TestCase
         $metadata = [
             'parts' => [],
             'chunks' => 0,
-            'uploadId' => null,
-            'content_type' => mime_content_type($source),
+            'content_type' => mime_content_type($source) ?: '',
         ];
-        $handle = @fopen($source, 'rb');
-        $op = __DIR__ . '/chunk.part';
+        $handle = $this->openStream($source);
         while ($start < $totalSize) {
-            $contents = fread($handle, $chunkSize);
-            $op = __DIR__ . '/chunk.part';
-            $cc = fopen($op, 'wb');
-            fwrite($cc, $contents);
-            fclose($cc);
-            $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
+            $contents = $this->readBytes($handle, $chunkSize);
+            $this->object->uploadData($contents, $dest, $metadata['content_type'] ?? '', $chunk, $chunks, $metadata);
             $start += \strlen($contents);
-            $chunk++;
+            ++$chunk;
             fseek($handle, $start);
         }
-        @fclose($handle);
-        unlink($op);
+        fclose($handle);
 
         $this->assertEquals(filesize($source), $this->object->getFileSize($dest));
 
@@ -299,7 +299,7 @@ abstract class S3Base extends TestCase
         return $dest;
     }
 
-    public function testPartUploadRetry()
+    public function testPartUploadRetry(): string
     {
         $source = __DIR__ . '/../resources/disk-a/large_file.mp4';
         $dest = $this->object->getPath('uploaded.mp4');
@@ -315,43 +315,30 @@ abstract class S3Base extends TestCase
         $metadata = [
             'parts' => [],
             'chunks' => 0,
-            'uploadId' => null,
-            'content_type' => mime_content_type($source),
+            'content_type' => mime_content_type($source) ?: '',
         ];
-        $handle = @fopen($source, 'rb');
-        $op = __DIR__ . '/chunk.part';
+        $handle = $this->openStream($source);
         while ($start < $totalSize) {
-            $contents = fread($handle, $chunkSize);
-            $op = __DIR__ . '/chunk.part';
-            $cc = fopen($op, 'wb');
-            fwrite($cc, $contents);
-            fclose($cc);
-            $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
+            $contents = $this->readBytes($handle, $chunkSize);
+            $this->object->uploadData($contents, $dest, $metadata['content_type'] ?? '', $chunk, $chunks, $metadata);
             $start += \strlen($contents);
-            $chunk++;
+            ++$chunk;
             break;
         }
-        @fclose($handle);
-        unlink($op);
+        fclose($handle);
 
         $chunk = 1;
         $start = 0;
         // retry from first to make sure duplicate chunk re-upload works without issue
-        $handle = @fopen($source, 'rb');
-        $op = __DIR__ . '/chunk.part';
+        $handle = $this->openStream($source);
         while ($start < $totalSize) {
-            $contents = fread($handle, $chunkSize);
-            $op = __DIR__ . '/chunk.part';
-            $cc = fopen($op, 'wb');
-            fwrite($cc, $contents);
-            fclose($cc);
-            $this->object->upload($op, $dest, $chunk, $chunks, $metadata);
+            $contents = $this->readBytes($handle, $chunkSize);
+            $this->object->uploadData($contents, $dest, $metadata['content_type'] ?? '', $chunk, $chunks, $metadata);
             $start += \strlen($contents);
-            $chunk++;
+            ++$chunk;
             fseek($handle, $start);
         }
-        @fclose($handle);
-        unlink($op);
+        fclose($handle);
 
         $this->assertEquals(filesize($source), $this->object->getFileSize($dest));
 
@@ -365,7 +352,7 @@ abstract class S3Base extends TestCase
         return $dest;
     }
 
-    public function testOutOfOrderPartUpload()
+    public function testOutOfOrderPartUpload(): string
     {
         $source = __DIR__ . '/../resources/disk-a/large_file.mp4';
         $dest = $this->object->getPath('uploaded-out-of-order.mp4');
@@ -377,30 +364,23 @@ abstract class S3Base extends TestCase
 
         // Read all chunk contents into memory so we can upload out of order
         $parts = [];
-        $handle = @fopen($source, 'rb');
+        $handle = $this->openStream($source);
         $chunkNum = 1;
         while ($chunkNum <= $chunks) {
-            $contents = fread($handle, $chunkSize);
-            $parts[$chunkNum] = $contents;
-            $chunkNum++;
+            $parts[$chunkNum] = $this->readBytes($handle, $chunkSize);
+            ++$chunkNum;
         }
-        @fclose($handle);
+        fclose($handle);
 
         $metadata = [
             'parts' => [],
             'chunks' => 0,
-            'uploadId' => null,
-            'content_type' => mime_content_type($source),
+            'content_type' => mime_content_type($source) ?: '',
         ];
 
         // Upload chunks in reverse order
-        for ($i = $chunks; $i >= 1; $i--) {
-            $op = __DIR__ . '/chunk.part';
-            $cc = fopen($op, 'wb');
-            fwrite($cc, $parts[$i]);
-            fclose($cc);
-            $this->object->upload($op, $dest, $i, $chunks, $metadata);
-            unlink($op);
+        for ($i = $chunks; $i >= 1; --$i) {
+            $this->object->uploadData($parts[$i], $dest, $metadata['content_type'] ?? '', $i, $chunks, $metadata);
         }
 
         $this->assertEquals(filesize($source), $this->object->getFileSize($dest));
@@ -425,12 +405,10 @@ abstract class S3Base extends TestCase
     public function testTransferLarge(string $path): void
     {
         // chunked file
-        $this->object->setTransferChunkSize(10000000); // 10 mb
-
         $device = new Local(__DIR__ . '/../resources/disk-a');
         $destination = $device->getPath('largefile.mp4');
 
-        $this->assertTrue($this->object->transfer($path, $destination, $device));
+        $this->assertTrue($this->object->transfer($path, $destination, $device, 10000000)); // 10 mb chunks
         $this->assertTrue($device->exists($destination));
         $this->assertSame('video/mp4', $device->getFileMimeType($destination));
 
@@ -440,15 +418,13 @@ abstract class S3Base extends TestCase
 
     public function testTransferSmall(): void
     {
-        $this->object->setTransferChunkSize(10000000); // 10 mb
-
         $device = new Local(__DIR__ . '/../resources/disk-a');
 
         $path = $this->object->getPath('text-for-read.txt');
         $this->object->write($path, 'Hello World', 'text/plain');
 
         $destination = $device->getPath('hello.txt');
-        $this->assertTrue($this->object->transfer($path, $destination, $device));
+        $this->assertTrue($this->object->transfer($path, $destination, $device, 10000000)); // 10 mb chunks
         $this->assertTrue($device->exists($destination));
         $this->assertSame('Hello World', $device->read($destination));
 

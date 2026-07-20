@@ -6,13 +6,10 @@
          cacheDirectory=".phpunit.cache">
     <testsuites>
         <testsuite name="unit">
-            <file>tests/Storage/Device/LocalTest.php</file>
-            <file>tests/Storage/Device/S3SlowDownTest.php</file>
-            <file>tests/Storage/StorageTest.php</file>
-            <directory>tests/Storage/Validator</directory>
+            <directory>tests/Storage</directory>
         </testsuite>
         <testsuite name="e2e">
-            <file>tests/Storage/Device/S3Test.php</file>
+            <directory>tests/E2E</directory>
         </testsuite>
     </testsuites>
     <source>

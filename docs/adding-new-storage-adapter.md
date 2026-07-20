@@ -18,8 +18,8 @@ In order to start implementing new storage adapter, add new file inside `package
 
 Always use properly named environment variables if any credentials are required.
 
-### 2.2. Introduce new device constant
-Introduce newly added device constant in `src/Storage/Storage.php` alongside existing device constants. The device constant should start with `const DEVICE_<name of device>` as the existing ones.
+### 2.2. Introduce new device type
+Add a case for the new device to the `DeviceType` enum in `src/Storage/DeviceType.php` alongside the existing cases, and return it from your adapter's `getType()` method.
 
 ## 3. Test your adapter
 
