@@ -52,6 +52,8 @@ class S3 extends Device
 
     protected static int $retryDelay = 500;
 
+    protected static ?\CurlShareHandle $curlShare = null;
+
     protected array $headers = [
         'host' => '',
         'date' => '',
@@ -731,7 +733,15 @@ class S3 extends Device
         $response->headers = [];
 
         // Basic setup
+        if (self::$curlShare === null) {
+            self::$curlShare = curl_share_init();
+            curl_share_setopt(self::$curlShare, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
+            curl_share_setopt(self::$curlShare, CURLSHOPT_SHARE, CURL_LOCK_DATA_SSL_SESSION);
+            curl_share_setopt(self::$curlShare, CURLSHOPT_SHARE, CURL_LOCK_DATA_CONNECT);
+        }
+
         $curl = curl_init();
+        curl_setopt($curl, CURLOPT_SHARE, self::$curlShare);
         curl_setopt($curl, CURLOPT_USERAGENT, 'utopia-php/storage');
         curl_setopt($curl, CURLOPT_URL, $url);
 
