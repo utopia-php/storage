@@ -42,7 +42,7 @@ class S3 extends Device
     /**
      * S3 Constructor
      *
-     * @param  ClientInterface|null  $client  PSR-18 client used for every request; defaults to `utopia-php/client` with the cURL adapter, no request timeout, and transient-error retries via `S3\RetryStrategy`
+     * @param  ClientInterface|null  $client  PSR-18 client used for every request; defaults to `utopia-php/client` with the cURL adapter — no overall deadline (large transfers may take arbitrarily long), a stall watchdog that aborts once no bytes move for 60s, TCP keepalive, and transient-error retries via `S3\RetryStrategy`
      */
     public function __construct(
         protected readonly string $root,
@@ -63,7 +63,12 @@ class S3 extends Device
         }
 
         $this->client = $client ?? new Retry(
-            new HttpClient(new CurlAdapter())->withTimeout(0.0),
+            new HttpClient(new CurlAdapter(options: [
+                \CURLOPT_TIMEOUT_MS => 0,
+                \CURLOPT_LOW_SPEED_LIMIT => 1,
+                \CURLOPT_LOW_SPEED_TIME => 60,
+                \CURLOPT_TCP_KEEPALIVE => 1,
+            ])),
             new S3\RetryStrategy(),
         );
     }
@@ -166,12 +171,7 @@ class S3 extends Device
             throw new \InvalidArgumentException('Chunk size must be greater than zero');
         }
 
-        $response = [];
-        try {
-            $response = $this->getInfo($path);
-        } catch (\Throwable) {
-            throw new NotFoundException('File not found');
-        }
+        $response = $this->getInfo($path);
         $size = (int) ($response['content-length'] ?? 0);
         $contentType = $response['content-type'] ?? '';
 
@@ -183,10 +183,24 @@ class S3 extends Device
 
         $totalChunks = (int) ceil($size / $chunkSize);
         $metadata = ['content_type' => $contentType];
-        for ($counter = 0; $counter < $totalChunks; ++$counter) {
-            $start = $counter * $chunkSize;
-            $data = $this->read($path, $start, $chunkSize);
-            $device->uploadData($data, $destination, $contentType, $counter + 1, $totalChunks, $metadata);
+        try {
+            for ($counter = 0; $counter < $totalChunks; ++$counter) {
+                $start = $counter * $chunkSize;
+                $data = $this->read($path, $start, $chunkSize);
+                $device->uploadData($data, $destination, $contentType, $counter + 1, $totalChunks, $metadata);
+            }
+        } catch (\Throwable $e) {
+            // Best effort, and only once a multipart upload was actually started —
+            // its unclaimed parts are billed until aborted. Aborting without one
+            // could delete a pre-existing destination the transfer never touched.
+            $uploadId = $metadata['uploadId'] ?? null;
+            if (\is_string($uploadId) && $uploadId !== '') {
+                try {
+                    $device->abort($destination, $uploadId);
+                } catch (\Throwable) {
+                }
+            }
+            throw $e;
         }
 
         return true;
@@ -441,7 +455,7 @@ class S3 extends Device
     {
         try {
             $this->getInfo($path);
-        } catch (\Throwable) {
+        } catch (NotFoundException) {
             return false;
         }
 
@@ -663,13 +677,13 @@ class S3 extends Device
         $code = $response->getStatusCode();
         $responseBody = (string) $response->getBody();
 
-        if ($code >= 400) {
-            $this->parseAndThrowS3Error($responseBody, $code);
-        }
-
         $responseHeaders = [];
         foreach ($response->getHeaders() as $name => $values) {
             $responseHeaders[strtolower((string) $name)] = implode(', ', $values);
+        }
+
+        if ($code >= 400) {
+            $this->parseAndThrowS3Error($responseBody, $code, $responseHeaders);
         }
 
         $contentType = $responseHeaders['content-type'] ?? '';
@@ -691,9 +705,8 @@ class S3 extends Device
      */
     private function decodeXml(string $body): array
     {
-        $xml = simplexml_load_string($body);
-        $encoded = $xml === false ? false : json_encode($xml);
-        $decoded = $encoded === false ? null : json_decode($encoded, true);
+        $xml = @simplexml_load_string($body, \SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA);
+        $decoded = $xml === false ? null : $this->xmlToArray($xml);
         if (! \is_array($decoded)) {
             throw new RemoteException('Failed to decode S3 XML response');
         }
@@ -702,32 +715,72 @@ class S3 extends Device
     }
 
     /**
+     * Convert an XML element into nested arrays: repeated child names become
+     * lists, text-only elements become strings and empty elements become
+     * empty arrays.
+     *
+     * @return array<mixed>|string
+     */
+    private function xmlToArray(\SimpleXMLElement $element): array|string
+    {
+        $children = $element->children();
+        if (\count($children) === 0) {
+            $text = (string) $element;
+
+            return $text === '' ? [] : $text;
+        }
+
+        $grouped = [];
+        foreach ($children as $name => $child) {
+            $grouped[$name][] = $this->xmlToArray($child);
+        }
+
+        $result = [];
+        foreach ($grouped as $name => $values) {
+            $result[$name] = \count($values) === 1 ? $values[0] : $values;
+        }
+
+        return $result;
+    }
+
+    /**
      * Parse an S3 error response and throw the matching exception.
      *
      * @param  string  $errorBody  The error response body
      * @param  int  $statusCode  The HTTP status code
+     * @param  array<string, string>  $headers  The response headers, for the S3 request IDs provider support asks for
      *
      * @throws NotFoundException When the object does not exist (404, or a NoSuchKey error code)
      * @throws RemoteException For every other error response
      */
-    private function parseAndThrowS3Error(string $errorBody, int $statusCode): never
+    private function parseAndThrowS3Error(string $errorBody, int $statusCode, array $headers = []): never
     {
         $errorCode = null;
         $errorMessage = null;
         if (str_starts_with(ltrim($errorBody), '<?xml') || str_starts_with(ltrim($errorBody), '<Error')) {
-            $xml = @simplexml_load_string($errorBody);
+            $xml = @simplexml_load_string($errorBody, \SimpleXMLElement::class, LIBXML_NONET | LIBXML_NOCDATA);
             if ($xml !== false) {
                 $errorCode = (string) ($xml->Code ?? '') ?: null;
                 $errorMessage = (string) ($xml->Message ?? '') ?: null;
             }
         }
 
+        $requestIds = array_filter([
+            'request-id' => $headers['x-amz-request-id'] ?? '',
+            'id-2' => $headers['x-amz-id-2'] ?? '',
+        ]);
+        $suffix = $requestIds === [] ? '' : ' [' . implode(', ', array_map(
+            fn(string $key, string $value): string => "$key: $value",
+            array_keys($requestIds),
+            $requestIds,
+        )) . ']';
+
         // HEAD error responses carry no body, so the status code is the only signal.
         if ($statusCode === 404 || $errorCode === 'NoSuchKey') {
-            throw new NotFoundException($errorMessage ?? 'File not found', $statusCode);
+            throw new NotFoundException(($errorMessage ?? 'File not found') . $suffix, $statusCode);
         }
 
-        throw new RemoteException($errorMessage ?? ($errorBody !== '' ? $errorBody : 'S3 request failed'), $statusCode, $errorCode);
+        throw new RemoteException(($errorMessage ?? ($errorBody !== '' ? $errorBody : 'S3 request failed')) . $suffix, $statusCode, $errorCode);
     }
 
     /**

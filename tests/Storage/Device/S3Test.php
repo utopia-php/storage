@@ -15,6 +15,7 @@ use Utopia\Psr7\Request;
 use Utopia\Psr7\Response;
 use Utopia\Psr7\Stream;
 use Utopia\Psr7\Uri;
+use Utopia\Storage\Device\Local;
 use Utopia\Storage\Device\S3;
 use Utopia\Storage\Device\S3\Response as S3Response;
 use Utopia\Storage\Device\S3\RetryStrategy;
@@ -41,6 +42,8 @@ class TestableS3 extends S3
      */
     public array $headersByOperation = [];
 
+    public ?int $failPart = null;
+
     private bool $objectExists = false;
 
     #[\Override]
@@ -51,6 +54,7 @@ class TestableS3 extends S3
             $method === 'POST' && \array_key_exists('uploads', $parameters) => 's3:createMultipartUpload',
             $method === 'PUT' && isset($parameters['partNumber']) => 's3:uploadPart',
             $method === 'POST' && isset($parameters['uploadId']) => 's3:completeMultipartUpload',
+            $method === 'DELETE' && isset($parameters['uploadId']) => 's3:abort',
             $method === 'PUT' => 's3:write',
             default => 's3:' . strtolower($method),
         };
@@ -59,7 +63,7 @@ class TestableS3 extends S3
 
         if ($operation === 's3:info') {
             if (! $this->objectExists) {
-                throw new \Exception('Not found');
+                throw new NotFoundException('Not found');
             }
 
             return new S3Response(code: 200, headers: ['content-length' => '1'], body: '');
@@ -70,6 +74,10 @@ class TestableS3 extends S3
         }
 
         if ($operation === 's3:uploadPart') {
+            if ($this->failPart === $parameters['partNumber']) {
+                throw new RemoteException('Injected part failure');
+            }
+
             return new S3Response(code: 200, headers: ['etag' => 'etag-' . $parameters['partNumber']], body: '');
         }
 
@@ -373,6 +381,64 @@ final class S3Test extends TestCase
         }
     }
 
+    public function testExistsReturnsFalseOnlyForNotFound(): void
+    {
+        $client = new ScriptedClient([new Response(404)]);
+
+        $this->assertFalse($this->device($client)->exists('/root/missing.txt'));
+    }
+
+    public function testExistsPropagatesTransientErrors(): void
+    {
+        // One initial attempt plus the default three retries, all throttled.
+        $client = new ScriptedClient([$this->slowDown(), $this->slowDown(), $this->slowDown(), $this->slowDown()]);
+
+        $this->expectException(RemoteException::class);
+        $this->device($client)->exists('/root/file.txt');
+    }
+
+    public function testErrorMessageIncludesAmzRequestIds(): void
+    {
+        $body = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>AccessDenied</Code><Message>Access denied.</Message></Error>';
+        $response = new Response(403, body: new Stream($body))
+            ->withHeader('x-amz-request-id', 'REQ123')
+            ->withHeader('x-amz-id-2', 'HOST456');
+        $client = new ScriptedClient([$response]);
+
+        try {
+            $this->device($client)->read('/root/file.txt');
+            self::fail('Expected remote exception');
+        } catch (RemoteException $e) {
+            $this->assertStringContainsString('Access denied.', $e->getMessage());
+            $this->assertStringContainsString('request-id: REQ123', $e->getMessage());
+            $this->assertStringContainsString('id-2: HOST456', $e->getMessage());
+        }
+    }
+
+    public function testTransferAbortsMultipartUploadOnFailure(): void
+    {
+        $dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'utopia-storage-' . uniqid();
+        mkdir($dir);
+        $sourcePath = $dir . DIRECTORY_SEPARATOR . 'src.bin';
+        file_put_contents($sourcePath, str_repeat('a', 30));
+
+        $this->s3->failPart = 2;
+
+        try {
+            new Local($dir)->transfer($sourcePath, '/root/dest.bin', $this->s3, 10);
+            self::fail('Expected the injected part failure to surface');
+        } catch (RemoteException $e) {
+            $this->assertSame('Injected part failure', $e->getMessage());
+        } finally {
+            unlink($sourcePath);
+            rmdir($dir);
+        }
+
+        $this->assertContains('s3:createMultipartUpload', $this->s3->calls);
+        $this->assertContains('s3:abort', $this->s3->calls);
+        $this->assertNotContains('s3:completeMultipartUpload', $this->s3->calls);
+    }
+
     public function testXmlListingIsDecodedIntoTypedFiles(): void
     {
         $body = '<?xml version="1.0" encoding="UTF-8"?><ListBucketResult><KeyCount>2</KeyCount><IsTruncated>true</IsTruncated><MaxKeys>1000</MaxKeys><NextContinuationToken>next-token</NextContinuationToken>'
@@ -389,5 +455,21 @@ final class S3Test extends TestCase
         $this->assertSame('abc123', $list->files[0]->etag);
         $this->assertSame('2026-01-02', $list->files[0]->modifiedAt?->format('Y-m-d'));
         $this->assertSame('next-token', $list->cursor);
+    }
+
+    /** A lone element decodes as one associative entry rather than a list — the consumer must handle both. */
+    public function testXmlListingWithSingleObjectIsDecoded(): void
+    {
+        $body = '<?xml version="1.0" encoding="UTF-8"?><ListBucketResult><KeyCount>1</KeyCount><IsTruncated>false</IsTruncated>'
+            . '<Contents><Key>root/a.txt</Key><Size>11</Size><LastModified>2026-01-02T03:04:05.000Z</LastModified><ETag>&quot;abc123&quot;</ETag></Contents>'
+            . '</ListBucketResult>';
+        $client = new ScriptedClient([new Response(200, body: new Stream($body))->withHeader('content-type', 'application/xml')]);
+
+        $list = $this->device($client)->listFiles('/root/testing');
+
+        $this->assertCount(1, $list->files);
+        $this->assertSame('root/a.txt', $list->files[0]->path);
+        $this->assertSame(11, $list->files[0]->size);
+        $this->assertNull($list->cursor);
     }
 }

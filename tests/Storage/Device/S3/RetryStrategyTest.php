@@ -27,9 +27,23 @@ final class RetryStrategyTest extends TestCase
     public function testTransientXmlErrorIsRetried(): void
     {
         $body = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>SlowDown</Code><Message>Please reduce your request rate.</Message></Error>';
-        $strategy = new RetryStrategy(delay: 0.5);
+        $strategy = new RetryStrategy(delay: 0.5, randomizer: static fn(): float => 1.0);
 
         $this->assertEqualsWithDelta(0.5, $strategy->delay($this->request(), 1, $this->response(503, $body), null), PHP_FLOAT_EPSILON);
+    }
+
+    /** The backoff window doubles per attempt (full jitter draws uniformly inside it) and is capped by maxDelay. */
+    public function testBackoffWindowGrowsExponentiallyWithJitter(): void
+    {
+        $strategy = new RetryStrategy(retries: 4, delay: 0.5, maxDelay: 1.5, randomizer: static fn(): float => 1.0);
+        $response = $this->response(503);
+
+        $this->assertEqualsWithDelta(0.5, $strategy->delay($this->request(), 1, $response, null), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(1.0, $strategy->delay($this->request(), 2, $response, null), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(1.5, $strategy->delay($this->request(), 3, $response, null), PHP_FLOAT_EPSILON);
+
+        $jittered = new RetryStrategy(delay: 0.5, randomizer: static fn(): float => 0.5);
+        $this->assertEqualsWithDelta(0.25, $jittered->delay($this->request(), 1, $response, null), PHP_FLOAT_EPSILON);
     }
 
     public function testNonTransientXmlErrorIsNotRetried(): void

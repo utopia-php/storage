@@ -217,6 +217,60 @@ final class LocalTest extends TestCase
     {
         $this->assertGreaterThan(0, $this->object->getDirectorySize(__DIR__ . '/../../resources/disk-a/'));
         $this->assertGreaterThan(0, $this->object->getDirectorySize(__DIR__ . '/../../resources/disk-b/'));
+
+        // Paths without a trailing separator must measure the same tree.
+        $this->assertSame(
+            $this->object->getDirectorySize(__DIR__ . '/../../resources/disk-a/'),
+            $this->object->getDirectorySize(__DIR__ . '/../../resources/disk-a'),
+        );
+
+        // An empty path is an error, not the filesystem root.
+        $this->assertSame(-1, $this->object->getDirectorySize(''));
+    }
+
+    /** Without a started multipart upload there is nothing to reclaim — aborting could delete a pre-existing destination. */
+    public function testFailedTransferDoesNotAbortOrDeleteExistingDestination(): void
+    {
+        $source = $this->object->getPath(uniqid() . '.txt');
+        $this->object->write($source, str_repeat('a', 30), 'text/plain');
+
+        $device = new class (sys_get_temp_dir()) extends Local {
+            public int $aborts = 0;
+
+            #[\Override]
+            public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+            {
+                if ($chunk === 2) {
+                    throw new UploadException('Injected chunk failure');
+                }
+
+                return parent::uploadData($data, $path, $contentType, $chunk, $chunks, $metadata);
+            }
+
+            #[\Override]
+            public function abort(string $path, string $uploadId = ''): bool
+            {
+                ++$this->aborts;
+
+                return parent::abort($path, $uploadId);
+            }
+        };
+
+        $destination = $device->getPath(uniqid() . '-dest.txt');
+        $device->write($destination, 'pre-existing', 'text/plain');
+
+        try {
+            $this->object->transfer($source, $destination, $device, 10);
+            self::fail('Expected the injected chunk failure to surface');
+        } catch (UploadException $e) {
+            $this->assertSame('Injected chunk failure', $e->getMessage());
+        } finally {
+            $this->object->delete($source);
+        }
+
+        $this->assertSame(0, $device->aborts);
+        $this->assertSame('pre-existing', $device->read($destination));
+        $device->delete($destination);
     }
 
     public function testPartUpload(): string
