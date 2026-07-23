@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Utopia\Storage;
 
+use Psr\Http\Message\StreamInterface;
 use Utopia\Storage\Exception\StorageException;
 use Utopia\Storage\Exception\UploadException;
 
@@ -13,9 +14,9 @@ use Utopia\Storage\Exception\UploadException;
 abstract class Device
 {
     /**
-     * Default max chunk size while transferring file from one device to another
+     * Default max chunk size while copying a file from one device to another
      */
-    public const TRANSFER_CHUNK_SIZE = 20000000; // 20 MB
+    public const COPY_CHUNK_SIZE = 20000000; // 20 MB
 
     /**
      * Get Type.
@@ -39,7 +40,7 @@ abstract class Device
     abstract public function getPath(string $filename): string;
 
     /**
-     * Prepare Upload.
+     * Prepare.
      *
      * Initialize adapter-specific upload state without transferring a chunk body.
      *
@@ -47,22 +48,22 @@ abstract class Device
      *
      * @throws StorageException
      */
-    abstract public function prepareUpload(string $path, string $contentType, int $chunks = 1, array &$metadata = []): void;
+    abstract public function prepare(string $path, string $contentType, int $chunks = 1, array &$metadata = []): void;
 
     /**
      * Upload Chunk.
      *
-     * Upload exactly one chunk of file contents without finalizing the full upload.
+     * Store exactly one chunk of file contents without finalizing the full upload.
      * Returns the number of chunks received so far.
      *
      * @param  UploadMetadata  $metadata
      *
      * @throws StorageException
      */
-    abstract public function uploadChunk(string $data, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int;
+    abstract protected function uploadChunk(StreamInterface $data, string $path, int $chunk, int $chunks, array &$metadata): int;
 
     /**
-     * Finalize Upload.
+     * Finalize.
      *
      * Complete a prepared upload once all chunks are known to be present.
      *
@@ -70,24 +71,26 @@ abstract class Device
      *
      * @throws StorageException
      */
-    abstract public function finalizeUpload(string $path, int $chunks = 1, array &$metadata = []): bool;
+    abstract public function finalize(string $path, int $chunks = 1, array &$metadata = []): bool;
 
     /**
-     * Upload Data.
+     * Upload.
      *
-     * Upload file contents to desired destination in the selected disk.
+     * Upload one chunk of file contents to the desired destination, preparing the
+     * upload on first contact and finalizing it once every chunk has arrived.
+     * A whole file is the default single-chunk case.
      * Returns the number of chunks received so far.
      *
      * @param  UploadMetadata  $metadata
      *
      * @throws StorageException
      */
-    public function uploadData(string $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    public function upload(StreamInterface $data, string $path, string $contentType, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
     {
-        $this->prepareUpload($path, $contentType, $chunks, $metadata);
+        $this->prepare($path, $contentType, $chunks, $metadata);
         $chunksReceived = $this->uploadChunk($data, $path, $chunk, $chunks, $metadata);
 
-        if ($chunks > 1 && $chunks === $chunksReceived && ! $this->finalizeUpload($path, $chunks, $metadata)) {
+        if ($chunks > 1 && $chunks === $chunksReceived && ! $this->finalize($path, $chunks, $metadata)) {
             throw new UploadException('Failed to finalize upload ' . $path);
         }
 
@@ -100,24 +103,68 @@ abstract class Device
     abstract public function abort(string $path, string $uploadId = ''): bool;
 
     /**
-     * Read file by given path.
+     * Read file or part of file by given path, offset and length.
+     *
+     * The returned stream is positioned at the start of the requested window.
      *
      * @param  int<0, max>  $offset
      * @param  int<0, max>|null  $length
      */
-    abstract public function read(string $path, int $offset = 0, ?int $length = null): string;
-
-    /**
-     * Transfer
-     * Transfer a file from current device to destination device.
-     *
-     */
-    abstract public function transfer(string $path, string $destination, Device $device, int $chunkSize = self::TRANSFER_CHUNK_SIZE): bool;
+    abstract public function read(string $path, int $offset = 0, ?int $length = null): StreamInterface;
 
     /**
      * Write file by given path.
+     *
+     * The stream is consumed in full: seekable streams are rewound and sent
+     * from the beginning on every adapter.
      */
-    abstract public function write(string $path, string $data, string $contentType): bool;
+    abstract public function write(string $path, StreamInterface $data, string $contentType): bool;
+
+    /**
+     * Copy a file to another path, on this device or onto another one.
+     *
+     * Large files are piped chunk by chunk, so memory stays bounded regardless
+     * of file size. A started multipart upload is aborted on failure.
+     *
+     * @throws StorageException
+     */
+    public function copy(string $source, string $target, ?Device $to = null, int $chunkSize = self::COPY_CHUNK_SIZE): bool
+    {
+        if ($chunkSize <= 0) {
+            throw new \InvalidArgumentException('Chunk size must be greater than zero');
+        }
+
+        $to ??= $this;
+        $size = $this->getFileSize($source);
+        $contentType = $this->getFileMimeType($source);
+
+        if ($size <= $chunkSize) {
+            return $to->write($target, $this->read($source), $contentType);
+        }
+
+        $totalChunks = (int) ceil($size / $chunkSize);
+        $metadata = ['content_type' => $contentType];
+        try {
+            for ($counter = 0; $counter < $totalChunks; ++$counter) {
+                $data = $this->read($source, $counter * $chunkSize, $chunkSize);
+                $to->upload($data, $target, $contentType, $counter + 1, $totalChunks, $metadata);
+            }
+        } catch (\Throwable $e) {
+            // Best effort, and only once a multipart upload was actually started —
+            // its unclaimed parts are billed until aborted. Aborting without one
+            // could delete a pre-existing destination the copy never touched.
+            $uploadId = $metadata['uploadId'] ?? null;
+            if (\is_string($uploadId) && $uploadId !== '') {
+                try {
+                    $to->abort($target, $uploadId);
+                } catch (\Throwable) {
+                }
+            }
+            throw $e;
+        }
+
+        return true;
+    }
 
     /**
      * Move file from given source to given path, return true on success and false on failure.
@@ -128,7 +175,7 @@ abstract class Device
             return false;
         }
 
-        if ($this->transfer($source, $target, $this)) {
+        if ($this->copy($source, $target)) {
             return $this->delete($source);
         }
 

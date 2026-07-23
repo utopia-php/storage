@@ -26,18 +26,19 @@ Devices are immutable value objects: construct one with its configuration and us
 
 require_once '../vendor/autoload.php';
 
+use Utopia\Psr7\Stream;
 use Utopia\Storage\Device\Local;
 
 $device = new Local('/path/to/storage');
 
-// Upload a file
-$device->uploadData(file_get_contents('/local/path/to/file.png'), 'destination/path/file.png', 'image/png');
+// Upload a file — contents move as PSR-7 streams, so memory stays bounded
+$device->upload(Stream::fromResource(fopen('/local/path/to/file.png', 'rb')), 'destination/path/file.png', 'image/png');
 
 // Check if file exists
 $exists = $device->exists('destination/path/file.png');
 
-// Read file contents
-$contents = $device->read('destination/path/file.png');
+// Read file contents as a stream
+$contents = (string) $device->read('destination/path/file.png');
 
 // Delete a file
 $device->delete('destination/path/file.png');
@@ -69,9 +70,12 @@ $device = new S3(
     'YOUR_SECRET_KEY',
     'YOUR_BUCKET_NAME.s3.us-east-1.amazonaws.com', // Host
     'us-east-1', // Region
-    Acl::Private // Access control (default: private)
+    Acl::Private, // Access control (default: private)
+    bucket: 'YOUR_BUCKET_NAME', // Optional: enables server-side copy
 );
 ```
+
+When the bucket name is known, a same-device `copy()` — and therefore `move()` — runs entirely server side (`CopyObject`, or `UploadPartCopy` above 5 GB), so no bytes move through PHP. The provider-specific adapters below pass their bucket automatically. Without it, `copy()` falls back to a streamed download and re-upload.
 
 The provider-specific adapters below build the host for you from a bucket and region. Every S3-family adapter also accepts optional named constructor arguments:
 
@@ -185,8 +189,13 @@ $device = new Wasabi(
 All storage adapters provide a consistent API for working with files:
 
 ```php
-// Upload file contents
-$device->uploadData(file_get_contents('/path/to/local/file.jpg'), 'remote/path/file.jpg', 'image/jpeg');
+use Utopia\Psr7\Stream;
+
+// Upload a file from disk without loading it into memory
+$device->upload(Stream::fromResource(fopen('/path/to/local/file.jpg', 'rb')), 'remote/path/file.jpg', 'image/jpeg');
+
+// Contents already in memory wrap into a stream for free
+$device->upload(new Stream($data), 'remote/path/file.jpg', 'image/jpeg');
 
 // Check if file exists
 $exists = $device->exists('remote/path/file.jpg');
@@ -200,20 +209,20 @@ $mime = $device->getFileMimeType('remote/path/file.jpg');
 // Get file MD5 hash
 $hash = $device->getFileHash('remote/path/file.jpg');
 
-// Read file contents
-$contents = $device->read('remote/path/file.jpg');
+// Read file contents as a PSR-7 stream; casting to string buffers it
+$stream = $device->read('remote/path/file.jpg');
 
 // Read partial file contents
-$chunk = $device->read('remote/path/file.jpg', 0, 1024); // Read first 1KB
+$chunk = (string) $device->read('remote/path/file.jpg', 0, 1024); // Read first 1KB
 
-// Multipart/chunked uploads
+// Multipart/chunked uploads — part 1 of 3
 $metadata = [];
-$device->uploadData($firstChunk, 'remote/video.mp4', 'video/mp4', 1, 3, $metadata); // Part 1 of 3
+$device->upload(new Stream($firstChunk), 'remote/video.mp4', 'video/mp4', 1, 3, $metadata);
 
 // Resumable uploads: prepare, upload chunks in any order, finalize
-$device->prepareUpload('remote/video.mp4', 'video/mp4', 3, $metadata);
-$device->uploadChunk($secondChunk, 'remote/video.mp4', 2, 3, $metadata);
-$device->finalizeUpload('remote/video.mp4', 3, $metadata);
+$device->prepare('remote/video.mp4', 'video/mp4', 3, $metadata);
+$device->upload(new Stream($secondChunk), 'remote/video.mp4', 'video/mp4', 2, 3, $metadata);
+$device->finalize('remote/video.mp4', 3, $metadata);
 
 // List files under a prefix, one page at a time
 $list = $device->listFiles('remote/directory', 100);
@@ -230,16 +239,20 @@ $device->delete('remote/path/file.jpg');
 // Delete directory
 $device->deletePath('remote/directory');
 
-// Transfer files between storage devices
-$sourceDevice->transfer('source/path.jpg', 'target/path.jpg', $targetDevice);
+// Copy a file, on the same device or onto another one
+$device->copy('source/path.jpg', 'target/path.jpg');
+$sourceDevice->copy('source/path.jpg', 'target/path.jpg', $targetDevice);
 
-// Transfer with a custom chunk size (default: 20 MB)
-$sourceDevice->transfer('source/path.jpg', 'target/path.jpg', $targetDevice, 10000000);
+// Copy with a custom chunk size (default: 20 MB)
+$sourceDevice->copy('source/path.jpg', 'target/path.jpg', $targetDevice, 10000000);
+
+// Move is copy plus delete
+$device->move('source/path.jpg', 'target/path.jpg');
 ```
 
 ## Custom HTTP client
 
-The S3-family adapters send requests through any [PSR-18](https://www.php-fig.org/psr/psr-18/) client. By default they use [utopia-php/client](https://github.com/utopia-php/client) with the cURL adapter, no request timeout, and the `Retry` decorator configured with `S3\RetryStrategy` — it retries transient S3 rate-limiting errors (`SlowDown`, `ServiceUnavailable`, `Throttling`, `RequestThrottled`, and plain 429/503 responses) three times with a 500 ms delay.
+The S3-family adapters send requests through any [PSR-18](https://www.php-fig.org/psr/psr-18/) client. By default they use [utopia-php/client](https://github.com/utopia-php/client) with the cURL adapter — no overall request timeout, a stall watchdog that aborts once no bytes move for 60 seconds, TCP keepalive — and the `Retry` decorator configured with `S3\RetryStrategy`. It retries transient S3 rate-limiting errors (`SlowDown`, `ServiceUnavailable`, `Throttling`, `RequestThrottled`, and plain 429/503 responses) three times with exponential backoff and full jitter from a 0.5 second base delay.
 
 Inject your own client to change the transport or the retry policy — for example the Swoole coroutine adapter with more aggressive retries:
 
@@ -299,6 +312,15 @@ use Utopia\Storage\Device\Telemetry;
 
 $device = new Telemetry($telemetryAdapter, new Local('/path/to/storage'));
 ```
+
+## Upgrading from 3.x
+
+Version 4.0 makes streaming the only I/O path: file contents move as PSR-7 streams end to end, so memory stays bounded regardless of file size.
+
+- `read()` returns a `Psr\Http\Message\StreamInterface` instead of a string. Cast with `(string)` or call `getContents()` where you want the bytes in memory — the cost is visible at the call site.
+- `write()` and the upload methods take a `StreamInterface` instead of a string. Wrap a string with `new Utopia\Psr7\Stream($data)`; wrap an open file handle with `Utopia\Psr7\Stream::fromResource($handle)`. S3 requires seekable streams: the payload is hashed for signing, rewound and sent — the same approach the AWS SDK takes.
+- `uploadData()` and `uploadChunk()` merged into one `upload($data, $path, $contentType, $chunk, $chunks, $metadata)` — a whole file is the single-chunk default. `prepareUpload()`/`finalizeUpload()` are now `prepare()`/`finalize()`.
+- `transfer()` is replaced by `copy($source, $target, $to, $chunkSize)` where `$to` defaults to the same device, and `move()` now works across every adapter as copy plus delete (`Local` still renames in place). The `TRANSFER_CHUNK_SIZE` constant is now `COPY_CHUNK_SIZE`.
 
 ## Upgrading from 2.x
 

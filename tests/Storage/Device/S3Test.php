@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Utopia\Tests\Storage\Device;
 
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 use Utopia\Client\Adapter;
 use Utopia\Client\Decorator\Retry;
 use Utopia\Client\Exception\NetworkException;
@@ -44,14 +46,23 @@ class TestableS3 extends S3
 
     public ?int $failPart = null;
 
-    private bool $objectExists = false;
+    public bool $objectExists = false;
+
+    public string $infoContentLength = '1';
+
+    /**
+     * @var array<string, array<int, array<string, string>>>
+     */
+    public array $amzHeadersByOperation = [];
 
     #[\Override]
-    protected function call(string $method, string $uri, string $data = '', array $parameters = [], array $headers = [], array $amzHeaders = [], bool $decode = true): S3Response
+    protected function call(string $method, string $uri, StreamInterface|string $data = '', array $parameters = [], array $headers = [], array $amzHeaders = [], bool $decode = true, ?callable $sink = null): S3Response
     {
         $operation = match (true) {
             $method === 'HEAD' => 's3:info',
             $method === 'POST' && \array_key_exists('uploads', $parameters) => 's3:createMultipartUpload',
+            $method === 'PUT' && isset($parameters['partNumber'], $amzHeaders['x-amz-copy-source']) => 's3:uploadPartCopy',
+            $method === 'PUT' && isset($amzHeaders['x-amz-copy-source']) => 's3:copyObject',
             $method === 'PUT' && isset($parameters['partNumber']) => 's3:uploadPart',
             $method === 'POST' && isset($parameters['uploadId']) => 's3:completeMultipartUpload',
             $method === 'DELETE' && isset($parameters['uploadId']) => 's3:abort',
@@ -60,13 +71,22 @@ class TestableS3 extends S3
         };
         $this->calls[] = $operation;
         $this->headersByOperation[$operation] = $headers;
+        $this->amzHeadersByOperation[$operation][] = $amzHeaders;
 
         if ($operation === 's3:info') {
             if (! $this->objectExists) {
                 throw new NotFoundException('Not found');
             }
 
-            return new S3Response(code: 200, headers: ['content-length' => '1'], body: '');
+            return new S3Response(code: 200, headers: ['content-length' => $this->infoContentLength], body: '');
+        }
+
+        if ($operation === 's3:copyObject') {
+            return new S3Response(code: 200, headers: [], body: ['ETag' => '"etag-copy"']);
+        }
+
+        if ($operation === 's3:uploadPartCopy') {
+            return new S3Response(code: 200, headers: [], body: ['ETag' => '"etag-' . $parameters['partNumber'] . '"']);
         }
 
         if ($operation === 's3:createMultipartUpload') {
@@ -82,7 +102,7 @@ class TestableS3 extends S3
         }
 
         if ($operation === 's3:completeMultipartUpload') {
-            $this->completedBody = $data;
+            $this->completedBody = (string) $data;
             $this->objectExists = true;
 
             return new S3Response(code: 200, headers: [], body: '');
@@ -104,7 +124,7 @@ final class ScriptedClient implements Adapter
     public array $requests = [];
 
     /**
-     * @param  array<ResponseInterface|\Psr\Http\Client\ClientExceptionInterface>  $responses
+     * @param  array<ResponseInterface|ClientExceptionInterface>  $responses
      */
     public function __construct(private array $responses) {}
 
@@ -112,7 +132,7 @@ final class ScriptedClient implements Adapter
     {
         $this->requests[] = $request;
         $response = array_shift($this->responses);
-        if ($response instanceof \Psr\Http\Client\ClientExceptionInterface) {
+        if ($response instanceof ClientExceptionInterface) {
             throw $response;
         }
         if (! $response instanceof ResponseInterface) {
@@ -181,11 +201,11 @@ final class S3Test extends TestCase
         );
     }
 
-    public function testPrepareUploadCreatesMultipartMetadata(): void
+    public function testPrepareCreatesMultipartMetadata(): void
     {
         $metadata = [];
 
-        $this->s3->prepareUpload('/root/file.txt', 'text/plain', 2, $metadata);
+        $this->s3->prepare('/root/file.txt', 'text/plain', 2, $metadata);
 
         $this->assertSame('upload-123', $metadata['uploadId'] ?? null);
         $this->assertSame([], $metadata['parts'] ?? null);
@@ -193,29 +213,28 @@ final class S3Test extends TestCase
         $this->assertSame(['s3:createMultipartUpload'], $this->s3->calls);
     }
 
-    public function testUploadChunkRecordsPartWithoutCompleting(): void
+    public function testUploadRecordsPartWithoutCompleting(): void
     {
         $metadata = [];
 
-        $this->s3->prepareUpload('/root/file.txt', 'text/plain', 2, $metadata);
-        $chunks = $this->s3->uploadChunk('aaa', '/root/file.txt', 1, 2, $metadata);
+        $chunks = $this->s3->upload(new Stream('aaa'), '/root/file.txt', 'text/plain', 1, 2, $metadata);
 
         $this->assertSame(1, $chunks);
         $this->assertSame('etag-1', ($metadata['parts'] ?? [])[1] ?? null);
         $this->assertNotContains('s3:completeMultipartUpload', $this->s3->calls);
     }
 
-    public function testSingleChunkUploadDataDoesNotFinalizeOrCheckExists(): void
+    public function testSingleChunkUploadDoesNotFinalizeOrCheckExists(): void
     {
         $metadata = [];
 
-        $this->assertSame(1, $this->s3->uploadData('aaa', '/root/file.txt', 'text/plain', 1, 1, $metadata));
+        $this->assertSame(1, $this->s3->upload(new Stream('aaa'), '/root/file.txt', 'text/plain', 1, 1, $metadata));
         $this->assertSame(['s3:write'], $this->s3->calls);
         $this->assertSame([1 => true], $metadata['parts'] ?? null);
         $this->assertSame(1, $metadata['chunks'] ?? null);
     }
 
-    public function testFinalizeUploadRequiresAllS3Parts(): void
+    public function testFinalizeRequiresAllS3Parts(): void
     {
         $metadata = [
             'uploadId' => 'upload-123',
@@ -225,10 +244,10 @@ final class S3Test extends TestCase
 
         $this->expectException(UploadException::class);
         $this->expectExceptionMessage('Missing chunk 2');
-        $this->s3->finalizeUpload('/root/file.txt', 2, $metadata);
+        $this->s3->finalize('/root/file.txt', 2, $metadata);
     }
 
-    public function testFinalizeUploadCompletesS3PartsInNumericOrder(): void
+    public function testFinalizeCompletesS3PartsInNumericOrder(): void
     {
         $metadata = [
             'uploadId' => 'upload-123',
@@ -247,7 +266,7 @@ final class S3Test extends TestCase
             'chunks' => 10,
         ];
 
-        $this->assertTrue($this->s3->finalizeUpload('/root/file.txt', 10, $metadata));
+        $this->assertTrue($this->s3->finalize('/root/file.txt', 10, $metadata));
 
         $part1 = strpos($this->s3->completedBody, '<PartNumber>1</PartNumber>');
         $part2 = strpos($this->s3->completedBody, '<PartNumber>2</PartNumber>');
@@ -260,7 +279,7 @@ final class S3Test extends TestCase
         $this->assertLessThan($part10, $part2);
     }
 
-    public function testFinalizeUploadSendsCompleteBodyAsXml(): void
+    public function testFinalizeSendsCompleteBodyAsXml(): void
     {
         $metadata = [
             'uploadId' => 'upload-123',
@@ -268,7 +287,7 @@ final class S3Test extends TestCase
             'chunks' => 2,
         ];
 
-        $this->assertTrue($this->s3->finalizeUpload('/root/file.txt', 2, $metadata));
+        $this->assertTrue($this->s3->finalize('/root/file.txt', 2, $metadata));
         $this->assertSame('application/xml', $this->s3->headersByOperation['s3:completeMultipartUpload']['content-type']);
     }
 
@@ -295,7 +314,7 @@ final class S3Test extends TestCase
     {
         $client = new ScriptedClient([new Response(200)]);
 
-        $this->assertTrue($this->device($client)->write('/root/file.txt', 'Hello World', 'text/plain'));
+        $this->assertTrue($this->device($client)->write('/root/file.txt', new Stream('Hello World'), 'text/plain'));
         $this->assertCount(1, $client->requests);
 
         $request = $client->requests[0];
@@ -315,7 +334,7 @@ final class S3Test extends TestCase
     {
         $client = new ScriptedClient([$this->slowDown(), $this->slowDown(), new Response(200)]);
 
-        $this->assertTrue($this->device($client)->write('/root/file.txt', 'Hello World', 'text/plain'));
+        $this->assertTrue($this->device($client)->write('/root/file.txt', new Stream('Hello World'), 'text/plain'));
         $this->assertCount(3, $client->requests);
     }
 
@@ -324,7 +343,7 @@ final class S3Test extends TestCase
         $client = new ScriptedClient([$this->slowDown(), $this->slowDown(), $this->slowDown(), $this->slowDown()]);
 
         try {
-            $this->device($client)->write('/root/file.txt', 'Hello World', 'text/plain');
+            $this->device($client)->write('/root/file.txt', new Stream('Hello World'), 'text/plain');
             self::fail('Expected exception after exhausting retries');
         } catch (RemoteException $e) {
             $this->assertSame(503, $e->getCode());
@@ -359,7 +378,7 @@ final class S3Test extends TestCase
         $client = new ScriptedClient([$psrError]);
 
         try {
-            $this->device($client)->write('/root/file.txt', 'Hello World', 'text/plain');
+            $this->device($client)->write('/root/file.txt', new Stream('Hello World'), 'text/plain');
             self::fail('Expected transport exception');
         } catch (TransportException $e) {
             $this->assertSame($psrError, $e->getPrevious());
@@ -379,6 +398,70 @@ final class S3Test extends TestCase
             $this->assertSame('Access denied.', $e->getMessage());
             $this->assertSame(403, $e->getCode());
         }
+    }
+
+    private function bucketDevice(): TestableS3
+    {
+        $s3 = new TestableS3(
+            root: '/root',
+            accessKey: 'test-key',
+            secretKey: 'test-secret',
+            host: 'https://s3.example.com',
+            region: 'us-east-1',
+            bucket: 'my-bucket',
+        );
+        $s3->objectExists = true;
+
+        return $s3;
+    }
+
+    public function testCopySameDeviceRunsServerSide(): void
+    {
+        $s3 = $this->bucketDevice();
+
+        $this->assertTrue($s3->copy('/root/a.jpg', '/root/b.jpg'));
+        $this->assertSame(['s3:info', 's3:copyObject'], $s3->calls);
+
+        $amzHeaders = $s3->amzHeadersByOperation['s3:copyObject'][0];
+        $this->assertSame('/my-bucket/root/a.jpg', $amzHeaders['x-amz-copy-source']);
+        $this->assertSame('COPY', $amzHeaders['x-amz-metadata-directive']);
+    }
+
+    public function testCopyLargeObjectUsesMultipartServerSideCopy(): void
+    {
+        $s3 = $this->bucketDevice();
+        $s3->infoContentLength = (string) (6 * 1024 * 1024 * 1024); // 6 GB — above the CopyObject limit
+
+        $this->assertTrue($s3->copy('/root/a.bin', '/root/b.bin'));
+        $this->assertSame([
+            's3:info',
+            's3:createMultipartUpload',
+            's3:uploadPartCopy',
+            's3:uploadPartCopy',
+            's3:completeMultipartUpload',
+        ], $s3->calls);
+
+        $ranges = array_column($s3->amzHeadersByOperation['s3:uploadPartCopy'], 'x-amz-copy-source-range');
+        $this->assertSame(['bytes=0-5368709119', 'bytes=5368709120-6442450943'], $ranges);
+        $this->assertStringContainsString('etag-2', $s3->completedBody);
+    }
+
+    public function testCopyWithoutBucketFallsBackToStreaming(): void
+    {
+        $this->s3->objectExists = true;
+
+        $this->assertTrue($this->s3->copy('/root/a.jpg', '/root/b.jpg'));
+        $this->assertNotContains('s3:copyObject', $this->s3->calls);
+        $this->assertContains('s3:get', $this->s3->calls);
+        $this->assertContains('s3:write', $this->s3->calls);
+    }
+
+    public function testZeroLengthReadReturnsEmptyStreamWithoutARequest(): void
+    {
+        $client = new ScriptedClient([]);
+
+        $this->assertSame('', (string) $this->device($client)->read('/root/file.txt', 5, 0));
+        $this->assertCount(0, $client->requests);
     }
 
     public function testExistsReturnsFalseOnlyForNotFound(): void
@@ -415,7 +498,7 @@ final class S3Test extends TestCase
         }
     }
 
-    public function testTransferAbortsMultipartUploadOnFailure(): void
+    public function testCopyAbortsMultipartUploadOnFailure(): void
     {
         $dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'utopia-storage-' . uniqid();
         mkdir($dir);
@@ -425,7 +508,7 @@ final class S3Test extends TestCase
         $this->s3->failPart = 2;
 
         try {
-            new Local($dir)->transfer($sourcePath, '/root/dest.bin', $this->s3, 10);
+            new Local($dir)->copy($sourcePath, '/root/dest.bin', $this->s3, 10);
             self::fail('Expected the injected part failure to surface');
         } catch (RemoteException $e) {
             $this->assertSame('Injected part failure', $e->getMessage());

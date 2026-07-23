@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Utopia\Storage\Device;
 
 use Psr\Http\Client\ClientInterface;
+use Utopia\Psr18\StreamingClientInterface;
 use Utopia\Storage\Acl;
 use Utopia\Storage\DeviceType;
 
@@ -36,10 +37,10 @@ class DOSpaces extends S3
         string $bucket,
         string $region = self::NYC3,
         Acl $acl = Acl::Private,
-        ?ClientInterface $client = null,
+        (ClientInterface&StreamingClientInterface)|null $client = null,
     ) {
         $host = $bucket . '.' . $region . '.digitaloceanspaces.com';
-        parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl, $client);
+        parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl, $client, $bucket);
     }
 
     #[\Override]

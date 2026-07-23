@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Utopia\Storage\Device;
 
 use Psr\Http\Client\ClientInterface;
+use Utopia\Psr18\StreamingClientInterface;
 use Utopia\Storage\Acl;
 use Utopia\Storage\DeviceType;
 
@@ -37,10 +38,10 @@ class Backblaze extends S3
         string $bucket,
         string $region = self::US_WEST_004,
         Acl $acl = Acl::Private,
-        ?ClientInterface $client = null,
+        (ClientInterface&StreamingClientInterface)|null $client = null,
     ) {
         $host = $bucket . '.' . 's3' . '.' . $region . '.backblazeb2.com';
-        parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl, $client);
+        parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl, $client, $bucket);
     }
 
     #[\Override]

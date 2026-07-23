@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Utopia\Tests\Storage\E2E;
 
+use PHPUnit\Framework\Attributes\Depends;
 use PHPUnit\Framework\TestCase;
+use Utopia\Psr7\Stream;
 use Utopia\Storage\Device\Local;
 use Utopia\Storage\Device\S3;
+use Utopia\Storage\DeviceType;
 use Utopia\Storage\Exception\NotFoundException;
 
 abstract class S3Base extends TestCase
@@ -40,7 +43,7 @@ abstract class S3Base extends TestCase
 
     abstract protected function init(): void;
 
-    abstract protected function getAdapterType(): \Utopia\Storage\DeviceType;
+    abstract protected function getAdapterType(): DeviceType;
 
     /**
      * @var S3
@@ -60,11 +63,8 @@ abstract class S3Base extends TestCase
 
     private function uploadFile(string $source, string $path): void
     {
-        $data = file_get_contents($source);
-        if ($data === false) {
-            throw new \RuntimeException('Failed to read ' . $source);
-        }
-        $this->object->uploadData($data, $path, mime_content_type($source) ?: '');
+        $handle = $this->openStream($source);
+        $this->object->upload(Stream::fromResource($handle), $path, mime_content_type($source) ?: '');
     }
 
     private function uploadTestFiles(): void
@@ -119,7 +119,7 @@ abstract class S3Base extends TestCase
     public function testListFilesSingleObject(): void
     {
         $path = $this->object->getPath('single/');
-        $this->object->write($path . 'only.txt', 'one', 'text/plain');
+        $this->object->write($path . 'only.txt', new Stream('one'), 'text/plain');
 
         $list = $this->object->listFiles($path);
         $this->assertCount(1, $list->files);
@@ -146,15 +146,15 @@ abstract class S3Base extends TestCase
 
     public function testWrite(): void
     {
-        $this->assertEquals(true, $this->object->write($this->object->getPath('text.txt'), 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->write($this->object->getPath('text.txt'), new Stream('Hello World'), 'text/plain'));
 
         $this->object->delete($this->object->getPath('text.txt'));
     }
 
     public function testRead(): void
     {
-        $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-read.txt'), 'Hello World', 'text/plain'));
-        $this->assertEquals('Hello World', $this->object->read($this->object->getPath('text-for-read.txt')));
+        $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-read.txt'), new Stream('Hello World'), 'text/plain'));
+        $this->assertSame('Hello World', (string) $this->object->read($this->object->getPath('text-for-read.txt')));
 
         $this->object->delete($this->object->getPath('text-for-read.txt'));
     }
@@ -173,13 +173,25 @@ abstract class S3Base extends TestCase
 
     public function testMove(): void
     {
-        $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-move.txt'), 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-move.txt'), new Stream('Hello World'), 'text/plain'));
         $this->assertEquals(true, $this->object->exists($this->object->getPath('text-for-move.txt')));
         $this->assertEquals(true, $this->object->move($this->object->getPath('text-for-move.txt'), $this->object->getPath('text-for-move-new.txt')));
-        $this->assertEquals('Hello World', $this->object->read($this->object->getPath('text-for-move-new.txt')));
+        $this->assertSame('Hello World', (string) $this->object->read($this->object->getPath('text-for-move-new.txt')));
         $this->assertEquals(false, $this->object->exists($this->object->getPath('text-for-move.txt')));
 
         $this->object->delete($this->object->getPath('text-for-move-new.txt'));
+    }
+
+    public function testCopySameDevice(): void
+    {
+        $source = $this->object->getPath('testing/kitten-1.jpg');
+        $target = $this->object->getPath('testing/kitten-copy.jpg');
+
+        $this->assertTrue($this->object->copy($source, $target));
+        $this->assertSame($this->object->getFileHash($source), $this->object->getFileHash($target));
+        $this->assertSame($this->object->getFileSize($source), $this->object->getFileSize($target));
+
+        $this->object->delete($target);
     }
 
     public function testMoveIdenticalName(): void
@@ -190,23 +202,23 @@ abstract class S3Base extends TestCase
 
     public function testDelete(): void
     {
-        $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-delete.txt'), 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-delete.txt'), new Stream('Hello World'), 'text/plain'));
         $this->assertEquals(true, $this->object->exists($this->object->getPath('text-for-delete.txt')));
         $this->assertEquals(true, $this->object->delete($this->object->getPath('text-for-delete.txt')));
     }
 
-    public function testSVGUpload(): void
+    public function testSvgUpload(): void
     {
         $this->uploadFile(__DIR__ . '/../resources/disk-b/appwrite.svg', $this->object->getPath('testing/appwrite.svg'));
-        $this->assertEquals(file_get_contents(__DIR__ . '/../resources/disk-b/appwrite.svg'), $this->object->read($this->object->getPath('testing/appwrite.svg')));
+        $this->assertEquals(file_get_contents(__DIR__ . '/../resources/disk-b/appwrite.svg'), (string) $this->object->read($this->object->getPath('testing/appwrite.svg')));
         $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/appwrite.svg')));
         $this->assertEquals(true, $this->object->delete($this->object->getPath('testing/appwrite.svg')));
     }
 
-    public function testXMLUpload(): void
+    public function testXmlUpload(): void
     {
         $this->uploadFile(__DIR__ . '/../resources/disk-a/config.xml', $this->object->getPath('testing/config.xml'));
-        $this->assertEquals(file_get_contents(__DIR__ . '/../resources/disk-a/config.xml'), $this->object->read($this->object->getPath('testing/config.xml')));
+        $this->assertEquals(file_get_contents(__DIR__ . '/../resources/disk-a/config.xml'), (string) $this->object->read($this->object->getPath('testing/config.xml')));
         $this->assertEquals(true, $this->object->exists($this->object->getPath('testing/config.xml')));
         $this->assertEquals(true, $this->object->delete($this->object->getPath('testing/config.xml')));
     }
@@ -216,7 +228,7 @@ abstract class S3Base extends TestCase
         // Test Single Object
         $path = $this->object->getPath('text-for-delete-path.txt');
         $path = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path);
-        $this->assertEquals(true, $this->object->write($path, 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->write($path, new Stream('Hello World'), 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path));
         $this->assertEquals(true, $this->object->deletePath('bucket'));
         $this->assertEquals(false, $this->object->exists($path));
@@ -224,12 +236,12 @@ abstract class S3Base extends TestCase
         // Test Multiple Objects
         $path = $this->object->getPath('text-for-delete-path1.txt');
         $path = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path);
-        $this->assertEquals(true, $this->object->write($path, 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->write($path, new Stream('Hello World'), 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path));
 
         $path2 = $this->object->getPath('text-for-delete-path2.txt');
         $path2 = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path2);
-        $this->assertEquals(true, $this->object->write($path2, 'Hello World', 'text/plain'));
+        $this->assertEquals(true, $this->object->write($path2, new Stream('Hello World'), 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path2));
 
         $this->assertEquals(true, $this->object->deletePath('bucket'));
@@ -280,7 +292,7 @@ abstract class S3Base extends TestCase
         $handle = $this->openStream($source);
         while ($start < $totalSize) {
             $contents = $this->readBytes($handle, $chunkSize);
-            $this->object->uploadData($contents, $dest, $metadata['content_type'] ?? '', $chunk, $chunks, $metadata);
+            $this->object->upload(new Stream($contents), $dest, $metadata['content_type'] ?? '', $chunk, $chunks, $metadata);
             $start += \strlen($contents);
             ++$chunk;
             fseek($handle, $start);
@@ -320,7 +332,7 @@ abstract class S3Base extends TestCase
         $handle = $this->openStream($source);
         while ($start < $totalSize) {
             $contents = $this->readBytes($handle, $chunkSize);
-            $this->object->uploadData($contents, $dest, $metadata['content_type'] ?? '', $chunk, $chunks, $metadata);
+            $this->object->upload(new Stream($contents), $dest, $metadata['content_type'] ?? '', $chunk, $chunks, $metadata);
             $start += \strlen($contents);
             ++$chunk;
             break;
@@ -333,7 +345,7 @@ abstract class S3Base extends TestCase
         $handle = $this->openStream($source);
         while ($start < $totalSize) {
             $contents = $this->readBytes($handle, $chunkSize);
-            $this->object->uploadData($contents, $dest, $metadata['content_type'] ?? '', $chunk, $chunks, $metadata);
+            $this->object->upload(new Stream($contents), $dest, $metadata['content_type'] ?? '', $chunk, $chunks, $metadata);
             $start += \strlen($contents);
             ++$chunk;
             fseek($handle, $start);
@@ -380,7 +392,7 @@ abstract class S3Base extends TestCase
 
         // Upload chunks in reverse order
         for ($i = $chunks; $i >= 1; --$i) {
-            $this->object->uploadData($parts[$i], $dest, $metadata['content_type'] ?? '', $i, $chunks, $metadata);
+            $this->object->upload(new Stream($parts[$i]), $dest, $metadata['content_type'] ?? '', $i, $chunks, $metadata);
         }
 
         $this->assertEquals(filesize($source), $this->object->getFileSize($dest));
@@ -392,23 +404,23 @@ abstract class S3Base extends TestCase
         return $dest;
     }
 
-    #[\PHPUnit\Framework\Attributes\Depends('testPartUpload')]
+    #[Depends('testPartUpload')]
     public function testPartRead(string $path): void
     {
         $source = __DIR__ . '/../resources/disk-a/large_file.mp4';
         $chunk = file_get_contents($source, false, null, 0, 500);
-        $readChunk = $this->object->read($path, 0, 500);
+        $readChunk = (string) $this->object->read($path, 0, 500);
         $this->assertEquals($chunk, $readChunk);
     }
 
-    #[\PHPUnit\Framework\Attributes\Depends('testPartUpload')]
-    public function testTransferLarge(string $path): void
+    #[Depends('testPartUpload')]
+    public function testCopyLarge(string $path): void
     {
         // chunked file
         $device = new Local(__DIR__ . '/../resources/disk-a');
         $destination = $device->getPath('largefile.mp4');
 
-        $this->assertTrue($this->object->transfer($path, $destination, $device, 10000000)); // 10 mb chunks
+        $this->assertTrue($this->object->copy($path, $destination, $device, 10000000)); // 10 mb chunks
         $this->assertTrue($device->exists($destination));
         $this->assertSame('video/mp4', $device->getFileMimeType($destination));
 
@@ -416,23 +428,23 @@ abstract class S3Base extends TestCase
         $this->object->delete($path);
     }
 
-    public function testTransferSmall(): void
+    public function testCopySmall(): void
     {
         $device = new Local(__DIR__ . '/../resources/disk-a');
 
         $path = $this->object->getPath('text-for-read.txt');
-        $this->object->write($path, 'Hello World', 'text/plain');
+        $this->object->write($path, new Stream('Hello World'), 'text/plain');
 
         $destination = $device->getPath('hello.txt');
-        $this->assertTrue($this->object->transfer($path, $destination, $device, 10000000)); // 10 mb chunks
+        $this->assertTrue($this->object->copy($path, $destination, $device, 10000000)); // 10 mb chunks
         $this->assertTrue($device->exists($destination));
-        $this->assertSame('Hello World', $device->read($destination));
+        $this->assertSame('Hello World', (string) $device->read($destination));
 
         $this->object->delete($path);
         $device->delete($destination);
     }
 
-    public function testTransferNonExistentFile(): void
+    public function testCopyNonExistentFile(): void
     {
         $device = new Local(__DIR__ . '/../resources/disk-a');
 
@@ -440,6 +452,6 @@ abstract class S3Base extends TestCase
         $destination = $device->getPath('hello.txt');
 
         $this->expectException(NotFoundException::class);
-        $this->object->transfer($path, $destination, $device);
+        $this->object->copy($path, $destination, $device);
     }
 }

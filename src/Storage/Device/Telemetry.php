@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Utopia\Storage\Device;
 
+use Psr\Http\Message\StreamInterface;
 use Utopia\Storage\Device;
 use Utopia\Storage\DeviceType;
 use Utopia\Storage\FileList;
@@ -14,6 +15,7 @@ use Utopia\Telemetry\Histogram;
  * Decorator that records a `storage.operation` histogram around every call to the decorated device.
  *
  * @phpstan-import-type UploadMetadata from Device
+ *
  * @see \Utopia\Tests\Storage\Device\TelemetryTest
  */
 class Telemetry extends Device
@@ -80,17 +82,20 @@ class Telemetry extends Device
     /**
      * @param  UploadMetadata  $metadata
      */
-    public function prepareUpload(string $path, string $contentType, int $chunks = 1, array &$metadata = []): void
+    public function prepare(string $path, string $contentType, int $chunks = 1, array &$metadata = []): void
     {
         $this->measure(__FUNCTION__, function () use ($path, $contentType, $chunks, &$metadata): void {
-            $this->device->prepareUpload($path, $contentType, $chunks, $metadata);
+            $this->device->prepare($path, $contentType, $chunks, $metadata);
         });
     }
 
     /**
      * @param  UploadMetadata  $metadata
      */
-    public function uploadChunk(string $data, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    /**
+     * @param  UploadMetadata  $metadata
+     */
+    protected function uploadChunk(StreamInterface $data, string $path, int $chunk, int $chunks, array &$metadata): int
     {
         return $this->measure(__FUNCTION__, function () use ($data, $path, $chunk, $chunks, &$metadata): int {
             return $this->device->uploadChunk($data, $path, $chunk, $chunks, $metadata);
@@ -100,10 +105,10 @@ class Telemetry extends Device
     /**
      * @param  UploadMetadata  $metadata
      */
-    public function finalizeUpload(string $path, int $chunks = 1, array &$metadata = []): bool
+    public function finalize(string $path, int $chunks = 1, array &$metadata = []): bool
     {
         return $this->measure(__FUNCTION__, function () use ($path, $chunks, &$metadata): bool {
-            return $this->device->finalizeUpload($path, $chunks, $metadata);
+            return $this->device->finalize($path, $chunks, $metadata);
         });
     }
 
@@ -116,17 +121,18 @@ class Telemetry extends Device
      * @param  int<0, max>  $offset
      * @param  int<0, max>|null  $length
      */
-    public function read(string $path, int $offset = 0, ?int $length = null): string
+    public function read(string $path, int $offset = 0, ?int $length = null): StreamInterface
     {
-        return $this->measure(__FUNCTION__, fn(): string => $this->device->read($path, $offset, $length));
+        return $this->measure(__FUNCTION__, fn(): StreamInterface => $this->device->read($path, $offset, $length));
     }
 
-    public function transfer(string $path, string $destination, Device $device, int $chunkSize = self::TRANSFER_CHUNK_SIZE): bool
+    #[\Override]
+    public function copy(string $source, string $target, ?Device $to = null, int $chunkSize = self::COPY_CHUNK_SIZE): bool
     {
-        return $this->measure(__FUNCTION__, fn(): bool => $this->device->transfer($path, $destination, $device, $chunkSize));
+        return $this->measure(__FUNCTION__, fn(): bool => $this->device->copy($source, $target, $to, $chunkSize));
     }
 
-    public function write(string $path, string $data, string $contentType): bool
+    public function write(string $path, StreamInterface $data, string $contentType): bool
     {
         return $this->measure(__FUNCTION__, fn(): bool => $this->device->write($path, $data, $contentType));
     }

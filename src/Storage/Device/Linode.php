@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Utopia\Storage\Device;
 
 use Psr\Http\Client\ClientInterface;
+use Utopia\Psr18\StreamingClientInterface;
 use Utopia\Storage\Acl;
 use Utopia\Storage\DeviceType;
 
@@ -32,10 +33,10 @@ class Linode extends S3
         string $bucket,
         string $region = self::EU_CENTRAL_1,
         Acl $acl = Acl::Private,
-        ?ClientInterface $client = null,
+        (ClientInterface&StreamingClientInterface)|null $client = null,
     ) {
         $host = $bucket . '.' . $region . '.' . 'linodeobjects.com';
-        parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl, $client);
+        parent::__construct($root, $accessKey, $secretKey, $host, $region, $acl, $client, $bucket);
     }
 
     #[\Override]

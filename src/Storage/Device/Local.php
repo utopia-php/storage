@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Utopia\Storage\Device;
 
+use Psr\Http\Message\StreamInterface;
+use Utopia\Psr7\Stream;
 use Utopia\Storage\Device;
 use Utopia\Storage\DeviceType;
 use Utopia\Storage\Exception\NotFoundException;
@@ -19,6 +21,8 @@ use Utopia\Storage\FileList;
  */
 class Local extends Device
 {
+    private const int PIPE_CHUNK_SIZE = 524288; // 512 KB
+
     /**
      * Local constructor.
      */
@@ -42,23 +46,24 @@ class Local extends Device
     /**
      * @param  UploadMetadata  $metadata
      */
-    public function prepareUpload(string $path, string $contentType, int $chunks = 1, array &$metadata = []): void
+    public function prepare(string $path, string $contentType, int $chunks = 1, array &$metadata = []): void
     {
         $this->createDirectory(\dirname($path));
         $metadata['parts'] ??= [];
         $metadata['chunks'] ??= 0;
     }
 
-    public function uploadChunk(string $data, string $path, int $chunk = 1, int $chunks = 1, array &$metadata = []): int
+    /**
+     * @param  UploadMetadata  $metadata
+     */
+    protected function uploadChunk(StreamInterface $data, string $path, int $chunk, int $chunks, array &$metadata): int
     {
         $this->createDirectory(\dirname($path));
         $metadata['parts'] ??= [];
         $metadata['chunks'] ??= 0;
 
         if ($chunks === 1) {
-            if (file_put_contents($path, $data) === false) {
-                throw new StorageException('Can\'t write file ' . $path);
-            }
+            $this->writeFile($path, $data);
 
             $metadata['parts'][$chunk] = true;
             $metadata['chunks'] = 1;
@@ -72,8 +77,8 @@ class Local extends Device
         $chunkFilePath = $tmp . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.' . $chunk;
 
         // skip writing chunk if the chunk was re-uploaded
-        if (!file_exists($chunkFilePath) && file_put_contents($chunkFilePath, $data) === false) {
-            throw new StorageException('Failed to write chunk ' . $chunk);
+        if (! file_exists($chunkFilePath)) {
+            $this->writeFile($chunkFilePath, $data);
         }
 
         $chunksReceived = $this->countChunks($tmp, $path);
@@ -83,7 +88,7 @@ class Local extends Device
         return $chunksReceived;
     }
 
-    public function finalizeUpload(string $path, int $chunks = 1, array &$metadata = []): bool
+    public function finalize(string $path, int $chunks = 1, array &$metadata = []): bool
     {
         if (file_exists($path)) {
             return true;
@@ -183,52 +188,6 @@ class Local extends Device
     }
 
     /**
-     * Transfer
-     */
-    public function transfer(string $path, string $destination, Device $device, int $chunkSize = self::TRANSFER_CHUNK_SIZE): bool
-    {
-        if ($chunkSize <= 0) {
-            throw new \InvalidArgumentException('Chunk size must be greater than zero');
-        }
-
-        if (! $this->exists($path)) {
-            throw new NotFoundException('File not found');
-        }
-        $size = $this->getFileSize($path);
-        $contentType = $this->getFileMimeType($path);
-
-        if ($size <= $chunkSize) {
-            $source = $this->read($path);
-
-            return $device->write($destination, $source, $contentType);
-        }
-
-        $totalChunks = (int) ceil($size / $chunkSize);
-        $metadata = ['content_type' => $contentType];
-        try {
-            for ($counter = 0; $counter < $totalChunks; ++$counter) {
-                $start = $counter * $chunkSize;
-                $data = $this->read($path, $start, $chunkSize);
-                $device->uploadData($data, $destination, $contentType, $counter + 1, $totalChunks, $metadata);
-            }
-        } catch (\Throwable $e) {
-            // Best effort, and only once a multipart upload was actually started —
-            // its unclaimed parts are billed until aborted. Aborting without one
-            // could delete a pre-existing destination the transfer never touched.
-            $uploadId = $metadata['uploadId'] ?? null;
-            if (\is_string($uploadId) && $uploadId !== '') {
-                try {
-                    $device->abort($destination, $uploadId);
-                } catch (\Throwable) {
-                }
-            }
-            throw $e;
-        }
-
-        return true;
-    }
-
-    /**
      * Abort Chunked Upload
      */
     public function abort(string $path, string $uploadId = ''): bool
@@ -252,42 +211,98 @@ class Local extends Device
     }
 
     /**
-     * Read file by given path.
+     * Read file or part of file by given path, offset and length.
      *
+     * A full read returns a stream over the file itself; a bounded window is
+     * copied into a temporary stream so consumers can read to its end.
      *
      * @throws StorageException
      */
-    public function read(string $path, int $offset = 0, ?int $length = null): string
+    public function read(string $path, int $offset = 0, ?int $length = null): StreamInterface
     {
         if (! $this->exists($path)) {
             throw new NotFoundException('File not found');
         }
 
-        $contents = file_get_contents($path, use_include_path: false, offset: $offset, length: $length);
-        if ($contents === false) {
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
             throw new StorageException('Failed to read file ' . $path);
         }
 
-        return $contents;
+        if ($offset > 0 && fseek($handle, $offset) !== 0) {
+            fclose($handle);
+            throw new StorageException('Failed to seek file ' . $path);
+        }
+
+        if ($length === null) {
+            return Stream::fromResource($handle);
+        }
+
+        $window = fopen('php://temp', 'r+b');
+        if ($window === false || stream_copy_to_stream($handle, $window, $length) === false) {
+            fclose($handle);
+            throw new StorageException('Failed to read file ' . $path);
+        }
+        fclose($handle);
+        rewind($window);
+
+        return Stream::fromResource($window);
     }
 
     /**
      * Write file by given path.
      */
-    public function write(string $path, string $data, string $contentType = ''): bool
+    public function write(string $path, StreamInterface $data, string $contentType = ''): bool
     {
         // Checks if directory path to file exists
-        if (!file_exists(\dirname($path)) && ! @mkdir(\dirname($path), 0755, true)) {
+        if (! file_exists(\dirname($path)) && ! @mkdir(\dirname($path), 0755, true)) {
             throw new StorageException('Can\'t create directory ' . \dirname($path));
         }
 
-        return (bool) file_put_contents($path, $data);
+        $this->writeFile($path, $data);
+
+        return true;
+    }
+
+    /**
+     * Pipe a stream into a file, chunk by chunk.
+     *
+     * @throws StorageException
+     */
+    private function writeFile(string $path, StreamInterface $data): void
+    {
+        if ($data->isSeekable()) {
+            $data->rewind();
+        }
+
+        $handle = fopen($path, 'wb');
+        if ($handle === false) {
+            throw new StorageException('Can\'t write file ' . $path);
+        }
+
+        try {
+            while (! $data->eof()) {
+                $chunk = $data->read(self::PIPE_CHUNK_SIZE);
+                $written = 0;
+                $length = \strlen($chunk);
+                if ($length === 0) {
+                    break;
+                }
+                while ($written < $length) {
+                    $bytes = fwrite($handle, substr($chunk, $written));
+                    if ($bytes === false || $bytes === 0) {
+                        throw new StorageException('Can\'t write file ' . $path);
+                    }
+                    $written += $bytes;
+                }
+            }
+        } finally {
+            fclose($handle);
+        }
     }
 
     /**
      * Move file from given source to given path, Return true on success and false on failure.
-     *
-     * @see http://php.net/manual/en/function.filesize.php
      *
      * @throws StorageException
      */
@@ -299,16 +314,15 @@ class Local extends Device
         }
 
         // Checks if directory path to file exists
-        if (!file_exists(\dirname($target)) && ! @mkdir(\dirname($target), 0755, true)) {
+        if (! file_exists(\dirname($target)) && ! @mkdir(\dirname($target), 0755, true)) {
             throw new StorageException('Can\'t create directory ' . \dirname($target));
         }
+
         return rename($source, $target);
     }
 
     /**
      * Delete file in given path, Return true on success and false on failure.
-     *
-     * @see http://php.net/manual/en/function.filesize.php
      */
     public function delete(string $path, bool $recursive = false): bool
     {

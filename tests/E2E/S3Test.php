@@ -24,7 +24,7 @@ final class S3Test extends S3Base
         $key = $this->env('S3_ACCESS_KEY', 'minioadmin');
         $secret = $this->env('S3_SECRET', 'minioadmin');
 
-        $this->object = new S3($this->root, $key, $secret, $host, 'us-east-1', Acl::Private);
+        $this->object = new S3($this->root, $key, $secret, $host, 'us-east-1', Acl::Private, bucket: 'utopia-storage-test');
     }
 
     protected function getAdapterType(): DeviceType
