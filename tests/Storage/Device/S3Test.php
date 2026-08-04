@@ -330,6 +330,27 @@ final class S3Test extends TestCase
         $this->assertSame('utopia-php/storage', $request->getHeaderLine('user-agent'));
     }
 
+    public function testEndpointPathIsExcludedFromHostHeader(): void
+    {
+        $client = new ScriptedClient([new Response(200)]);
+        $device = new S3(
+            root: '/',
+            accessKey: 'test-key',
+            secretKey: 'test-secret',
+            host: 'http://minio:9000/storage/',
+            region: 'us-east-1',
+            client: $client,
+        );
+
+        $this->assertTrue($device->write('archive/file.json', new Stream('{}'), 'application/json'));
+
+        $request = $client->requests[0];
+        $this->assertSame('minio', $request->getUri()->getHost());
+        $this->assertSame(9000, $request->getUri()->getPort());
+        $this->assertSame('/storage/archive/file.json', $request->getUri()->getPath());
+        $this->assertSame('minio:9000', $request->getHeaderLine('host'));
+    }
+
     public function testTransientErrorIsRetriedUntilSuccess(): void
     {
         $client = new ScriptedClient([$this->slowDown(), $this->slowDown(), new Response(200)]);

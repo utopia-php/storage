@@ -45,6 +45,8 @@ class S3 extends Device
 
     private readonly string $host;
 
+    private readonly string $path;
+
     private readonly ClientInterface&StreamingClientInterface $client;
 
     /**
@@ -64,13 +66,20 @@ class S3 extends Device
         (ClientInterface&StreamingClientInterface)|null $client = null,
         protected readonly ?string $bucket = null,
     ) {
-        if (str_starts_with($host, 'http://') || str_starts_with($host, 'https://')) {
-            $this->fqdn = $host;
-            $this->host = str_replace(['http://', 'https://'], '', $host);
-        } else {
-            $this->fqdn = 'https://' . $host;
-            $this->host = $host;
+        $endpoint = Uri::parse(rtrim(
+            str_starts_with($host, 'http://') || str_starts_with($host, 'https://')
+                ? $host
+                : 'https://' . $host,
+            '/',
+        ));
+        $authority = $endpoint->getHost();
+        $port = $endpoint->getPort();
+        if ($port !== null) {
+            $authority .= ':' . $port;
         }
+        $this->fqdn = $endpoint->getScheme() . '://' . $authority;
+        $this->host = $authority;
+        $this->path = rtrim($endpoint->getPath(), '/');
 
         $this->client = $client ?? new Retry(
             new HttpClient(new CurlAdapter(options: [
@@ -722,7 +731,7 @@ class S3 extends Device
      */
     protected function call(string $method, string $uri, StreamInterface|string $data = '', array $parameters = [], array $headers = [], array $amzHeaders = [], bool $decode = true, ?callable $sink = null): S3\Response
     {
-        $uri = $this->getAbsolutePath($uri);
+        $uri = $this->path . $this->getAbsolutePath($uri);
         $url = $this->fqdn . $uri . '?' . http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 
         if ($data instanceof StreamInterface) {
