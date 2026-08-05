@@ -31,7 +31,7 @@
         "ext-fileinfo": "*",
         "ext-curl": "*",
         "ext-simplexml": "*",
-        "utopia-php/telemetry": "^0.4",
+        "utopia-php/telemetry": "^0.4.6",
         "utopia-php/validators": "0.3.*",
         "psr/http-client": "^1.0",
         "psr/http-message": "^1.1 || ^2.0",

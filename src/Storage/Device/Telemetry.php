@@ -24,8 +24,7 @@ class Telemetry extends Device
 
     public function __construct(Adapter $telemetry, private readonly Device $device)
     {
-        $this->telemetry = Histogram::lazy(
-            telemetry: $telemetry,
+        $this->telemetry = $telemetry->createHistogram(
             name: 'storage.operation',
             unit: 's',
             advisory: ['ExplicitBucketBoundaries' => [0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10]],
