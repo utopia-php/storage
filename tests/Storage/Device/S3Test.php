@@ -184,6 +184,11 @@ final class ScriptedClient implements Adapter
     {
         return $this;
     }
+
+    public function withFollowRedirects(bool $enabled = true): static
+    {
+        return $this;
+    }
 }
 
 final class S3Test extends TestCase
