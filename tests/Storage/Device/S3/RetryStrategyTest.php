@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Utopia\Tests\Storage\Device\S3;
 
 use PHPUnit\Framework\TestCase;
+use Utopia\Client\Exception\ConnectionException;
+use Utopia\Client\Exception\DnsException;
 use Utopia\Client\Exception\NetworkException;
 use Utopia\Psr7\Request;
 use Utopia\Psr7\Response;
@@ -79,11 +81,36 @@ final class RetryStrategyTest extends TestCase
         $this->assertNull($strategy->delay($this->request(), 3, $response, null));
     }
 
+    /** A reset connection may have been applied server-side, so it stays non-retryable. */
     public function testTransportErrorsAreNotRetried(): void
     {
         $error = new NetworkException($this->request(), 'Connection reset');
 
         $this->assertNull(new RetryStrategy()->delay($this->request(), 1, null, $error));
+    }
+
+    public function testRefusedConnectionIsRetried(): void
+    {
+        $error = new ConnectionException($this->request(), 'Could not connect to server');
+        $strategy = new RetryStrategy(delay: 0.5, randomizer: static fn(): float => 1.0);
+
+        $this->assertEqualsWithDelta(0.5, $strategy->delay($this->request(), 1, null, $error), PHP_FLOAT_EPSILON);
+    }
+
+    public function testUnresolvableHostIsRetried(): void
+    {
+        $error = new DnsException($this->request(), 'Could not resolve host');
+        $strategy = new RetryStrategy(delay: 0.5, randomizer: static fn(): float => 1.0);
+
+        $this->assertEqualsWithDelta(0.5, $strategy->delay($this->request(), 1, null, $error), PHP_FLOAT_EPSILON);
+    }
+
+    public function testConnectionRetriesAreCapped(): void
+    {
+        $error = new ConnectionException($this->request(), 'Could not connect to server');
+        $strategy = new RetryStrategy(retries: 2, delay: 0.5, randomizer: static fn(): float => 1.0);
+
+        $this->assertNull($strategy->delay($this->request(), 3, null, $error));
     }
 
     public function testReadingTheBodyLeavesItReadable(): void

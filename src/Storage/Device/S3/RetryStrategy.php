@@ -9,6 +9,8 @@ use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Utopia\Client\Decorator\Retry\Strategy;
+use Utopia\Client\Exception\ConnectionException;
+use Utopia\Client\Exception\DnsException;
 
 /**
  * Retry strategy for transient S3 rate-limiting errors (e.g. SlowDown,
@@ -18,6 +20,10 @@ use Utopia\Client\Decorator\Retry\Strategy;
  * regardless of HTTP status: a 503/429 carrying a parseable but non-transient
  * error code is not retried, while unparseable 429/503 responses fall back to
  * status-code detection.
+ *
+ * A refused connection or an unresolvable host is retried too: the request
+ * never reached the service, so replaying it cannot duplicate an effect. Other
+ * transport failures are left alone, since the request may have been applied.
  *
  * Waits use exponential backoff with full jitter so a fleet throttled at the
  * same moment does not retry in lockstep.
@@ -54,11 +60,15 @@ final readonly class RetryStrategy implements Strategy
 
     public function delay(RequestInterface $request, int $attempt, ?ResponseInterface $response, ?ClientExceptionInterface $error): ?float
     {
-        if ($attempt > $this->retries || ! $response instanceof ResponseInterface) {
+        if ($attempt > $this->retries) {
             return null;
         }
 
-        if (! $this->isTransient($response)) {
+        $retryable = $response instanceof ResponseInterface
+            ? $this->isTransient($response)
+            : $error instanceof ConnectionException || $error instanceof DnsException;
+
+        if (! $retryable) {
             return null;
         }
 
