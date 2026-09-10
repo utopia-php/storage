@@ -735,11 +735,12 @@ class S3 extends Device
         $url = $this->fqdn . $uri . '?' . http_build_query($parameters, '', '&', PHP_QUERY_RFC3986);
 
         if ($data instanceof StreamInterface) {
-            [$md5, $sha256] = $this->hashBody($data);
+            [$md5, $sha256, $length] = $this->hashBody($data);
             $body = $data;
         } else {
             $md5 = base64_encode(md5($data, true));
             $sha256 = hash('sha256', $data);
+            $length = \strlen($data);
             $body = new Stream($data);
         }
 
@@ -747,6 +748,12 @@ class S3 extends Device
         $headers['host'] = $this->host;
         $headers['date'] = gmdate('D, d M Y H:i:s T');
         $headers['content-md5'] = $md5;
+        // Send an explicit Content-Length (signed, alongside content-md5). Without
+        // it the cURL transport streams the body with Transfer-Encoding: chunked —
+        // or omits the header on an empty POST — which S3-compatible services such
+        // as GCS reject with HTTP 411. The value is the full body size, so it also
+        // matches what the transport sends for a size-known stream.
+        $headers['content-length'] = (string) $length;
 
         $amzHeaders = array_filter($amzHeaders, fn(string $value): bool => $value !== '');
         $amzHeaders['x-amz-date'] = gmdate('Ymd\THis\Z');
@@ -810,7 +817,7 @@ class S3 extends Device
      * the cURL adapter rewinds seekable bodies before sending, so the
      * signature must cover the full stream.
      *
-     * @return array{string, string} Base64 MD5 and hex SHA-256 of the full stream
+     * @return array{string, string, int} Base64 MD5, hex SHA-256, and byte length of the full stream
      */
     private function hashBody(StreamInterface $body): array
     {
@@ -821,17 +828,19 @@ class S3 extends Device
         $body->rewind();
         $md5 = hash_init('md5');
         $sha256 = hash_init('sha256');
+        $length = 0;
         while (! $body->eof()) {
             $chunk = $body->read(self::PIPE_CHUNK_SIZE);
             if ($chunk === '') {
                 break;
             }
+            $length += \strlen($chunk);
             hash_update($md5, $chunk);
             hash_update($sha256, $chunk);
         }
         $body->rewind();
 
-        return [base64_encode(hash_final($md5, true)), hash_final($sha256)];
+        return [base64_encode(hash_final($md5, true)), hash_final($sha256), $length];
     }
 
     /**
