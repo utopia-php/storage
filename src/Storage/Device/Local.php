@@ -464,6 +464,10 @@ class Local extends Device
      */
     public function getFileInfo(string $path): FileInfo
     {
+        if (! $this->exists($path)) {
+            throw new NotFoundException('File not found: ' . $path);
+        }
+
         $modified = filemtime($path);
 
         return new FileInfo(
