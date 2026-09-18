@@ -129,7 +129,9 @@ class S3 extends Device
 
     public function finalize(string $path, int $chunks = 1, array &$metadata = []): bool
     {
-        if ($chunks === 1) {
+        // A single chunk went up as a whole object, unless the upload was
+        // prepared without knowing the count: then it is one part to complete.
+        if ($chunks === 1 && empty($metadata['uploadId'])) {
             return $this->exists($path);
         }
 

@@ -813,6 +813,22 @@ final class LocalTest extends TestCase
         }
     }
 
+    public function testASingleChunkOfAnUploadWithUnknownCountIsJoined(): void
+    {
+        $path = $this->object->getPath('single-chunk.txt');
+        $this->object->write($path, new Stream('old contents'), 'text/plain');
+
+        $metadata = [];
+        $this->object->upload(new Stream('new contents'), $path, 'text/plain', 1, 0, $metadata);
+        $this->assertSame('old contents', file_get_contents($path), 'a chunk of an upload with unknown count is not the file yet');
+
+        $this->assertTrue($this->object->finalize($path, 1, $metadata));
+        $this->assertSame('new contents', file_get_contents($path));
+        $this->assertTrue($this->object->finalize($path, 1, $metadata), 'finalizing again is not an error');
+
+        $this->object->delete($path);
+    }
+
     public function testFinalizeReplacesAnExistingFile(): void
     {
         $path = $this->object->getPath('replaced-by-upload.txt');

@@ -631,6 +631,17 @@ final class S3Test extends TestCase
         $this->s3->finalize('/root/file.txt', 2, $metadata);
     }
 
+    public function testASingleChunkOfAnUploadWithUnknownCountIsCompleted(): void
+    {
+        $this->s3->objectExists = true; // the object being replaced
+        $metadata = [];
+        $this->s3->upload(new Stream('a'), '/root/file.txt', 'text/plain', 1, 0, $metadata);
+
+        $this->assertNotContains('s3:completeMultipartUpload', $this->s3->calls);
+        $this->assertTrue($this->s3->finalize('/root/file.txt', 1, $metadata));
+        $this->assertContains('s3:completeMultipartUpload', $this->s3->calls, 'one part is still a part, not a whole object written already');
+    }
+
     public function testUnknownChunkCountNeverFinalizesOnItsOwn(): void
     {
         $metadata = [];

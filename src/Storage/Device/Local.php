@@ -91,11 +91,14 @@ class Local extends Device
 
     public function finalize(string $path, int $chunks = 1, array &$metadata = []): bool
     {
-        if ($chunks === 1) {
+        $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . basename($path);
+
+        // A single chunk was written as the whole file, unless the upload was
+        // prepared without knowing the count: then it is one part to join.
+        if ($chunks === 1 && ! file_exists($tmp . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.1')) {
             return file_exists($path);
         }
 
-        $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . basename($path);
         for ($i = 1; $i <= $chunks; ++$i) {
             $part = $tmp . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.' . $i;
             if (file_exists($part)) {

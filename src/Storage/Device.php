@@ -252,6 +252,7 @@ abstract class Device
      * Size, last modification and ETag of a file, in one request.
      *
      * @throws NotFoundException When there is no file at the path
+     * @throws StorageException When the file cannot be looked at
      */
     abstract public function getFileInfo(string $path): FileInfo;
 
