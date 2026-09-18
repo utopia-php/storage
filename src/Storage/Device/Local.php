@@ -9,6 +9,7 @@ use Utopia\Psr7\Stream;
 use Utopia\Storage\Device;
 use Utopia\Storage\DeviceType;
 use Utopia\Storage\Exception\NotFoundException;
+use Utopia\Storage\Exception\PreconditionFailedException;
 use Utopia\Storage\Exception\StorageException;
 use Utopia\Storage\Exception\UploadException;
 use Utopia\Storage\FileInfo;
@@ -90,20 +91,24 @@ class Local extends Device
 
     public function finalize(string $path, int $chunks = 1, array &$metadata = []): bool
     {
-        if (file_exists($path)) {
-            return true;
-        }
-
         if ($chunks === 1) {
-            return false;
+            return file_exists($path);
         }
 
         $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . basename($path);
         for ($i = 1; $i <= $chunks; ++$i) {
             $part = $tmp . DIRECTORY_SEPARATOR . pathinfo($path, PATHINFO_FILENAME) . '.part.' . $i;
-            if (! file_exists($part)) {
-                throw new UploadException('Missing chunk ' . $i);
+            if (file_exists($part)) {
+                continue;
             }
+
+            // The chunks are removed once joined, so a file already in place
+            // is a finalized upload; without one, a chunk is truly missing.
+            if (file_exists($path)) {
+                return true;
+            }
+
+            throw new UploadException('Missing chunk ' . $i);
         }
 
         $this->joinChunks($path, $chunks);
@@ -132,10 +137,6 @@ class Local extends Device
 
     private function joinChunks(string $path, int $chunks): void
     {
-        if (file_exists($path)) {
-            return;
-        }
-
         $tmp = \dirname($path) . DIRECTORY_SEPARATOR . 'tmp_' . basename($path);
         $tmpAssemble = tempnam(\dirname($path), 'tmp_assemble_' . basename($path) . '_');
 
@@ -151,6 +152,13 @@ class Local extends Device
             if ($src === false) {
                 fclose($dest);
                 unlink($tmpAssemble);
+
+                // The chunks go once joined: a file in place means another
+                // request assembled it meanwhile, and there is nothing left to do.
+                if (file_exists($path)) {
+                    return;
+                }
+
                 throw new StorageException('Failed to open chunk ' . $part);
             }
 
@@ -166,12 +174,8 @@ class Local extends Device
 
         fclose($dest);
 
+        // rename() replaces a file in place, so the assembled file takes over from whatever was there.
         if (! rename($tmpAssemble, $path)) {
-            if (file_exists($path)) {
-                unlink($tmpAssemble);
-
-                return;
-            }
             unlink($tmpAssemble);
             throw new StorageException('Failed to finalize assembled file ' . $path);
         }
@@ -214,14 +218,20 @@ class Local extends Device
      * Read file or part of file by given path, offset and length.
      *
      * A full read returns a stream over the file itself; a bounded window is
-     * copied into a temporary stream so consumers can read to its end.
+     * copied into a temporary stream so consumers can read to its end. The
+     * ETag of a local file is its MD5 hash, so a conditional read hashes the
+     * whole file first.
      *
      * @throws StorageException
      */
-    public function read(string $path, int $offset = 0, ?int $length = null): StreamInterface
+    public function read(string $path, int $offset = 0, ?int $length = null, ?string $etag = null): StreamInterface
     {
         if (! $this->exists($path)) {
             throw new NotFoundException('File not found');
+        }
+
+        if ($etag !== null && $this->getFileHash($path) !== $etag) {
+            throw new PreconditionFailedException('File ' . $path . ' no longer has ETag ' . $etag);
         }
 
         $handle = fopen($path, 'rb');
@@ -265,19 +275,75 @@ class Local extends Device
     }
 
     /**
+     * Write a file where there is none yet. Opening the file exclusively makes
+     * the check and the creation one step.
+     */
+    public function create(string $path, StreamInterface $data, string $contentType = ''): string
+    {
+        if (! file_exists(\dirname($path)) && ! @mkdir(\dirname($path), 0755, true)) {
+            throw new StorageException('Can\'t create directory ' . \dirname($path));
+        }
+
+        $handle = @fopen($path, 'xb');
+        if ($handle === false) {
+            if (file_exists($path)) {
+                throw new PreconditionFailedException('File ' . $path . ' already exists');
+            }
+
+            throw new StorageException('Can\'t write file ' . $path);
+        }
+
+        $this->pipe($handle, $path, $data);
+
+        return $this->getFileHash($path);
+    }
+
+    /**
+     * Write over the file with the given ETag. The check and the write are two
+     * steps, so a replacement landing between them goes unnoticed; a local disk
+     * offers nothing better without a lock file.
+     */
+    public function replace(string $path, StreamInterface $data, string $etag, string $contentType = ''): string
+    {
+        if (! $this->exists($path)) {
+            throw new PreconditionFailedException('File ' . $path . ' is gone');
+        }
+
+        if ($this->getFileHash($path) !== $etag) {
+            throw new PreconditionFailedException('File ' . $path . ' no longer has ETag ' . $etag);
+        }
+
+        $this->writeFile($path, $data);
+
+        return $this->getFileHash($path);
+    }
+
+    /**
      * Pipe a stream into a file, chunk by chunk.
      *
      * @throws StorageException
      */
     private function writeFile(string $path, StreamInterface $data): void
     {
-        if ($data->isSeekable()) {
-            $data->rewind();
-        }
-
         $handle = fopen($path, 'wb');
         if ($handle === false) {
             throw new StorageException('Can\'t write file ' . $path);
+        }
+
+        $this->pipe($handle, $path, $data);
+    }
+
+    /**
+     * Pipe a stream into an open file, chunk by chunk, and close it.
+     *
+     * @param  resource  $handle
+     *
+     * @throws StorageException
+     */
+    private function pipe($handle, string $path, StreamInterface $data): void
+    {
+        if ($data->isSeekable()) {
+            $data->rewind();
         }
 
         try {
@@ -385,6 +451,21 @@ class Local extends Device
     public function exists(string $path): bool
     {
         return file_exists($path);
+    }
+
+    /**
+     * Size, last modification and MD5 hash of a file. The hash reads the whole file.
+     */
+    public function getFileInfo(string $path): FileInfo
+    {
+        $modified = filemtime($path);
+
+        return new FileInfo(
+            path: $path,
+            size: $this->getFileSize($path),
+            modifiedAt: $modified === false ? null : new \DateTimeImmutable('@' . $modified),
+            etag: $this->getFileHash($path),
+        );
     }
 
     /**

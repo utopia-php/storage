@@ -11,6 +11,7 @@ use Utopia\Psr7\Stream;
 use Utopia\Storage\Device\Local;
 use Utopia\Storage\DeviceType;
 use Utopia\Storage\Exception\NotFoundException;
+use Utopia\Storage\Exception\PreconditionFailedException;
 use Utopia\Storage\Exception\UploadException;
 use Utopia\Storage\FileInfo;
 
@@ -734,5 +735,98 @@ final class LocalTest extends TestCase
         $this->assertSame('AAAABBBB', file_get_contents($dest), 'File content must not be corrupted');
 
         $storage->delete($storage->getRoot(), true);
+    }
+
+    public function testFileInfoReportsSizeModificationAndHash(): void
+    {
+        $path = $this->object->getPath('info.txt');
+        $this->object->write($path, new Stream('Hello World'), 'text/plain');
+
+        $info = $this->object->getFileInfo($path);
+
+        $this->assertSame($path, $info->path);
+        $this->assertSame(11, $info->size);
+        $this->assertSame(md5('Hello World'), $info->etag);
+        $this->assertEqualsWithDelta(time(), $info->modifiedAt?->getTimestamp() ?? 0, 5);
+
+        $this->object->delete($path);
+    }
+
+    public function testFileInfoOfAMissingFileThrowsNotFound(): void
+    {
+        $this->expectException(NotFoundException::class);
+        $this->object->getFileInfo($this->object->getPath('missing.txt'));
+    }
+
+    public function testCreateWritesOnlyWhereNothingIs(): void
+    {
+        $path = $this->object->getPath('created.txt');
+
+        $this->assertSame(md5('first'), $this->object->create($path, new Stream('first'), 'text/plain'));
+        $this->assertSame('first', file_get_contents($path));
+
+        try {
+            $this->object->create($path, new Stream('second'), 'text/plain');
+            self::fail('Expected precondition failure');
+        } catch (PreconditionFailedException) {
+            $this->assertSame('first', file_get_contents($path), 'the file is left alone');
+        }
+
+        $this->object->delete($path);
+    }
+
+    public function testReplaceWritesOverTheNamedVersionOnly(): void
+    {
+        $path = $this->object->getPath('replaced.txt');
+        $etag = $this->object->create($path, new Stream('first'), 'text/plain');
+
+        $this->assertSame(md5('second'), $this->object->replace($path, new Stream('second'), $etag, 'text/plain'));
+        $this->assertSame('second', file_get_contents($path));
+
+        try {
+            $this->object->replace($path, new Stream('third'), $etag, 'text/plain');
+            self::fail('Expected precondition failure');
+        } catch (PreconditionFailedException) {
+            $this->assertSame('second', file_get_contents($path), 'a stale ETag changes nothing');
+        }
+
+        $this->object->delete($path);
+
+        $this->expectException(PreconditionFailedException::class);
+        $this->object->replace($path, new Stream('third'), md5('second'), 'text/plain');
+    }
+
+    public function testReadWithEtagRefusesAReplacedFile(): void
+    {
+        $path = $this->object->getPath('conditional.txt');
+        $etag = $this->object->create($path, new Stream('Hello World'), 'text/plain');
+
+        $this->assertSame('World', (string) $this->object->read($path, 6, 5, $etag));
+
+        $this->object->write($path, new Stream('Goodbye World'), 'text/plain');
+
+        try {
+            $this->expectException(PreconditionFailedException::class);
+            $this->object->read($path, 6, 5, $etag);
+        } finally {
+            $this->object->delete($path);
+        }
+    }
+
+    public function testFinalizeReplacesAnExistingFile(): void
+    {
+        $path = $this->object->getPath('replaced-by-upload.txt');
+        $this->object->write($path, new Stream('old contents'), 'text/plain');
+
+        $metadata = [];
+        $this->object->upload(new Stream('new '), $path, 'text/plain', 1, 0, $metadata);
+        $this->object->upload(new Stream('contents'), $path, 'text/plain', 2, 0, $metadata);
+        $this->assertSame('old contents', file_get_contents($path), 'nothing changes before finalize');
+
+        $this->assertTrue($this->object->finalize($path, 2, $metadata));
+        $this->assertSame('new contents', file_get_contents($path));
+        $this->assertTrue($this->object->finalize($path, 2, $metadata), 'finalizing again is not an error');
+
+        $this->object->delete($path);
     }
 }
