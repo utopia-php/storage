@@ -282,7 +282,7 @@ $chunk = $device->read('dataset.bin', $offset, $length, $etag);
 
 On S3 the check and the operation are one request (`If-None-Match`, `If-Match`), so nothing can slip in between. On the local disk the ETag is the file's MD5 hash and `replace()` checks it before writing, which leaves a window between the two; `create()` opens the file exclusively and has none.
 
-Multipart uploads left neither finalized nor aborted keep their parts, and S3 bills for them. `listUploads()` finds them, so a cleanup job can abort what a crashed uploader left behind. Amazon S3 takes any prefix; MinIO only honours a whole key.
+Multipart uploads left neither finalized nor aborted keep their parts, and S3 bills for them. `listUploads()` finds them, so a cleanup job can abort what a crashed process left behind. Amazon S3 takes any prefix; MinIO only honours a whole key.
 
 ```php
 $list = $device->listUploads('remote/directory');
