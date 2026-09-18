@@ -260,18 +260,17 @@ class Local extends Device
     }
 
     /**
-     * Write file by given path.
+     * Write file by given path. The ETag of a local file is its MD5 hash,
+     * taken from the bytes as they are written.
      */
-    public function write(string $path, StreamInterface $data, string $contentType = ''): bool
+    public function write(string $path, StreamInterface $data, string $contentType = ''): string
     {
         // Checks if directory path to file exists
         if (! file_exists(\dirname($path)) && ! @mkdir(\dirname($path), 0755, true)) {
             throw new StorageException('Can\'t create directory ' . \dirname($path));
         }
 
-        $this->writeFile($path, $data);
-
-        return true;
+        return $this->writeFile($path, $data);
     }
 
     /**
@@ -293,9 +292,7 @@ class Local extends Device
             throw new StorageException('Can\'t write file ' . $path);
         }
 
-        $this->pipe($handle, $path, $data);
-
-        return $this->getFileHash($path);
+        return $this->pipe($handle, $path, $data);
     }
 
     /**
@@ -313,38 +310,41 @@ class Local extends Device
             throw new PreconditionFailedException('File ' . $path . ' no longer has ETag ' . $etag);
         }
 
-        $this->writeFile($path, $data);
-
-        return $this->getFileHash($path);
+        return $this->writeFile($path, $data);
     }
 
     /**
      * Pipe a stream into a file, chunk by chunk.
      *
+     * @return string MD5 hash of the bytes written
+     *
      * @throws StorageException
      */
-    private function writeFile(string $path, StreamInterface $data): void
+    private function writeFile(string $path, StreamInterface $data): string
     {
         $handle = fopen($path, 'wb');
         if ($handle === false) {
             throw new StorageException('Can\'t write file ' . $path);
         }
 
-        $this->pipe($handle, $path, $data);
+        return $this->pipe($handle, $path, $data);
     }
 
     /**
      * Pipe a stream into an open file, chunk by chunk, and close it.
      *
      * @param  resource  $handle
+     * @return string MD5 hash of the bytes written, the file's ETag
      *
      * @throws StorageException
      */
-    private function pipe($handle, string $path, StreamInterface $data): void
+    private function pipe($handle, string $path, StreamInterface $data): string
     {
         if ($data->isSeekable()) {
             $data->rewind();
         }
+
+        $hash = hash_init('md5');
 
         try {
             while (! $data->eof()) {
@@ -354,6 +354,7 @@ class Local extends Device
                 if ($length === 0) {
                     break;
                 }
+                hash_update($hash, $chunk);
                 while ($written < $length) {
                     $bytes = fwrite($handle, substr($chunk, $written));
                     if ($bytes === false || $bytes === 0) {
@@ -365,6 +366,8 @@ class Local extends Device
         } finally {
             fclose($handle);
         }
+
+        return hash_final($hash);
     }
 
     /**

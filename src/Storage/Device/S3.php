@@ -350,11 +350,9 @@ class S3 extends Device
      *
      * @throws StorageException
      */
-    public function write(string $path, StreamInterface $data, string $contentType = ''): bool
+    public function write(string $path, StreamInterface $data, string $contentType = ''): string
     {
-        $this->put($path, $data, $contentType);
-
-        return true;
+        return $this->put($path, $data, $contentType);
     }
 
     /**
@@ -363,7 +361,7 @@ class S3 extends Device
      */
     public function create(string $path, StreamInterface $data, string $contentType = ''): string
     {
-        return $this->put($path, $data, $contentType, ['if-none-match' => '*']) ?? throw new RemoteException('Missing ETag in S3 response');
+        return $this->put($path, $data, $contentType, ['if-none-match' => '*']);
     }
 
     /**
@@ -372,17 +370,17 @@ class S3 extends Device
      */
     public function replace(string $path, StreamInterface $data, string $etag, string $contentType = ''): string
     {
-        return $this->put($path, $data, $contentType, ['if-match' => $this->quote($etag)]) ?? throw new RemoteException('Missing ETag in S3 response');
+        return $this->put($path, $data, $contentType, ['if-match' => $this->quote($etag)]);
     }
 
     /**
-     * Send a PutObject request and return the ETag of the object written, when the service reports one.
+     * Send a PutObject request and return the ETag of the object written.
      *
      * @param  array<string, string>  $headers  Conditions on the write
      *
      * @throws StorageException
      */
-    private function put(string $path, StreamInterface $data, string $contentType, array $headers = []): ?string
+    private function put(string $path, StreamInterface $data, string $contentType, array $headers = []): string
     {
         $uri = $path !== '' ? '/' . str_replace(['%2F', '%3F'], ['/', '?'], rawurlencode($path)) : '/';
 
@@ -394,9 +392,7 @@ class S3 extends Device
             amzHeaders: $this->aclHeaders(),
         );
 
-        $etag = $response->headers['etag'] ?? '';
-
-        return $etag === '' ? null : $this->unquote($etag);
+        return $this->unquote($response->headers['etag'] ?? throw new RemoteException('Missing ETag in S3 response'));
     }
 
     /**

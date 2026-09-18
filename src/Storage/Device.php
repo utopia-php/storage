@@ -128,12 +128,15 @@ abstract class Device
     abstract public function read(string $path, int $offset = 0, ?int $length = null, ?string $etag = null): StreamInterface;
 
     /**
-     * Write file by given path.
+     * Write file by given path, replacing whatever was there.
      *
      * The stream is consumed in full: seekable streams are rewound and sent
-     * from the beginning on every adapter.
+     * from the beginning on every adapter. Returns the ETag of the file
+     * written, as `getFileInfo()` will report it.
+     *
+     * @throws StorageException
      */
-    abstract public function write(string $path, StreamInterface $data, string $contentType): bool;
+    abstract public function write(string $path, StreamInterface $data, string $contentType): string;
 
     /**
      * Write a file where there is none yet.
@@ -178,7 +181,9 @@ abstract class Device
         $contentType = $this->getFileMimeType($source);
 
         if ($size <= $chunkSize) {
-            return $to->write($target, $this->read($source), $contentType);
+            $to->write($target, $this->read($source), $contentType);
+
+            return true;
         }
 
         $totalChunks = (int) ceil($size / $chunkSize);

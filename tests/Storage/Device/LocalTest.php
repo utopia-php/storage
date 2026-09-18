@@ -81,7 +81,7 @@ final class LocalTest extends TestCase
 
     public function testWrite(): void
     {
-        $this->assertEquals(true, $this->object->write($this->object->getPath('text.txt'), new Stream('Hello World')));
+        $this->assertSame(md5('Hello World'), $this->object->write($this->object->getPath('text.txt'), new Stream('Hello World')));
         $this->assertFileExists($this->object->getPath('text.txt'));
         $this->assertIsReadable($this->object->getPath('text.txt'));
 
@@ -90,7 +90,7 @@ final class LocalTest extends TestCase
 
     public function testRead(): void
     {
-        $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-read.txt'), new Stream('Hello World')));
+        $this->assertSame(md5('Hello World'), $this->object->write($this->object->getPath('text-for-read.txt'), new Stream('Hello World')));
         $this->assertSame('Hello World', (string) $this->object->read($this->object->getPath('text-for-read.txt')));
 
         $this->object->delete($this->object->getPath('text-for-read.txt'));
@@ -102,7 +102,7 @@ final class LocalTest extends TestCase
         $stream->read(6); // consume a prefix — seekable streams are sent from the beginning
 
         $path = $this->object->getPath('text-for-rewind.txt');
-        $this->assertTrue($this->object->write($path, $stream));
+        $this->assertSame(md5('Hello World'), $this->object->write($path, $stream));
         $this->assertSame('Hello World', (string) $this->object->read($path));
 
         $this->object->delete($path);
@@ -116,7 +116,7 @@ final class LocalTest extends TestCase
 
     public function testFileExists(): void
     {
-        $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-test-exists.txt'), new Stream('Hello World')));
+        $this->assertSame(md5('Hello World'), $this->object->write($this->object->getPath('text-for-test-exists.txt'), new Stream('Hello World')));
         $this->assertEquals(true, $this->object->exists($this->object->getPath('text-for-test-exists.txt')));
         $this->assertEquals(false, $this->object->exists($this->object->getPath('text-for-test-doesnt-exist.txt')));
 
@@ -125,7 +125,7 @@ final class LocalTest extends TestCase
 
     public function testMove(): void
     {
-        $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-move.txt'), new Stream('Hello World')));
+        $this->assertSame(md5('Hello World'), $this->object->write($this->object->getPath('text-for-move.txt'), new Stream('Hello World')));
         $this->assertSame('Hello World', (string) $this->object->read($this->object->getPath('text-for-move.txt')));
         $this->assertEquals(true, $this->object->move($this->object->getPath('text-for-move.txt'), $this->object->getPath('text-for-move-new.txt')));
         $this->assertSame('Hello World', (string) $this->object->read($this->object->getPath('text-for-move-new.txt')));
@@ -183,7 +183,7 @@ final class LocalTest extends TestCase
 
     public function testDelete(): void
     {
-        $this->assertEquals(true, $this->object->write($this->object->getPath('text-for-delete.txt'), new Stream('Hello World')));
+        $this->assertSame(md5('Hello World'), $this->object->write($this->object->getPath('text-for-delete.txt'), new Stream('Hello World')));
         $this->assertSame('Hello World', (string) $this->object->read($this->object->getPath('text-for-delete.txt')));
         $this->assertEquals(true, $this->object->delete($this->object->getPath('text-for-delete.txt')));
         $this->assertFileDoesNotExist($this->object->getPath('text-for-delete.txt'));
@@ -195,8 +195,8 @@ final class LocalTest extends TestCase
         $directory = $this->object->getPath('delete-hidden');
 
         $this->assertTrue($this->object->createDirectory($directory));
-        $this->assertTrue($this->object->write($directory . DIRECTORY_SEPARATOR . '.hidden', new Stream('secret')));
-        $this->assertTrue($this->object->write($directory . DIRECTORY_SEPARATOR . 'visible', new Stream('visible')));
+        $this->assertSame(md5('secret'), $this->object->write($directory . DIRECTORY_SEPARATOR . '.hidden', new Stream('secret')));
+        $this->assertSame(md5('visible'), $this->object->write($directory . DIRECTORY_SEPARATOR . 'visible', new Stream('visible')));
 
         $this->assertTrue($this->object->delete($directory, true));
         $this->assertFalse($this->object->exists($directory));
@@ -494,7 +494,7 @@ final class LocalTest extends TestCase
         // Test Single Object
         $path = $this->object->getPath('text-for-delete-path.txt');
         $path = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path);
-        $this->assertEquals(true, $this->object->write($path, new Stream('Hello World'), 'text/plain'));
+        $this->assertSame(md5('Hello World'), $this->object->write($path, new Stream('Hello World'), 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path));
         $this->assertEquals(true, $this->object->deletePath('bucket'));
         $this->assertEquals(false, $this->object->exists($path));
@@ -502,17 +502,17 @@ final class LocalTest extends TestCase
         // Test Multiple Objects
         $path = $this->object->getPath('text-for-delete-path1.txt');
         $path = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path);
-        $this->assertEquals(true, $this->object->write($path, new Stream('Hello World'), 'text/plain'));
+        $this->assertSame(md5('Hello World'), $this->object->write($path, new Stream('Hello World'), 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path));
 
         $path2 = $this->object->getPath('text-for-delete-path2.txt');
         $path2 = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path2);
-        $this->assertEquals(true, $this->object->write($path2, new Stream('Hello World'), 'text/plain'));
+        $this->assertSame(md5('Hello World'), $this->object->write($path2, new Stream('Hello World'), 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path2));
 
         $path3 = $this->object->getPath('.hidden.txt');
         $path3 = str_ireplace($this->object->getRoot(), $this->object->getRoot() . DIRECTORY_SEPARATOR . 'bucket', $path3);
-        $this->assertEquals(true, $this->object->write($path3, new Stream('Hello World'), 'text/plain'));
+        $this->assertSame(md5('Hello World'), $this->object->write($path3, new Stream('Hello World'), 'text/plain'));
         $this->assertEquals(true, $this->object->exists($path3));
 
         $this->assertEquals(true, $this->object->deletePath('bucket/'));

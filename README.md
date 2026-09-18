@@ -261,7 +261,7 @@ $device->move('source/path.jpg', 'target/path.jpg');
 
 ### Conditional operations
 
-Every file carries an ETag, reported by `getFileInfo()` and returned by every conditional write. Naming it makes an operation apply to that version of the file and no other, which is what coordinating several processes through one file takes: a lock, a lease, or a dataset that must never be read half old and half new.
+Every file carries an ETag, reported by `getFileInfo()` and returned by every write, conditional or not. Naming it makes an operation apply to that version of the file and no other, which is what coordinating several processes through one file takes: a lock, a lease, or a dataset that must never be read half old and half new.
 
 ```php
 use Utopia\Storage\Exception\PreconditionFailedException;
@@ -353,6 +353,12 @@ use Utopia\Storage\Device\Telemetry;
 
 $device = new Telemetry($telemetryAdapter, new Local('/path/to/storage'));
 ```
+
+## Upgrading from 4.1
+
+- `write()` returns the ETag of the file written, a string, instead of `true`. A `false` never happened: every adapter threw instead. Callers testing the result for truth keep working; callers comparing it with `true` do not.
+- `Device` has three new abstract methods, `getFileInfo()`, `create()` and `replace()`, and `read()` takes an optional ETag. Adapters outside this library must implement them.
+- `finalize()` completes a multipart upload over an existing file instead of skipping it. Finalizing twice is still not an error.
 
 ## Upgrading from 3.x
 

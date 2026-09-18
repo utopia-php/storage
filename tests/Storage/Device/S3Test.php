@@ -329,9 +329,9 @@ final class S3Test extends TestCase
 
     public function testWriteSendsSignedRequest(): void
     {
-        $client = new ScriptedClient([new Response(200)]);
+        $client = new ScriptedClient([new Response(200)->withHeader('etag', '"b10a8db164e0754105b7a99be72e3fe5"')]);
 
-        $this->assertTrue($this->device($client)->write('/root/file.txt', new Stream('Hello World'), 'text/plain'));
+        $this->assertSame('b10a8db164e0754105b7a99be72e3fe5', $this->device($client)->write('/root/file.txt', new Stream('Hello World'), 'text/plain'), 'the ETag comes back without its quotes');
         $this->assertCount(1, $client->requests);
 
         $request = $client->requests[0];
@@ -349,7 +349,7 @@ final class S3Test extends TestCase
 
     public function testEndpointPathIsExcludedFromHostHeader(): void
     {
-        $client = new ScriptedClient([new Response(200)]);
+        $client = new ScriptedClient([new Response(200)->withHeader('etag', '"abc"')]);
         $device = new S3(
             root: '/',
             accessKey: 'test-key',
@@ -359,7 +359,7 @@ final class S3Test extends TestCase
             client: $client,
         );
 
-        $this->assertTrue($device->write('archive/file.json', new Stream('{}'), 'application/json'));
+        $this->assertSame('abc', $device->write('archive/file.json', new Stream('{}'), 'application/json'));
 
         $request = $client->requests[0];
         $this->assertSame('minio', $request->getUri()->getHost());
@@ -370,9 +370,9 @@ final class S3Test extends TestCase
 
     public function testTransientErrorIsRetriedUntilSuccess(): void
     {
-        $client = new ScriptedClient([$this->slowDown(), $this->slowDown(), new Response(200)]);
+        $client = new ScriptedClient([$this->slowDown(), $this->slowDown(), new Response(200)->withHeader('etag', '"abc"')]);
 
-        $this->assertTrue($this->device($client)->write('/root/file.txt', new Stream('Hello World'), 'text/plain'));
+        $this->assertSame('abc', $this->device($client)->write('/root/file.txt', new Stream('Hello World'), 'text/plain'));
         $this->assertCount(3, $client->requests);
     }
 
@@ -657,7 +657,7 @@ final class S3Test extends TestCase
             client: $client,
         );
 
-        $this->assertTrue($device->write('/root/file.txt', new Stream('Hello World'), 'text/plain'));
+        $this->assertSame('abc', $device->write('/root/file.txt', new Stream('Hello World'), 'text/plain'));
         $this->assertFalse($client->requests[0]->hasHeader('x-amz-acl'));
     }
 
@@ -766,6 +766,15 @@ final class S3Test extends TestCase
 
         $this->expectException(NotFoundException::class);
         $this->device($client)->getFileInfo('/root/missing.txt');
+    }
+
+    public function testAWriteWithoutAnEtagInTheResponseIsAnError(): void
+    {
+        $client = new ScriptedClient([new Response(200)]);
+
+        $this->expectException(RemoteException::class);
+        $this->expectExceptionMessage('Missing ETag');
+        $this->device($client)->write('/root/file.txt', new Stream('Hello World'), 'text/plain');
     }
 
     public function testUploadListingIsDecodedIntoTypedUploads(): void

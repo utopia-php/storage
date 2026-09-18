@@ -132,9 +132,9 @@ class Telemetry extends Device
         return $this->measure(__FUNCTION__, fn(): bool => $this->device->copy($source, $target, $to, $chunkSize));
     }
 
-    public function write(string $path, StreamInterface $data, string $contentType): bool
+    public function write(string $path, StreamInterface $data, string $contentType): string
     {
-        return $this->measure(__FUNCTION__, fn(): bool => $this->device->write($path, $data, $contentType));
+        return $this->measure(__FUNCTION__, fn(): string => $this->device->write($path, $data, $contentType));
     }
 
     public function create(string $path, StreamInterface $data, string $contentType = ''): string

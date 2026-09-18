@@ -87,10 +87,10 @@ final class S3Test extends S3Base
         $failure = null;
 
         try {
-            $this->assertTrue($path->write($pathObject, new Stream('path-style'), 'text/plain'));
+            $this->assertSame(md5('path-style'), $path->write($pathObject, new Stream('path-style'), 'text/plain'));
             $this->assertSame('path-style', (string) $this->object->read($pathObject));
 
-            $this->assertTrue($this->object->write($virtualObject, new Stream('virtual-hosted'), 'text/plain'));
+            $this->assertSame(md5('virtual-hosted'), $this->object->write($virtualObject, new Stream('virtual-hosted'), 'text/plain'));
             $this->assertSame('virtual-hosted', (string) $path->read($virtualObject));
             $this->assertSame(
                 [$pathObject, $virtualObject],
@@ -163,7 +163,7 @@ final class S3Test extends S3Base
         $part = str_repeat('a', 5 * 1024 * 1024); // the smallest part S3 accepts, except for the last one
 
         try {
-            $this->assertTrue($this->object->write($path, new Stream('old'), 'text/plain'));
+            $this->assertSame(md5('old'), $this->object->write($path, new Stream('old'), 'text/plain'));
 
             // The number of parts is not known up front: nothing finalizes until asked.
             $metadata = [];
@@ -213,7 +213,7 @@ final class S3Test extends S3Base
         $path = $device->getPath('no-acl/' . bin2hex(random_bytes(8)) . '.txt');
 
         try {
-            $this->assertTrue($device->write($path, new Stream('no acl'), 'text/plain'));
+            $this->assertSame(md5('no acl'), $device->write($path, new Stream('no acl'), 'text/plain'));
             $this->assertSame('no acl', (string) $device->read($path));
         } finally {
             $device->delete($path);
